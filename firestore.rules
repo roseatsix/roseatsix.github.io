@@ -1,37 +1,57 @@
 rules_version = '2';
 
 // rose at six — Firestore security rules
-// Paste into Firebase console → Firestore Database → Rules, and replace
-// OWNER_UID with your account ID (the site shows it the first time you sign in).
+// Paste into Firebase console → Firestore Database → Rules → Publish.
 //
-// Only the owner can read or write anything. On top of that:
+// Anyone can sign in with Google. Each account gets its own space under
+// users/{their uid} and can only read or write inside it.
+// On top of that:
 // - items can only move forward one revision at a time, so nothing is
 //   ever overwritten blindly, even by a bug;
-// - version history is append-only: versions can't be edited or deleted.
+// - version history is append-only: versions can't be edited or deleted;
+// - documents must have the expected shape and size, so the database
+//   can't be used to store arbitrary files.
 // (All contents are encrypted in the browser before they reach here.)
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isOwner(uid) {
-      return request.auth != null
-        && request.auth.uid == uid
-        && uid == 'OWNER_UID';
+    function isSelf(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Encrypted item / version document
+    function validItem(rev) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['t', 'rev', 'iv', 'ct', 'device', 'updatedAt'])
+        && d.rev == rev
+        && d.t is string && d.t.size() <= 64
+        && d.iv is bytes && d.iv.size() == 12
+        && d.ct is bytes && d.ct.size() <= 800000
+        && d.device is string && d.device.size() <= 64
+        && d.updatedAt == request.time;
+    }
+
+    // Wrapped encryption keys
+    function validKeys() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['v', 'passphrase', 'recovery', 'createdAt'])
+        && d.passphrase is map && d.recovery is map;
     }
 
     match /users/{uid}/meta/keys {
-      allow read: if isOwner(uid);
-      allow create, update: if isOwner(uid);
+      allow read: if isSelf(uid);
+      allow create, update: if isSelf(uid) && validKeys();
     }
 
     match /users/{uid}/items/{itemId} {
-      allow read: if isOwner(uid);
-      allow create: if isOwner(uid) && request.resource.data.rev == 1;
-      allow update: if isOwner(uid) && request.resource.data.rev == resource.data.rev + 1;
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && validItem(1);
+      allow update: if isSelf(uid) && validItem(resource.data.rev + 1);
 
       match /versions/{rev} {
-        allow read: if isOwner(uid);
-        allow create: if isOwner(uid) && rev == string(request.resource.data.rev);
+        allow read: if isSelf(uid);
+        allow create: if isSelf(uid) && validItem(int(rev));
       }
     }
   }
