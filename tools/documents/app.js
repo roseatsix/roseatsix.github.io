@@ -25,10 +25,10 @@ const state = { view: 'merge' };
 
 function picker(id, { multiple = true, accept = 'application/pdf,image/*,.heic,.heif', label = 'Choose files', hint = '' } = {}) {
   return `
-    <label class="d-drop" data-drop="${id}">
+    <label class="dropzone" data-drop="${id}">
       <input type="file" ${multiple ? 'multiple' : ''} accept="${accept}" data-pick="${id}" hidden>
-      <span class="d-drop-icon">${ICON.file}</span>
-      <span class="d-drop-text"><strong>${esc(label)}</strong><small>${esc(hint || (multiple ? 'or drop them here' : 'or drop it here'))}</small></span>
+      <span class="dropzone-icon">${ICON.file}</span>
+      <span class="dropzone-text"><strong>${esc(label)}</strong><small>${esc(hint || (multiple ? 'or drop them here' : 'or drop it here'))}</small></span>
     </label>`;
 }
 

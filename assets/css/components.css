@@ -223,3 +223,23 @@ a.stat.is-link:hover { background: var(--surface-hover); }
 /*  from split  */
 /*  from documents  */
 .seg-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* file upload box and result card (documents, generate) */
+.dropzone {
+  display: flex; align-items: center; gap: 14px; padding: 18px;
+  border-radius: var(--radius); border: 2px dashed color-mix(in oklab, var(--flower) 35%, var(--border));
+  background: color-mix(in oklab, var(--flower) 5%, var(--bg)); cursor: pointer; transition: background-color .15s, border-color .15s;
+}
+.dropzone:hover, .dropzone.is-over { background: var(--flower-soft); border-color: var(--flower); }
+.dropzone-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--flower-soft); color: var(--flower-deep); }
+.dropzone-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.dropzone-text { display: grid; }
+.dropzone-text small { color: var(--text-muted); }
+.result-card {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--leaf-soft);
+}
+.result-info { display: grid; min-width: 0; }
+.result-info strong { overflow-wrap: anywhere; }
+.result-info span { font-size: .84rem; color: var(--text-muted); }
+.result-actions { display: flex; gap: 8px; }

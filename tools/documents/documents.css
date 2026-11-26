@@ -1,16 +1,6 @@
 /* Document toolkit */
 
 .d-intro { margin: -2px 0 12px; color: var(--text-muted); font-size: .92rem; }
-.d-drop {
-  display: flex; align-items: center; gap: 14px; padding: 18px;
-  border-radius: var(--radius); border: 2px dashed color-mix(in oklab, var(--flower) 35%, var(--border));
-  background: color-mix(in oklab, var(--flower) 5%, var(--bg)); cursor: pointer; transition: background-color .15s, border-color .15s;
-}
-.d-drop:hover, .d-drop.is-over { background: var(--flower-soft); border-color: var(--flower); }
-.d-drop-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--flower-soft); color: var(--flower-deep); }
-.d-drop-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.d-drop-text { display: grid; }
-.d-drop-text small { color: var(--text-muted); }
 
 .d-files { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
 .d-file { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); }
@@ -33,15 +23,6 @@
 .d-bar i { display: block; height: 100%; border-radius: 999px; background: var(--flower); transition: width .2s; }
 .d-summary { margin: 14px 0 0; font-size: 1.05rem; }
 [data-out] .form-error { margin-top: 14px; }
-
-.d-result {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
-  margin-top: 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--leaf-soft);
-}
-.d-result-info { display: grid; min-width: 0; }
-.d-result-info strong { overflow-wrap: anywhere; }
-.d-result-info span { font-size: .84rem; color: var(--text-muted); }
-.d-result-actions { display: flex; gap: 8px; }
 
 .d-pagebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 10px; }
 .d-pagebar-actions { display: flex; flex-wrap: wrap; gap: 6px; }

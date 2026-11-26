@@ -21,6 +21,7 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `tools/split/`: bill splitter (many receipts, by-item splits, settle up, share picture)
 - `tools/documents/`: document toolkit (merge, pages, compress, convert, text & OCR), all in the browser
 - `assets/vendor/`: pdf-lib, pdf.js, JSZip and Tesseract (OCR) with English and Indonesian data
+- `tools/generate/`: Generate from DOCX (templates with `{{placeholders}}`, form, formulas, history)
 - `tools/<name>/`: each further tool gets its own folder
 
 ## Offline
@@ -40,3 +41,13 @@ copy. When adding a new tool, add its files to `SHELL` in `sw.js` and bump
 
 A tool page loads those three, in that order. Put anything two tools share in
 `components.css` with a neutral name, never in another tool's stylesheet.
+
+## Generate from DOCX
+
+Templates are ordinary Word files with placeholders: `{{name}}`, optionally with
+formats after colons, e.g. `{{jumlah:rp}}`, `{{jumlah:terbilang_rp}}`,
+`{{nama:upper}}`, `{{tanggal:terbilang}}`, `{{selisih:abs:persen}}`,
+`{{selisih:tanda(naik|turun|tetap)}}`. Word MERGEFIELDs also work. The full list is
+in the tool's "How to write placeholders" guide and in `tools/generate/engine.js`.
+The template file, field settings and every generated entry (all values, keyed by
+timestamp) are stored encrypted in the `docgen` store.

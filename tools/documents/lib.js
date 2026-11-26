@@ -176,10 +176,10 @@ export function resultCard(blob, filename, note = '') {
     try { return !!(navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: blob.type })] })); } catch (e) { return false; }
   })();
   const wrap = document.createElement('div');
-  wrap.className = 'd-result';
+  wrap.className = 'result-card';
   wrap.innerHTML = `
-    <div class="d-result-info"><strong></strong><span></span></div>
-    <div class="d-result-actions">
+    <div class="result-info"><strong></strong><span></span></div>
+    <div class="result-actions">
       ${canShare ? '<button class="btn btn-ghost" type="button" data-share>Share</button>' : ''}
       <a class="btn btn-primary" download>Download</a>
     </div>`;
