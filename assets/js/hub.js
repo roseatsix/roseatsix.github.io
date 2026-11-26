@@ -114,7 +114,7 @@ renderTools();
 mountThemeControls();
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
-  .then(m => { m.mountHeader(); showInventoryBadge(); })
+  .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); })
   .catch(err => {
     console.error('Sign-in failed to load', err);
     const slot = document.getElementById('account-slot');
@@ -129,7 +129,7 @@ async function showInventoryBadge() {
     if (!card) return;
     openStore('inventory').subscribe(list => {
       IM.setItems(list);
-      const due = IM.replacementsDue(IM.today()).length;
+      const due = IM.attention(IM.today(), 7).length;
       let badge = card.querySelector('.card-badge');
       if (!due) { badge?.remove(); return; }
       if (!badge) {
@@ -137,7 +137,7 @@ async function showInventoryBadge() {
         badge.className = 'tag card-badge';
         card.querySelector('.card-top').appendChild(badge);
       }
-      badge.textContent = `${due} to replace`;
+      badge.textContent = `${due} need attention`;
     });
   } catch (e) { console.warn('Inventory badge unavailable', e); }
 }

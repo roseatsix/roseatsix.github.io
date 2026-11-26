@@ -12,6 +12,7 @@ export const ICONS = {
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   hand: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5A5.5 5.5 0 0 1 6 17.5l-1.6-3.2a1.4 1.4 0 0 1 2.4-1.4L8 14.5"/></svg>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.5"/></svg>',
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
 };
 
@@ -48,6 +49,8 @@ export function itemRow(i, { showWhere = true, showDue = true } = {}) {
   const r = M.replaceInfo(i);
   const chips = [];
   if (showDue && r && r.state !== 'ok') chips.push(`<span class="i-chip is-${r.state}">${ICONS.repeat}${esc(M.dueText(r))}</span>`);
+  const x = M.expiryInfo(i);
+  if (showDue && x && x.state !== 'ok') chips.push(`<span class="i-chip is-${x.state === 'expired' ? 'overdue' : 'soon'}">${ICONS.clock}${esc(M.expiryText(x))}</span>`);
   if (i.condition === 'broken') chips.push('<span class="i-chip is-broken">Broken</span>');
   else if (i.condition === 'worn') chips.push('<span class="i-chip">Worn</span>');
   if (i.sentimental) chips.push(`<span class="i-chip is-heart" title="Sentimental">${ICONS.heart}</span>`);
@@ -111,7 +114,7 @@ export function renderItems(ui) {
     && (!ui.room || !ui.spot || spotKey(i) === ui.spot));
   list = sortItems(list, ui.sort);
   const value = all.reduce((n, i) => n + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
-  const due = M.replacementsDue(M.today()).length;
+  const due = M.attention(M.today(), 30).length;
   const toReview = all.filter(i => M.verdict(i, all).kind !== 'keep').length;
 
   const groups = new Map();
@@ -126,7 +129,7 @@ export function renderItems(ui) {
     <section class="j-view i-items">
       <div class="j-stats">
         <div class="j-stat"><span>${all.reduce((n, i) => n + (Number(i.qty) || 1), 0)}</span>things</div>
-        <a class="j-stat is-link" href="#/replace"><span>${due}</span>to replace</a>
+        <a class="j-stat is-link" href="#/due"><span>${due}</span>due soon</a>
         <a class="j-stat is-link" href="#/declutter"><span>${toReview}</span>to review</a>
         <div class="j-stat"><span class="j-full">${esc(M.money(value))}</span><span class="j-compact">${esc(M.money(value, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated value</div>
       </div>
@@ -203,36 +206,51 @@ export function renderRooms(ui) {
     </section>`;
 }
 
-/* ---------- Replace ---------- */
+/* ---------- Due: replacements + expiry ---------- */
 
-export function renderReplace() {
-  const scheduled = M.owned().map(i => ({ i, r: M.replaceInfo(i) })).filter(x => x.r).sort((a, b) => a.r.next.localeCompare(b.r.next));
-  const groups = {
-    overdue: scheduled.filter(x => x.r.state === 'overdue'),
-    now: scheduled.filter(x => x.r.state === 'today' || x.r.state === 'soon'),
-    later: scheduled.filter(x => x.r.state === 'ok'),
-  };
-  const row = ({ i, r }) => `
-    <li class="i-rep is-${r.state}">
-      <button type="button" class="i-rep-main" data-act="open-item" data-id="${i.id}">
-        <span class="i-name">${esc(i.name)} ${qtyText(i)}</span>
-        <span class="i-meta"><span>${ICONS.repeat}${esc(M.periodText(i.replace))}</span><span>${esc(M.dueText(r))} · ${esc(M.fmt.short(r.next))}</span>${where(i) ? `<span>${ICONS.pin}${esc(where(i))}</span>` : ''}</span>
-        <span class="i-progress"><span style="width:${r.pct}%"></span></span>
+export function renderDue() {
+  const t = M.today();
+  const rows = [];
+  for (const i of M.owned()) {
+    const r = M.replaceInfo(i);
+    if (r) rows.push({ i, kind: 'replace', date: r.next, state: r.state === 'overdue' ? 'overdue' : (r.state === 'today' || r.state === 'soon') ? 'soon' : 'ok', pct: r.pct, text: M.dueText(r), sub: M.periodText(i.replace) });
+    const x = M.expiryInfo(i);
+    if (x) {
+      const total = x.source === 'opened' ? Math.max(1, M.daysBetween(i.opened, x.date)) : null;
+      rows.push({ i, kind: 'expiry', date: x.date, state: x.state === 'expired' ? 'overdue' : x.state, text: M.expiryText(x),
+        pct: total ? Math.min(100, Math.max(0, Math.round((total - x.daysLeft) / total * 100))) : null,
+        sub: x.source === 'opened' ? `opened ${M.fmt.short(i.opened)}` : 'expiry date' });
+    }
+  }
+  rows.sort((a, b) => a.date.localeCompare(b.date));
+  const row = d => `
+    <li class="i-rep is-${d.state}">
+      <button type="button" class="i-rep-main" data-act="open-item" data-id="${d.i.id}">
+        <span class="i-name">${esc(d.i.name)} ${qtyText(d.i)}</span>
+        <span class="i-meta">
+          <span class="i-kind">${d.kind === 'replace' ? ICONS.repeat + 'Replace' : ICONS.clock + 'Expiry'}</span>
+          <span>${esc(d.text)} · ${esc(M.fmt.short(d.date))}</span>
+          <span>${esc(d.sub)}</span>
+          ${where(d.i) ? `<span>${ICONS.pin}${esc(where(d.i))}</span>` : ''}
+        </span>
+        ${d.pct != null ? `<span class="i-progress"><span style="width:${d.pct}%"></span></span>` : ''}
       </button>
-      <button class="btn btn-ghost btn-sm" type="button" data-act="replaced" data-id="${i.id}">${ICONS.check}Replaced</button>
+      ${d.kind === 'replace'
+        ? `<button class="btn btn-ghost btn-sm" type="button" data-act="replaced" data-id="${d.i.id}">${ICONS.check}Replaced</button>`
+        : `<button class="btn btn-ghost btn-sm" type="button" data-act="renew" data-id="${d.i.id}">${ICONS.check}New one</button>`}
     </li>`;
-  const section = (title, list, empty, cls = '') => `
+  const section = (title, list, empty, cls) => `
     <section class="j-card ${cls}">
       <div class="j-card-head"><h2>${title}</h2><span class="j-count">${list.length}</span></div>
       ${list.length ? `<ul class="i-reps">${list.map(row).join('')}</ul>` : `<p class="j-empty">${empty}</p>`}
     </section>`;
   return `
     <section class="j-view">
-      <div class="j-head-title i-title"><p class="eyebrow">Replacements</p><h1>What needs renewing</h1></div>
-      ${scheduled.length ? '' : `<div class="j-card i-empty"><p>Nothing is on a schedule yet. When adding or editing an item, turn on <strong>Replace periodically</strong> and choose how often, e.g. scissors every 2 years, a toothbrush every 3 months.</p></div>`}
-      ${scheduled.length ? section('Overdue', groups.overdue, 'Nothing overdue.', 'tone-flower') : ''}
-      ${scheduled.length ? section('Coming up', groups.now, 'Nothing due in the next few weeks.', 'tone-sun') : ''}
-      ${scheduled.length ? section('Later', groups.later, 'Nothing else scheduled.', 'tone-leaf') : ''}
+      <div class="j-head-title i-title"><p class="eyebrow">Due</p><h1>What needs attention</h1></div>
+      ${rows.length ? '' : `<div class="j-card i-empty"><p>Nothing is being tracked yet. When adding or editing an item, turn on <strong>Replace periodically</strong> (scissors every 2 years, a toothbrush every 3 months) or <strong>Track expiry</strong> (medicine, food, skincare).</p></div>`}
+      ${rows.length ? section('Overdue or expired', rows.filter(d => d.state === 'overdue'), 'Nothing overdue.', 'tone-flower') : ''}
+      ${rows.length ? section('Coming up', rows.filter(d => d.state === 'soon'), 'Nothing due in the next few weeks.', 'tone-sun') : ''}
+      ${rows.length ? section('Later', rows.filter(d => d.state === 'ok'), 'Nothing else tracked.', 'tone-leaf') : ''}
     </section>`;
 }
 

@@ -113,3 +113,7 @@ a.j-stat.is-link:hover { background: var(--surface-hover); }
 .i-addspot .input { min-height: 36px; padding: 6px 10px; font-size: .92rem; }
 .i-addspot .btn { min-height: 36px; }
 @media (max-width: 480px) { .i-filters:has(select:nth-child(4)) select:last-child { grid-column: auto; } }
+
+.i-expiry { margin-top: 10px; }
+.i-expiry .hint { margin: 6px 2px 0; }
+.i-kind { font-weight: 700; color: var(--text); }

@@ -90,15 +90,18 @@ export function openItemDialog(id, defaults = {}) {
       el.closest('dialog').classList.add('is-wide');
       const info = existing && !wish && item.status !== 'gone' ? (() => {
         const ri = M.replaceInfo(item);
+        const xi = M.expiryInfo(item);
         const bits = [];
         if (M.isDate(item.acquired)) bits.push(`In the house ${M.duration(item.acquired)}`);
         if (M.isDate(item.lastUsed)) bits.push(`last used ${M.duration(item.lastUsed)} ago`);
         if (ri) bits.push(M.dueText(ri));
+        if (xi) bits.push(M.expiryText(xi));
         return `
           <p class="i-facts">${esc(bits.join(' · '))}</p>
           <div class="i-quick">
             <button class="btn btn-ghost btn-sm" type="button" data-quick="used">${ICONS.hand}Used it today</button>
             ${item.replace ? `<button class="btn btn-ghost btn-sm" type="button" data-quick="replaced">${ICONS.check}Replaced today</button>` : ''}
+            ${item.afterOpen && !item.opened ? `<button class="btn btn-ghost btn-sm" type="button" data-quick="opened">Opened today</button>` : ''}
             <button class="btn btn-ghost btn-sm" type="button" data-quick="letgo">Let go…</button>
           </div>`;
       })() : '';
@@ -143,6 +146,25 @@ export function openItemDialog(id, defaults = {}) {
             </div>
             <label class="field i-lastrep" ${item.replace ? '' : 'hidden'}><span class="field-label">Last replaced</span>
               <input class="input" name="lastReplaced" type="date" value="${esc(item.lastReplaced || item.acquired || '')}"></label>
+          </div>
+
+          <div class="i-replace i-expiry">
+            <label class="check"><input type="checkbox" name="doExpiry" ${item.expires || item.afterOpen ? 'checked' : ''}>
+              <span>Track expiry<small>For medicine, food, skincare and anything that goes off.</small></span></label>
+            <div data-expiry ${item.expires || item.afterOpen ? '' : 'hidden'}>
+              <div class="i-grid">
+                <label class="field"><span class="field-label">Expiry date</span>
+                  <input class="input" name="expires" type="date" value="${esc(item.expires || '')}"></label>
+                <label class="field"><span class="field-label">Opened on</span>
+                  <input class="input" name="opened" type="date" value="${esc(item.opened || '')}"></label>
+              </div>
+              <div class="i-every">
+                <span>Use within</span>
+                <input class="input" name="aoEvery" type="number" inputmode="numeric" min="1" step="1" value="${item.afterOpen ? Number(item.afterOpen.every) : ''}" placeholder="–" aria-label="How long after opening">
+                <select class="input" name="aoUnit" aria-label="Unit">${Object.entries(M.UNITS).map(([u, [, many]]) => `<option value="${u}" ${u === ((item.afterOpen && item.afterOpen.unit) || 'months') ? 'selected' : ''}>${many}</option>`).join('')}</select>
+              </div>
+              <p class="hint">after opening. Fill in either or both; the earlier date counts. Skincare often says 6M or 12M on the jar.</p>
+            </div>
           </div>
 
           <div class="field"><span class="field-label">Condition</span>
@@ -196,6 +218,7 @@ export function openItemDialog(id, defaults = {}) {
         condition = condition === b.dataset.cond ? '' : b.dataset.cond;
         el.querySelectorAll('[data-cond]').forEach(x => x.setAttribute('aria-checked', String(x.dataset.cond === condition)));
       });
+      form.doExpiry?.addEventListener('change', () => { el.querySelector('[data-expiry]').hidden = !form.doExpiry.checked; });
       form.doReplace?.addEventListener('change', () => {
         el.querySelector('.i-every').hidden = !form.doReplace.checked;
         el.querySelector('.i-lastrep').hidden = !form.doReplace.checked;
@@ -213,6 +236,13 @@ export function openItemDialog(id, defaults = {}) {
         const id2 = key.slice(5);
         if (b.dataset.quick === 'used') { await markUsed(id2); close(); }
         if (b.dataset.quick === 'replaced') { await markReplaced(id2); close(); }
+        if (b.dataset.quick === 'opened') {
+          const cur = M.clone(M.get(key));
+          cur.opened = M.today();
+          await save(key, cur);
+          toast(`Opened today. Use within ${M.periodText(cur.afterOpen).replace('every ', '')}.`);
+          close();
+        }
         if (b.dataset.quick === 'letgo') { close(); openLetGoDialog(id2); }
       });
 
@@ -244,6 +274,15 @@ export function openItemDialog(id, defaults = {}) {
           next.acquired = M.isDate(form.acquired.value) ? form.acquired.value : (item.acquired || M.today());
           next.condition = condition;
           next.sentimental = form.sentimental.checked;
+          if (form.doExpiry.checked) {
+            const ao = Math.round(Number(form.aoEvery.value) || 0);
+            next.expires = M.isDate(form.expires.value) ? form.expires.value : null;
+            next.afterOpen = ao > 0 ? { every: ao, unit: form.aoUnit.value } : null;
+            next.opened = M.isDate(form.opened.value) ? form.opened.value : null;
+            if (!next.expires && !next.afterOpen) { err.textContent = 'Add an expiry date, or how long it lasts after opening.'; return; }
+          } else {
+            next.expires = null; next.afterOpen = null; next.opened = null;
+          }
           if (form.doReplace.checked) {
             next.replace = { every: Math.max(1, Math.round(Number(form.every.value) || 1)), unit: form.unit.value };
             next.lastReplaced = M.isDate(form.lastReplaced.value) ? form.lastReplaced.value : null;
@@ -253,6 +292,50 @@ export function openItemDialog(id, defaults = {}) {
         }
         await busy(form.querySelector('[type=submit]'), 'Saving…', () => save(key, next));
         if (!existing) toast(wish ? 'Added to your wishlist' : `Added ${name}`);
+        close(true);
+      });
+    },
+  });
+}
+
+/* ---------- a fresh one of something that expires ---------- */
+
+export function openRenewDialog(id) {
+  const i = M.get('item:' + id);
+  if (!i) return;
+  return openDialog({
+    label: `New ${i.name}`,
+    render(el, close) {
+      el.innerHTML = `
+        <h2>New ${esc(i.name)}</h2>
+        <p>Got a fresh one? Update its dates. Or, if it's simply finished, let it go instead.</p>
+        <form novalidate>
+          <div class="i-grid">
+            ${i.expires || !i.afterOpen ? `<label class="field"><span class="field-label">New expiry date</span><input class="input" type="date" name="expires"></label>` : ''}
+            ${i.afterOpen ? `<label class="field"><span class="field-label">Opened on</span><input class="input" type="date" name="opened" value=""></label>` : ''}
+          </div>
+          ${i.afterOpen ? '<p class="hint">Leave "Opened on" empty if it\'s still sealed.</p>' : ''}
+          <div class="form-error" role="alert"></div>
+          <div class="dialog-actions">
+            <button class="btn btn-text" type="button" data-letgo>It's finished, let it go</button>
+            <span class="spacer"></span>
+            <button class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </form>`;
+      const form = el.querySelector('form');
+      el.querySelector('[data-letgo]').addEventListener('click', () => { close(); openLetGoDialog(id); });
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const next = M.clone(i);
+        if (form.expires) {
+          if (!M.isDate(form.expires.value) && !i.afterOpen) { el.querySelector('.form-error').textContent = 'Pick the new expiry date.'; return; }
+          next.expires = M.isDate(form.expires.value) ? form.expires.value : null;
+        }
+        if (form.opened) next.opened = M.isDate(form.opened.value) ? form.opened.value : null;
+        next.condition = 'good';
+        next.acquired = M.today();
+        await busy(form.querySelector('[type=submit]'), 'Saving…', () => save('item:' + id, next));
+        toast(`Updated ${i.name}`);
         close(true);
       });
     },

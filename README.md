@@ -18,3 +18,11 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `tools/journal/`: tasks, interstitial log, week/month/year calendars with holidays and events, budget, activity, habits
 - `tools/inventory/`: home inventory (items, rooms, replacements, declutter suggestions, wishlist)
 - `tools/<name>/`: each further tool gets its own folder
+
+## Offline
+
+`sw.js` (service worker) keeps a copy of the site so it opens without a
+connection: pages load from the network first and fall back to the saved
+copy. When adding a new tool, add its files to `SHELL` in `sw.js` and bump
+`VERSION`, and add its store name to `KNOWN_STORES` in
+`assets/js/core/backup.js`.

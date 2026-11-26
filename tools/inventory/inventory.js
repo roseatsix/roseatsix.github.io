@@ -14,10 +14,11 @@ const store = openStore('inventory');
 D.useStore(store);
 
 const ui = { loaded: false, view: 'items', q: '', room: '', spot: '', cat: '', sort: 'name', showGone: false };
-const VIEWS = ['items', 'rooms', 'replace', 'declutter', 'wishlist'];
+const VIEWS = ['items', 'rooms', 'due', 'declutter', 'wishlist'];
 
 function onRoute() {
-  const v = (location.hash || '').split('/')[1];
+  let v = (location.hash || '').split('/')[1];
+  if (v === 'replace') v = 'due';   // old links
   ui.view = VIEWS.includes(v) ? v : 'items';
   tabs.querySelectorAll('[data-tab]').forEach(a => a.setAttribute('aria-current', a.dataset.tab === ui.view ? 'page' : 'false'));
   render();
@@ -30,7 +31,7 @@ function render() {
   const sel = f ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
   main.innerHTML =
     ui.view === 'rooms' ? V.renderRooms(ui)
-    : ui.view === 'replace' ? V.renderReplace()
+    : ui.view === 'due' ? V.renderDue()
     : ui.view === 'declutter' ? V.renderDeclutter(ui)
     : ui.view === 'wishlist' ? V.renderWishlist()
     : V.renderItems(ui);
@@ -55,6 +56,7 @@ main.addEventListener('click', e => {
     case 'open-item': return D.openItemDialog(id);
     case 'used': return D.markUsed(id).catch(fail);
     case 'replaced': return D.markReplaced(id).catch(fail);
+    case 'renew': return D.openRenewDialog(id);
     case 'keep': return D.markKept(id).catch(fail);
     case 'let-go': return D.openLetGoDialog(id);
     case 'bought': return D.markBought(id).catch(fail);
