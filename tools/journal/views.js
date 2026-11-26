@@ -224,16 +224,19 @@ export function renderDay(date, ui) {
 
 /* Home inventory: things due for replacement */
 function replaceCard(date, isToday) {
-  const list = isToday ? IM.replacementsDue(date) : IM.replacementsOn(date);
+  const list = isToday ? IM.attention(date, 7) : IM.attentionOn(date).map(a => ({ ...a,
+    text: a.kind === 'replace' ? IM.dueText(IM.replaceInfo(a.item)) : IM.expiryText(IM.expiryInfo(a.item)) }));
   if (!list.length) return '';
   return `
     <section class="j-card tone-sun" aria-labelledby="h-replace">
-      <div class="j-card-head"><h2 id="h-replace">To replace</h2><a class="btn btn-text" href="../inventory/#/replace">Inventory</a></div>
-      <ul class="j-list">${list.map(({ item, r }) => `
+      <div class="j-card-head"><h2 id="h-replace">At home</h2><a class="btn btn-text" href="../inventory/#/due">Inventory</a></div>
+      <ul class="j-list">${list.map(({ item, kind, text, overdue }) => `
         <li class="j-task j-rep">
           <span class="j-task-main"><span class="j-task-title">${esc(item.name)}</span>
-            <span class="j-task-meta"><span class="${r.state === 'overdue' ? 'is-overdue' : ''}">${esc(IM.dueText(r))}</span></span></span>
-          <button class="btn btn-ghost btn-sm" type="button" data-act="inv-replaced" data-id="${item.id}">Replaced</button>
+            <span class="j-task-meta"><span class="${overdue ? 'is-overdue' : ''}">${esc(text)}</span></span></span>
+          ${kind === 'replace'
+            ? `<button class="btn btn-ghost btn-sm" type="button" data-act="inv-replaced" data-id="${item.id}">Replaced</button>`
+            : `<a class="btn btn-ghost btn-sm" href="../inventory/#/due">Update</a>`}
         </li>`).join('')}</ul>
     </section>`;
 }
@@ -269,7 +272,7 @@ export function renderWeek(date) {
     entries += logs.length;
     const daySpent = M.sum(logs.filter(e => M.isSpendCat(e.cat) && typeof e.amount === 'number'));
     spent += daySpent;
-    const markers = dayMarkers(d) + IM.replacementsOn(d).map(({ item }) => `<a class="j-pill is-replace" href="../inventory/#/replace" title="Replace ${esc(item.name)}">↻ ${esc(item.name)}</a>`).join('');
+    const markers = dayMarkers(d) + IM.attentionOn(d).map(({ item, kind }) => `<a class="j-pill is-replace" href="../inventory/#/due" title="${kind === 'replace' ? 'Replace' : 'Expires:'} ${esc(item.name)}">${kind === 'replace' ? '↻' : '⏳'} ${esc(item.name)}</a>`).join('');
     days.push(`
       <section class="j-card j-weekday${d === t ? ' is-today' : ''}${d < t ? ' is-past' : ''}">
         <a class="j-weekday-head" href="#/day/${d}">

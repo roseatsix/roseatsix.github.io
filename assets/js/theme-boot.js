@@ -136,4 +136,13 @@
   };
 
   apply(read());
+
+  // Offline support (see /sw.js)
+  try {
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  } catch (e) {}
 })();

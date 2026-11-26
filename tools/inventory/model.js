@@ -6,6 +6,9 @@
        status: "owned" | "wish" | "gone",
        acquired: "YYYY-MM-DD",            // when it came into the house
        replace: { every, unit } | null,   // unit: days | weeks | months | years
+       expires: "YYYY-MM-DD" | null,      // printed expiry date
+       afterOpen: { every, unit } | null, // "use within N months after opening"
+       opened: "YYYY-MM-DD" | null,
        lastReplaced: "YYYY-MM-DD" | null, // replacement cycle restarts here
        price, notes, link,
        condition: "" | "good" | "worn" | "broken",
@@ -47,6 +50,7 @@ export const DEFAULT_CONFIG = {
     decor: { name: 'Decor', order: 8 },
     furniture: { name: 'Furniture', order: 9 },
     health: { name: 'Medicine & health', order: 10 },
+    pantry: { name: 'Food & pantry', order: 10.5 },
     other: { name: 'Other', order: 11 },
   },
   rooms: {
@@ -178,6 +182,57 @@ export function replacementsDue(by = today()) {
 }
 export const replacementsOn = date => owned().map(i => ({ item: i, r: replaceInfo(i) })).filter(x => x.r && x.r.next === date);
 
+/* ---------- expiry ---------- */
+
+const EXPIRY_SOON_DAYS = 30;
+
+/** Effective expiry: the printed date, or opened + "use within", whichever is first. */
+export function expiryInfo(item, on = today()) {
+  if ((item.status || 'owned') !== 'owned') return null;
+  const candidates = [];
+  if (isDate(item.expires)) candidates.push({ date: item.expires, source: 'date' });
+  if (item.afterOpen && isDate(item.opened)) candidates.push({ date: addPeriod(item.opened, item.afterOpen.every, item.afterOpen.unit), source: 'opened' });
+  if (!candidates.length) return null;
+  const first = candidates.sort((a, b) => a.date.localeCompare(b.date))[0];
+  const daysLeft = daysBetween(on, first.date);
+  return { ...first, daysLeft, state: daysLeft < 0 ? 'expired' : daysLeft <= EXPIRY_SOON_DAYS ? 'soon' : 'ok' };
+}
+
+export function expiryText(x) {
+  if (!x) return '';
+  const opened = x.source === 'opened';
+  if (x.daysLeft < 0) return opened ? `past use-by since opening (${duration(x.date)})` : `expired ${duration(x.date)} ago`;
+  if (x.daysLeft === 0) return opened ? 'use up today' : 'expires today';
+  return opened ? `use within ${duration(today(), x.date)}` : `expires in ${duration(today(), x.date)}`;
+}
+
+/**
+ * Everything at home that needs attention by a date:
+ * replacements due, and things expired or expiring within `soonDays`.
+ */
+export function attention(on = today(), soonDays = 7) {
+  const out = [];
+  for (const item of owned()) {
+    const r = replaceInfo(item, on);
+    if (r && r.next <= on) out.push({ item, kind: 'replace', date: r.next, overdue: r.next < on, text: dueText(r) });
+    const x = expiryInfo(item, on);
+    if (x && x.daysLeft <= soonDays) out.push({ item, kind: 'expiry', date: x.date, overdue: x.daysLeft < 0, text: expiryText(x) });
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Replacements and expiry dates falling exactly on a date (for calendars). */
+export function attentionOn(date) {
+  const out = [];
+  for (const item of owned()) {
+    const r = replaceInfo(item);
+    if (r && r.next === date) out.push({ item, kind: 'replace' });
+    const x = expiryInfo(item);
+    if (x && x.date === date) out.push({ item, kind: 'expiry' });
+  }
+  return out;
+}
+
 export function dueText(r) {
   if (!r) return '';
   if (r.state === 'overdue') return `overdue by ${duration(r.next)}`;
@@ -249,6 +304,8 @@ export function verdict(item, everything = owned()) {
 
   const r = replaceInfo(item);
   if (r && r.state === 'overdue') reasons.push('Due for replacement');
+  const x = expiryInfo(item);
+  if (x && x.state === 'expired') { score += 3; reasons.unshift(x.source === 'opened' ? 'Past its use-by since opening' : 'Expired'); }
 
   // You chose to keep it recently: hold off unless it broke since.
   if (isDate(item.keptAt) && daysBetween(item.keptAt, today()) < KEEP_SNOOZE_DAYS && item.condition !== 'broken') {
