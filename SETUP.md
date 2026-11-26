@@ -48,8 +48,25 @@ Google account in. The free Spark plan is plenty.
 ## 4. Optional hardening
 
 - **Google Cloud console → APIs & Services → Credentials → Browser key** →
-  *Application restrictions: Websites* → add `https://roseatsix.github.io/*`.
-  This stops other sites from using your project's key.
+  *Application restrictions: Websites* → add **both**:
+  - `https://roseatsix.github.io/*`
+  - `https://roseatsix.firebaseapp.com/*` (the Google sign-in pop-up runs
+    here; leaving it out breaks sign-in with "The requested action is invalid")
+
+  This stops other sites from using your project's key. If you also set
+  *API restrictions*, the key needs at least **Identity Toolkit API**,
+  **Token Service API** and **Cloud Firestore API**.
+
+## Troubleshooting
+
+- **Pop-up says "The requested action is invalid"**: check that Google is
+  enabled under Authentication → Sign-in method, and that any website
+  restriction on the API key includes `https://roseatsix.firebaseapp.com/*`.
+  Changes to key restrictions can take a few minutes to apply.
+- **"This web address isn't authorised for sign-in"**: add
+  `roseatsix.github.io` under Authentication → Settings → Authorized domains.
+- **"This space is private"**: the account ID in your Firestore rules doesn't
+  match. Copy it from that screen into the rules and publish again.
 
 ## How the data is protected
 
