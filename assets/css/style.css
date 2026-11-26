@@ -672,6 +672,7 @@ dialog.dialog::backdrop {
 @media (max-width: 520px) { .sprig { opacity: .45; } }
 
 .sprig .stem { fill: none; stroke: var(--leaf); stroke-width: 2.2; stroke-linecap: round; }
+.sprig .stem.thin { stroke-width: 1.7; }
 .sprig .leaf { fill: var(--leaf); opacity: .7; }
 .sprig .b1, .sprig .b3 { color: var(--flower); }
 .sprig .b2 { color: color-mix(in oklab, var(--flower) 45%, var(--surface)); }
