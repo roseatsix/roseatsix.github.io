@@ -111,6 +111,7 @@ function renderGreeting() {
 
 renderGreeting();
 renderTools();
+renderQuickTools();
 mountThemeControls();
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
@@ -140,4 +141,14 @@ async function showInventoryBadge() {
       badge.textContent = `${due} need attention`;
     });
   } catch (e) { console.warn('Inventory badge unavailable', e); }
+}
+
+/* Phones: one-tap shortcuts to the ready tools, at the top of the page. */
+function renderQuickTools() {
+  const nav = document.getElementById('quick-tools');
+  if (!nav) return;
+  nav.innerHTML = TOOLS.filter(t => t.status === 'ready').map(t => {
+    const tone = (GROUPS.find(g => g.id === t.group) || {}).tone || 'flower';
+    return `<a class="quick-tool tone-${tone}" href="${t.href}">${svgIcon(t.icon)}<span>${t.name}</span></a>`;
+  }).join('');
 }
