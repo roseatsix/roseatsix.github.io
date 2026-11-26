@@ -51,7 +51,24 @@ function parseHash() {
   }
 }
 
+/** Links like #/task/<id> or #/event/<id> (from the hub's search) open that item. */
+function openLinked() {
+  const [, kind, id] = (location.hash || '').split('/');
+  if (kind === 'task' && M.get('task:' + id)) {
+    const t = M.get('task:' + id);
+    history.replaceState(null, '', '#/day/' + (M.isDate(t.due) ? t.due : M.today()));
+    setTimeout(() => D.openTaskDialog(id), 0);
+  } else if (kind === 'event' && M.get('event:' + id)) {
+    history.replaceState(null, '', '#/month/' + M.get('event:' + id).date.slice(0, 7));
+    setTimeout(() => D.openEventDialog(id), 0);
+  } else if (kind === 'log' && M.get('log:' + id)) {
+    history.replaceState(null, '', '#/day/' + M.get('log:' + id).date);
+    setTimeout(() => D.openLogDialog(id), 0);
+  }
+}
+
 function onRoute() {
+  openLinked();
   ui.route = parseHash();
   const r = ui.route;
   if (r.date) ui.focus = r.date;

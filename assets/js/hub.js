@@ -115,7 +115,7 @@ renderQuickTools();
 mountThemeControls();
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
-  .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); })
+  .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); import('./hub-search.js').then(s => s.mountSearch()); })
   .catch(err => {
     console.error('Sign-in failed to load', err);
     const slot = document.getElementById('account-slot');
@@ -147,8 +147,9 @@ async function showInventoryBadge() {
 function renderQuickTools() {
   const nav = document.getElementById('quick-tools');
   if (!nav) return;
+  const SHORT = { 'Home inventory': 'Home', 'Bill splitter': 'Split', 'Subscriptions': 'Subs', 'Document toolkit': 'Docs', 'Generate from DOCX': 'DOCX' };
   nav.innerHTML = TOOLS.filter(t => t.status === 'ready').map(t => {
     const tone = (GROUPS.find(g => g.id === t.group) || {}).tone || 'flower';
-    return `<a class="quick-tool tone-${tone}" href="${t.href}">${svgIcon(t.icon)}<span>${t.name}</span></a>`;
+    return `<a class="quick-tool tone-${tone}" href="${t.href}" aria-label="${t.name}" title="${t.name}">${svgIcon(t.icon)}<span>${SHORT[t.name] || t.name}</span></a>`;
   }).join('');
 }

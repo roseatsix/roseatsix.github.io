@@ -17,23 +17,17 @@ encrypted in the browser before it's uploaded. The free Spark plan is plenty.
 
 ## 2. Connect the site
 
+The config is kept out of the repository; the deploy workflow inserts it.
+
 1. **Project settings** (gear icon) → **Your apps** → the web icon `</>` →
-   register an app (no hosting needed).
-2. Copy the `firebaseConfig` object it shows and paste it into
-   `assets/js/config.js`, replacing `null`:
-
-   ```js
-   export const firebaseConfig = {
-     apiKey: "…",
-     authDomain: "….firebaseapp.com",
-     projectId: "…",
-     storageBucket: "….appspot.com",
-     messagingSenderId: "…",
-     appId: "…",
-   };
-   ```
-
-   These values are meant to be public; they only identify the project.
+   register an app (no hosting needed), and copy the `firebaseConfig` object.
+2. GitHub → this repository → **Settings → Secrets and variables → Actions →
+   Variables → New repository variable**: name `FIREBASE_CONFIG`, value: the
+   object you copied, e.g. `{ apiKey: "…", authDomain: "…", projectId: "…", … }`.
+3. GitHub → **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. Push to the `public` branch (or run the "Deploy site" workflow from the
+   Actions tab). The workflow writes the config into the published copy of
+   `assets/js/config.js`; the file in the repository stays `null`.
 
 ## 3. Publish the database rules
 
@@ -101,7 +95,7 @@ can't use your project as free file storage.
 ```sh
 npx firebase-tools emulators:start --only auth,firestore --project demo-ras
 python3 -m http.server 8000
-# open http://localhost:8000/?emulator
+# open http://localhost:8000/?emulator   (uses the emulators, no real config needed)
 ```
 
 ## Backups
