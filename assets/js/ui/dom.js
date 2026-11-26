@@ -58,19 +58,28 @@ export function openDialog({ label, render, dismissible = true }) {
   });
 }
 
-let toastEl, toastTimer;
+let toastEl, toastTimer, toastHideTimer;
 export function toast(message) {
   if (!toastEl) {
     toastEl = document.createElement('div');
     toastEl.className = 'toast';
     toastEl.setAttribute('role', 'status');
     toastEl.hidden = true;
+    if ('popover' in toastEl) toastEl.popover = 'manual';
     document.body.appendChild(toastEl);
   }
   toastEl.textContent = message;
-  toastEl.hidden = false;
+  if (toastEl.showPopover) {
+    // Re-open so it lands on top of any dialog opened since.
+    clearTimeout(toastHideTimer);
+    try { if (toastEl.matches(':popover-open')) toastEl.hidePopover(); toastEl.showPopover(); } catch (e) { /* ignore */ }
+  }
+  requestAnimationFrame(() => { toastEl.hidden = false; });
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
+  toastTimer = setTimeout(() => {
+    toastEl.hidden = true;
+    toastHideTimer = setTimeout(() => { try { toastEl.hidePopover?.(); } catch (e) { /* ignore */ } }, 300);
+  }, 2800);
 }
 
 export async function copyText(text) {

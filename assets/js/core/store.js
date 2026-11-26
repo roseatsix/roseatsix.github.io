@@ -83,8 +83,12 @@ addEventListener('offline', notifyStatus);
 
 /* ---------- Store ---------- */
 
+const openStores = new Map();
+
+/** One shared instance per tool on a page. */
 export function openStore(tool) {
-  return new Store(tool);
+  if (!openStores.has(tool)) openStores.set(tool, new Store(tool));
+  return openStores.get(tool);
 }
 
 class Store {
@@ -183,6 +187,7 @@ class Store {
     this._stop();
     this.offSession();
     stores.delete(this);
+    openStores.delete(this.tool);
     notifyStatus();
   }
 

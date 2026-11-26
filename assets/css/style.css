@@ -542,7 +542,8 @@ dialog.dialog::backdrop {
   font-weight: 700;
   cursor: pointer;
 }
-.segmented button[aria-pressed="true"] {
+.segmented button[aria-pressed="true"],
+.segmented button[aria-checked="true"] {
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
@@ -792,6 +793,8 @@ a.card:hover {
   transform: translate(-50%, 0);
   transition: opacity .25s, transform .25s;
 }
+/* Shown as a popover so it sits above open dialogs */
+.toast[popover] { inset: auto; left: 50%; bottom: 20px; margin: 0; border: 0; overflow: visible; }
 .toast[hidden] { display: block !important; opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
 
 /* ---------- Footer ---------- */
@@ -827,3 +830,19 @@ a.card:hover {
 }
 
 .btn-sm { min-height: 32px; padding: 4px 12px; font-size: .82rem; }
+
+/* ---------- Backup & restore ---------- */
+
+.segmented.b-format { grid-template-columns: repeat(2, 1fr); }
+.b-format + .hint { margin: 8px 2px 0; }
+.b-last { flex: 1 1 100%; order: 3; text-align: right; }
+.b-last:empty { display: none; }
+.b-file { cursor: pointer; }
+.b-summary {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.b-summary p { margin: 0 0 4px; color: var(--text); }
+.b-summary .dialog-actions { margin-top: 12px; }

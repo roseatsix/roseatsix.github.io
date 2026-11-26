@@ -698,3 +698,6 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
   .j-qrow-bottom { flex-wrap: wrap; }
   .j-qrow-bottom select, .j-qrow-bottom .input[data-q="options"] { flex: 1 1 100%; }
 }
+
+.j-reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.j-erase-btn:not([disabled]) { background: var(--danger); color: #fff; }

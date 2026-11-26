@@ -3,6 +3,8 @@
 import { openDialog, esc, toast, busy } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import { ICONS } from './views.js';
+import { openBackupDialog } from '../../assets/js/ui/backup.js';
+import { eraseStore } from '../../assets/js/core/backup.js';
 import { FIELD_TYPES, renderFieldInputs, applyFieldClick, collectFields, fieldList } from './fields.js';
 
 let store = null;
@@ -342,6 +344,12 @@ export function openSettingsDialog() {
         <button class="btn btn-ghost btn-sm" type="button" data-add="spendCats">${ICONS.plus}Add spending category</button>
         <h3>Currency</h3>
         <select class="input j-currency" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <h3>Backup &amp; reset</h3>
+        <div class="j-reset-actions">
+          <button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-reset-cats>Reset categories to defaults</button>
+          <button class="btn btn-ghost btn-sm j-danger" type="button" data-erase>Erase all journal data…</button>
+        </div>
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
       el.addEventListener('click', async e => {
@@ -353,6 +361,14 @@ export function openSettingsDialog() {
           draw();
         }
         if (e.target.closest('[data-close]')) close();
+        if (e.target.closest('[data-backup]')) openBackupDialog();
+        if (e.target.closest('[data-erase]')) { await openEraseDialog(); draw(); }
+      });
+      const resetBtn = el.querySelector('[data-reset-cats]');
+      confirmButton(resetBtn, 'Tap again to reset categories', async () => {
+        if (M.get('config')) await remove('config');
+        draw();
+        toast('Categories, prompts, questions and currency are back to the defaults. Your entries are untouched.');
       });
       el.querySelector('[data-currency]').addEventListener('change', async e => {
         const v = e.target.value;
@@ -473,6 +489,44 @@ function openCategoryEditor(map, id) {
         delete next.archived;
         await busy(form.querySelector('[type=submit]'), 'Saving…', () => saveConfig(c => { c[map] = { ...(c[map] || {}), [cid]: next }; }));
         close(true);
+      });
+    },
+  });
+}
+
+/* ---------- Erase all journal data ---------- */
+
+function openEraseDialog() {
+  return openDialog({
+    label: 'Erase all journal data',
+    render(el, close) {
+      el.innerHTML = `
+        <h2>Erase all journal data</h2>
+        <p>This deletes <strong>everything in the journal</strong>: log entries, tasks, events, budgets, habits and your categories. It happens on all your devices.</p>
+        <p>Your only way back is a backup, so make one first if there's anything you might want.</p>
+        <div class="dialog-actions" style="justify-content:flex-start;margin-top:4px">
+          <button class="btn btn-ghost" type="button" data-backup>Make a backup first</button>
+        </div>
+        <label class="field"><span class="field-label">Type <strong>erase</strong> to confirm</span>
+          <input class="input" name="confirm" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <div class="form-error" role="alert"></div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
+          <button class="btn btn-primary j-erase-btn" type="button" data-go disabled>Erase everything</button>
+        </div>`;
+      const input = el.querySelector('[name=confirm]');
+      const go = el.querySelector('[data-go]');
+      input.addEventListener('input', () => { go.disabled = input.value.trim().toLowerCase() !== 'erase'; });
+      el.querySelector('[data-backup]').addEventListener('click', () => openBackupDialog());
+      el.querySelector('[data-cancel]').addEventListener('click', () => close());
+      go.addEventListener('click', async () => {
+        try {
+          const n = await busy(go, 'Erasing…', () => eraseStore('journal', (i, t) => { go.lastChild.textContent = ` Erasing ${i} of ${t}…`; }));
+          toast(`Erased ${n} ${n === 1 ? 'item' : 'items'}. The journal is fresh.`);
+          close(true);
+        } catch (err) {
+          el.querySelector('.form-error').textContent = err.message || "Couldn't erase.";
+        }
       });
     },
   });
