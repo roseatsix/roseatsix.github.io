@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// rose at six — Firestore security rules
+// Paste into Firebase console → Firestore Database → Rules, and replace
+// OWNER_UID with your account ID (the site shows it the first time you sign in).
+//
+// Only the owner can read or write anything. On top of that:
+// - items can only move forward one revision at a time, so nothing is
+//   ever overwritten blindly, even by a bug;
+// - version history is append-only: versions can't be edited or deleted.
+// (All contents are encrypted in the browser before they reach here.)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && uid == 'OWNER_UID';
+    }
+
+    match /users/{uid}/meta/keys {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid);
+    }
+
+    match /users/{uid}/items/{itemId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && request.resource.data.rev == 1;
+      allow update: if isOwner(uid) && request.resource.data.rev == resource.data.rev + 1;
+
+      match /versions/{rev} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && rev == string(request.resource.data.rev);
+      }
+    }
+  }
+}
