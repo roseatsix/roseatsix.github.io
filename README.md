@@ -19,6 +19,8 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `tools/inventory/`: home inventory (items, rooms, replacements, declutter suggestions, wishlist)
 - `tools/subscriptions/`: subscriptions (price changes, shared plans, renewals)
 - `tools/split/`: bill splitter (many receipts, by-item splits, settle up, share picture)
+- `tools/documents/`: document toolkit (merge, pages, compress, convert, text & OCR), all in the browser
+- `assets/vendor/`: pdf-lib, pdf.js, JSZip and Tesseract (OCR) with English and Indonesian data
 - `tools/<name>/`: each further tool gets its own folder
 
 ## Offline

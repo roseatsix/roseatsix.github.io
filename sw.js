@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-26c';
+const VERSION = 'ras-2026-11-26d';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -27,6 +27,8 @@ const SHELL = [
   '/tools/inventory/', '/tools/inventory/index.html', '/tools/inventory/inventory.css', '/tools/inventory/inventory.js',
   '/tools/inventory/model.js', '/tools/inventory/views.js', '/tools/inventory/dialogs.js',
   '/tools/subscriptions/', '/tools/subscriptions/index.html', '/tools/subscriptions/app.js', '/tools/subscriptions/model.js', '/tools/subscriptions/subs.css',
+  '/tools/documents/', '/tools/documents/index.html', '/tools/documents/app.js', '/tools/documents/lib.js', '/tools/documents/documents.css',
+  '/assets/vendor/pdf-lib.min.js', '/assets/vendor/jszip.min.js', '/assets/vendor/pdfjs/pdf.min.mjs', '/assets/vendor/pdfjs/pdf.worker.min.mjs',
   '/tools/split/', '/tools/split/index.html', '/tools/split/app.js', '/tools/split/model.js', '/tools/split/share.js', '/tools/split/split.css',
   'https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js',

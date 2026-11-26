@@ -1,0 +1,60 @@
+/* Document toolkit */
+
+.d-intro { margin: -2px 0 12px; color: var(--text-muted); font-size: .92rem; }
+.d-drop {
+  display: flex; align-items: center; gap: 14px; padding: 18px;
+  border-radius: var(--radius); border: 2px dashed color-mix(in oklab, var(--flower) 35%, var(--border));
+  background: color-mix(in oklab, var(--flower) 5%, var(--bg)); cursor: pointer; transition: background-color .15s, border-color .15s;
+}
+.d-drop:hover, .d-drop.is-over { background: var(--flower-soft); border-color: var(--flower); }
+.d-drop-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--flower-soft); color: var(--flower-deep); }
+.d-drop-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.d-drop-text { display: grid; }
+.d-drop-text small { color: var(--text-muted); }
+
+.d-files { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.d-file { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); }
+.d-thumb { display: grid; place-items: center; width: 44px; height: 56px; flex: none; overflow: hidden; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+.d-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.d-thumb svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.d-file-main { flex: 1; min-width: 0; display: grid; }
+.d-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d-meta { font-size: .82rem; color: var(--text-muted); }
+.d-file-actions { display: flex; gap: 4px; flex: none; }
+.d-file-actions .icon-btn { width: 34px; height: 34px; }
+.d-file-actions .icon-btn[disabled] { opacity: .35; cursor: default; }
+.d-file-actions svg, .d-pagebar svg, .d-text svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.d-options { margin-top: 10px; }
+.d-go { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.d-progress { display: grid; gap: 8px; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--bg); font-size: .9rem; }
+.d-progress .spinner { color: var(--flower); }
+.d-bar { height: 6px; border-radius: 999px; background: color-mix(in oklab, var(--flower) 14%, var(--surface)); overflow: hidden; }
+.d-bar i { display: block; height: 100%; border-radius: 999px; background: var(--flower); transition: width .2s; }
+.d-summary { margin: 14px 0 0; font-size: 1.05rem; }
+[data-out] .form-error { margin-top: 14px; }
+
+.d-result {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--leaf-soft);
+}
+.d-result-info { display: grid; min-width: 0; }
+.d-result-info strong { overflow-wrap: anywhere; }
+.d-result-info span { font-size: .84rem; color: var(--text-muted); }
+.d-result-actions { display: flex; gap: 8px; }
+
+.d-seg3 { grid-template-columns: repeat(3, 1fr); }
+
+.d-pagebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 10px; }
+.d-pagebar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.d-pages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.d-page { display: grid; gap: 4px; width: 100%; padding: 6px; border-radius: var(--radius-sm); border: 2px solid transparent; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+.d-page.is-sel { border-color: var(--flower); background: var(--flower-soft); }
+.d-page-img { display: grid; place-items: center; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 4px; background: var(--surface); }
+.d-page-img img { max-width: 100%; max-height: 100%; box-shadow: 0 1px 4px rgb(0 0 0 / .15); transition: transform .2s; }
+.d-page-n { font-size: .8rem; font-weight: 700; text-align: center; }
+.d-page-n small { font-weight: 600; color: var(--text-muted); }
+
+.d-text { margin-top: 14px; }
+.d-text-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.d-textarea { font-size: .92rem; line-height: 1.5; resize: vertical; min-height: 200px; }

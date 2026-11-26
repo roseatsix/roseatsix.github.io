@@ -25,8 +25,8 @@ const TOOLS = [
   { group: 'money', name: 'Subscriptions', desc: 'Recurring payments and renewal dates.',
     href: 'tools/subscriptions/', icon: 'repeat', status: 'ready' },
 
-  { group: 'documents', name: 'Document toolkit', desc: 'Convert, compress, merge and extract files, plus OCR for scans.',
-    href: 'tools/documents/', icon: 'toolkit', status: 'soon' },
+  { group: 'documents', name: 'Document toolkit', desc: 'Merge, pages, compress, convert, and text from scans. Files stay on your device.',
+    href: 'tools/documents/', icon: 'toolkit', status: 'ready' },
   { group: 'documents', name: 'Generate from DOCX', desc: 'Fill a Word template to make new documents.',
     href: 'tools/generate/', icon: 'sparkdoc', status: 'soon' },
 ];
