@@ -148,6 +148,8 @@ function tripView(t) {
           </li>`).join('')}</ul>` : '<p class="j-empty">Everyone is square.</p>'}
         <label class="field"><span class="field-label">Pay to (shown on the shared picture)</span>
           <input class="input" data-field="payTo" value="${esc(t.payTo || '')}" placeholder="e.g. BCA 1234567890 a.n. Rose" maxlength="100"></label>
+        ${!(t.payTo || '').trim() && M.savedPayTo() ? `<button class="btn btn-text sp-usesaved" type="button" data-act="use-saved">Use saved: ${esc(M.savedPayTo())}</button>` : ''}
+        ${(t.payTo || '').trim() && !M.savedPayTo() ? `<button class="btn btn-text sp-usesaved" type="button" data-act="save-payto">Save as my payment details for new splits</button>` : ''}
         <div class="sp-share">
           <button class="btn btn-primary" type="button" data-act="share">${ICON.share}Share picture</button>
           <button class="btn btn-ghost" type="button" data-act="copy">${ICON.copy}Copy as text</button>
@@ -186,7 +188,7 @@ function openTripDialog(id) {
         const people = { [M.newId()]: { name: form.me.value.trim() || 'Me', me: true, order: 0 } };
         form.others.value.split(',').map(s => s.trim()).filter(Boolean).forEach((n, i) => { people[M.newId()] = { name: n, order: i + 1 }; });
         const nid = M.newId();
-        await busy(form.querySelector('[type=submit]'), 'Creating…', () => save(tripKey(nid), { title, date: M.today(), people, receipts: {}, paid: {}, createdAt: Date.now() }));
+        await busy(form.querySelector('[type=submit]'), 'Creating…', () => save(tripKey(nid), { title, date: M.today(), people, receipts: {}, paid: {}, payTo: M.savedPayTo(), createdAt: Date.now() }));
         close();
         location.hash = '#/t/' + nid;
       });
@@ -289,6 +291,14 @@ function openReceiptDialog(tid, rid) {
               <label class="field"><span class="field-label">Tax %</span><input class="input" name="tax" inputmode="decimal" value="${Number(r.tax) || ''}" placeholder="e.g. 10"></label>
               <label class="field"><span class="field-label">Discount</span><input class="input" name="discount" inputmode="decimal" value="${r.discount ? esc(M.plainNumber(r.discount)) : ''}" placeholder="0"></label>
             </div>
+            <div class="sp-delivery">
+              <label class="field"><span class="field-label">Delivery fee</span><input class="input" name="delivery" inputmode="decimal" value="${r.delivery ? esc(M.plainNumber(r.delivery)) : ''}" placeholder="0"></label>
+              <div class="field"><span class="field-label">Split delivery</span>
+                <div class="segmented s-splitmode" role="radiogroup" aria-label="Split delivery">
+                  <button type="button" role="radio" data-dby="price" aria-checked="${r.deliveryBy !== 'items'}">By price</button>
+                  <button type="button" role="radio" data-dby="items" aria-checked="${r.deliveryBy === 'items'}">By items</button>
+                </div></div>
+            </div>
           </div>
 
           <div class="sp-preview" data-preview></div>
@@ -307,6 +317,7 @@ function openReceiptDialog(tid, rid) {
         r.total = M.parseAmount(form.total.value);
         r.service = M.parsePercent(form.service.value); r.tax = M.parsePercent(form.tax.value);
         r.discount = M.parseAmount(form.discount.value) || 0;
+        r.delivery = M.parseAmount(form.delivery.value) || 0;
         el.querySelectorAll('[data-iid]').forEach(li => {
           const it = r.items[li.dataset.iid];
           if (!it) return;
@@ -321,7 +332,7 @@ function openReceiptDialog(tid, rid) {
         const parts = people.filter(p => c.shares[p.id]).map(p => `<span><b>${esc(p.name)}</b> ${esc(M.money(c.shares[p.id]))}</span>`);
         el.querySelector('[data-preview]').innerHTML = `
           <p class="sp-preview-total">Total <strong>${esc(M.money(c.total))}</strong>
-            ${r.mode === 'items' && (c.service || c.tax || c.discount) ? `<small>(${esc(M.money(c.subtotal))}${c.service ? ' + service ' + esc(M.money(c.service)) : ''}${c.tax ? ' + tax ' + esc(M.money(c.tax)) : ''}${c.discount ? ' − ' + esc(M.money(c.discount)) : ''})</small>` : ''}</p>
+            ${r.mode === 'items' && (c.service || c.tax || c.delivery || c.discount) ? `<small>(${esc(M.money(c.subtotal))}${c.service ? ' + service ' + esc(M.money(c.service)) : ''}${c.tax ? ' + tax ' + esc(M.money(c.tax)) : ''}${c.delivery ? ' + delivery ' + esc(M.money(c.delivery)) : ''}${c.discount ? ' − ' + esc(M.money(c.discount)) : ''})</small>` : ''}</p>
           <p class="sp-preview-shares">${parts.join('') || '<span>Nothing to split yet</span>'}</p>`;
       };
       const showMode = () => {
@@ -348,6 +359,8 @@ function openReceiptDialog(tid, rid) {
       if (r.mode === 'items' && !Object.keys(r.items).length) addItem();
 
       el.addEventListener('click', e => {
+        const dby = e.target.closest('[data-dby]');
+        if (dby) { r.deliveryBy = dby.dataset.dby; el.querySelectorAll('[data-dby]').forEach(b => b.setAttribute('aria-checked', String(b === dby))); preview(); }
         const m = e.target.closest('[data-mode]');
         if (m) { readForm(); r.mode = m.dataset.mode; if (r.mode === 'items' && !Object.keys(r.items).length) addItem(); showMode(); }
         const ew = e.target.closest('[data-even-who]');
@@ -462,6 +475,9 @@ function openSettings() {
     render(el, close) {
       el.innerHTML = `
         <h2>Splitter settings</h2>
+        <h3>My payment details</h3>
+        <p>Filled in as "Pay to" on new splits. Stored encrypted like everything else.</p>
+        <textarea class="input" data-payto rows="2" maxlength="100" placeholder="e.g. BCA 1234567890 a.n. Rose · GoPay 0812…">${esc(M.savedPayTo())}</textarea>
         <h3>Currency</h3>
         <select class="input j-currency" data-currency>${M.CURRENCIES.map(c => `<option ${c === M.currency() ? 'selected' : ''}>${c}</option>`).join('')}</select>
         <h3>Backup</h3><button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
@@ -471,6 +487,10 @@ function openSettings() {
         toast('Currency saved');
       });
       el.querySelector('[data-backup]').addEventListener('click', () => openBackupDialog());
+      el.querySelector('[data-payto]').addEventListener('change', async e => {
+        await save('config', { ...(M.clone(M.get('config')) || {}), payTo: e.target.value.trim() });
+        toast('Payment details saved');
+      });
       el.querySelector('[data-close]').addEventListener('click', () => close());
     },
   });
@@ -492,6 +512,11 @@ main.addEventListener('click', async e => {
     case 'share': return busy(b, 'Drawing…', () => openShareDialog(tid));
     case 'copy': return copyText(summaryText(getTrip(tid)));
     case 'log-share': return openLogShareDialog(tid);
+    case 'use-saved': await updateTrip(tid, x => { x.payTo = M.savedPayTo(); }); return render();
+    case 'save-payto':
+      await save('config', { ...(M.clone(M.get('config')) || {}), payTo: (getTrip(tid).payTo || '').trim() });
+      toast('Saved. New splits will use it.');
+      return render();
     case 'delete-trip':
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to delete this split'; return; }
       await store.remove(tripKey(tid)); location.hash = '#/'; toast('Split deleted');

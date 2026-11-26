@@ -72,3 +72,9 @@
 .sp-preview-shares { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px !important; font-size: .88rem; }
 .sp-preview-shares b { font-weight: 700; }
 .sp-shot { display: block; width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg); margin: 8px 0; }
+
+.sp-delivery { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 0 10px; align-items: end; }
+.sp-delivery .segmented { margin-top: 0; }
+@media (max-width: 420px) { .sp-delivery { grid-template-columns: minmax(0, 1fr); } }
+.sp-usesaved { display: block; margin-top: 6px; font-size: .86rem; overflow-wrap: anywhere; text-align: left; }
+.segmented.s-splitmode { grid-template-columns: repeat(2, 1fr); }

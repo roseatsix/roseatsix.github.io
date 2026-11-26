@@ -9,12 +9,13 @@
          mode: "even" | "items",
          total, sharedBy: [pid],                     // even
          items: { <iid>: { name, price, qty, sharedBy: [pid], order } },
-         service, tax, discount                      // items: % / % / amount
+         service, tax, discount,                     // items: % / % / amount
+         delivery, deliveryBy: "price" | "items"     // items: fee + how it's shared
        } },
        paid: { "<from>><to>": true },                // settle-up transfers done
        loggedShare: "YYYY-MM-DD"                     // my share sent to journal
      }
-     config { currency }
+     config { currency, payTo }
    ========================================================== */
 
 import { pad, ymd, parseDate, addDays, today, isDate, fmt } from '../journal/model.js';
@@ -28,6 +29,7 @@ export const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
 export const CURRENCIES = ['IDR', 'USD', 'EUR', 'SGD', 'MYR', 'AUD', 'JPY', 'GBP'];
 
 export const currency = () => (get('config') || {}).currency || 'IDR';
+export const savedPayTo = () => ((get('config') || {}).payTo || '').trim();
 const decimals = () => (['IDR', 'JPY'].includes(currency()) ? 0 : 2);
 export const round = n => { const f = 10 ** decimals(); return Math.round((n + Number.EPSILON) * f) / f; };
 
@@ -74,25 +76,43 @@ export function receiptCalc(t, r) {
   const ids = Object.keys(t.people || {});
   const who = list => { const l = (list || []).filter(id => ids.includes(id)); return l.length ? l : ids; };
   const shares = {};
-  let subtotal = 0, service = 0, tax = 0, discount = 0, total = 0;
+  let subtotal = 0, service = 0, tax = 0, discount = 0, delivery = 0, total = 0;
 
   if ((r.mode || 'even') === 'even') {
     total = subtotal = Number(r.total) || 0;
     const ppl = who(r.sharedBy);
     for (const id of ppl) shares[id] = total / ppl.length;
   } else {
+    const units = {};                                     // items each person had
     for (const it of itemsOf(r)) {
-      const amount = (Number(it.price) || 0) * (Number(it.qty) || 1);
+      const qty = Number(it.qty) || 1;
+      const amount = (Number(it.price) || 0) * qty;
       subtotal += amount;
       const ppl = who(it.sharedBy);
-      for (const id of ppl) shares[id] = (shares[id] || 0) + amount / ppl.length;
+      for (const id of ppl) {
+        shares[id] = (shares[id] || 0) + amount / ppl.length;
+        if (amount > 0) units[id] = (units[id] || 0) + qty / ppl.length;
+      }
     }
     service = subtotal * (Number(r.service) || 0) / 100;
     tax = (subtotal + service) * (Number(r.tax) || 0) / 100;
-    discount = Math.min(Number(r.discount) || 0, subtotal + service + tax);
-    total = subtotal + service + tax - discount;
-    const factor = subtotal ? total / subtotal : 0;
-    for (const id of Object.keys(shares)) shares[id] *= factor;
+    const factor = subtotal ? (subtotal + service + tax) / subtotal : 0;
+    for (const id of Object.keys(shares)) shares[id] *= factor;  // items + service + tax
+
+    // Delivery: not taxed; by price (like the items) or by number of items.
+    delivery = Math.max(0, Number(r.delivery) || 0);
+    if (delivery && subtotal) {
+      const base = r.deliveryBy === 'items' ? units : shares;
+      const sum = Object.values(base).reduce((a, b) => a + b, 0);
+      for (const id of Object.keys(shares)) shares[id] += sum ? delivery * (base[id] || 0) / sum : 0;
+    }
+
+    // Discount comes off everyone in proportion to what they owe.
+    const gross = subtotal + service + tax + delivery;
+    discount = Math.min(Number(r.discount) || 0, gross);
+    total = gross - discount;
+    const keep = gross ? total / gross : 0;
+    for (const id of Object.keys(shares)) shares[id] *= keep;
   }
 
   // Round each share; put any leftover from rounding on the payer.
@@ -104,7 +124,7 @@ export function receiptCalc(t, r) {
     const target = shares[r.paidBy] != null ? r.paidBy : Object.keys(shares)[0];
     if (target) shares[target] = round(shares[target] + diff);
   }
-  return { subtotal: round(subtotal), service: round(service), tax: round(tax), discount: round(discount), total, shares };
+  return { subtotal: round(subtotal), service: round(service), tax: round(tax), delivery: round(delivery), discount: round(discount), total, shares };
 }
 
 /** Whole split: per-person totals, balances and the fewest transfers to settle. */
