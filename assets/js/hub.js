@@ -20,10 +20,10 @@ const TOOLS = [
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
     href: 'tools/inventory/', icon: 'home', status: 'ready' },
 
-  { group: 'money', name: 'Bill splitter', desc: 'Split costs with friends, settle up fairly.',
-    href: 'tools/split/', icon: 'receipt', status: 'soon' },
+  { group: 'money', name: 'Bill splitter', desc: 'Split many receipts with friends, then settle up once.',
+    href: 'tools/split/', icon: 'receipt', status: 'ready' },
   { group: 'money', name: 'Subscriptions', desc: 'Recurring payments and renewal dates.',
-    href: 'tools/subscriptions/', icon: 'repeat', status: 'soon' },
+    href: 'tools/subscriptions/', icon: 'repeat', status: 'ready' },
 
   { group: 'documents', name: 'Document toolkit', desc: 'Convert, compress, merge and extract files, plus OCR for scans.',
     href: 'tools/documents/', icon: 'toolkit', status: 'soon' },

@@ -14,11 +14,13 @@ import * as D from './dialogs.js';
 import { onHolidaysUpdate } from './holidays.js';
 import { applyFieldClick, collectFields } from './fields.js';
 import * as IM from '../inventory/model.js';
+import * as SM from '../subscriptions/model.js';
 
 const main = document.getElementById('journal');
 const tabs = document.querySelector('.j-tabs');
 const store = openStore('journal');
 const inventory = openStore('inventory');
+const subscriptions = openStore('subscriptions');
 D.useStore(store);
 
 const ui = {
@@ -193,6 +195,20 @@ main.addEventListener('click', async e => {
       toast(`${item.name} replaced`);
       return;
     }
+    case 'sub-log': {
+      const sub = SM.get('sub:' + id);
+      if (!sub) return;
+      const date = ui.route.date;
+      const spend = M.activeList(M.config().logCats).find(c => c.spend);
+      const amount = SM.myCost(sub, date);
+      try {
+        await store.put('log:' + M.newId(), { date, time: date === M.today() ? M.nowTime() : '12:00', cat: spend ? spend.id : 'spending',
+          text: sub.name, amount, spendCat: 'bills', createdAt: Date.now() });
+        await subscriptions.put('sub:' + id, { ...SM.clone(sub), logged: { ...(sub.logged || {}), [date]: true } });
+        toast(`Logged ${sub.name}`);
+      } catch (err) { fail(err); }
+      return;
+    }
     case 'copy-budget': {
       const prev = M.get('budget:' + M.addMonths(ui.route.month, -1));
       if (prev) await store.put('budget:' + ui.route.month, M.clone(prev)).catch(fail);
@@ -307,6 +323,12 @@ S.onChange(st => {
     M.setItems([]);
     render();
   }
+});
+
+// Subscription renewals show on Today and Week.
+subscriptions.subscribe(list => {
+  SM.setItems(list);
+  if (ui.loaded && !isTyping()) render(); else ui.stale = true;
 });
 
 // Replacements from the home inventory show on Today and Week.

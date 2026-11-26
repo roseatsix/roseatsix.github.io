@@ -1,0 +1,45 @@
+/* Subscriptions (builds on journal + inventory shared styles) */
+
+.t-bar { justify-content: flex-end; }
+.t-title { flex: 1; margin: 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.5rem, 5vw, 2rem); }
+
+.s-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.s-list, .s-up { list-style: none; margin: 0; padding: 0; }
+.s-list > li + li { border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent); }
+.s-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 4px;
+  border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.s-row:hover { background: color-mix(in oklab, var(--bg) 60%, transparent); }
+.s-row.is-paused, .s-row.is-cancelled { opacity: .7; }
+.s-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.s-name { font-weight: 700; overflow-wrap: break-word; }
+.s-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: .82rem; color: var(--text-muted); }
+.s-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.s-meta svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.s-status { font-weight: 700; color: var(--text); }
+.s-change { color: var(--sun-deep); font-weight: 700; }
+.s-right { display: grid; justify-items: end; gap: 1px; flex: none; text-align: right; }
+.s-price { font-weight: 800; font-variant-numeric: tabular-nums; }
+.s-of { font-size: .76rem; color: var(--text-muted); }
+.s-next { font-size: .78rem; font-weight: 700; color: var(--text-muted); }
+.s-next.is-soon, .s-when.is-soon { color: var(--sun-deep); }
+
+.s-up li + li { border-top: 1px dashed color-mix(in oklab, var(--border) 80%, transparent); }
+.s-up button {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 2px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.s-when { font-size: .84rem; font-weight: 700; color: var(--text-muted); }
+.s-amt { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.s-old > summary { list-style: none; cursor: pointer; margin-bottom: 0; }
+.s-old > summary::-webkit-details-marker { display: none; }
+.s-old[open] > summary { margin-bottom: 8px; }
+
+.s-cycle { margin: 4px 0 6px; }
+.s-splitmode, .s-status-seg { margin-top: 10px; }
+.segmented.s-splitmode { grid-template-columns: repeat(2, 1fr); }
+.s-history { list-style: none; margin: 0; padding: 0; }
+.s-history li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent); font-size: .92rem; }
