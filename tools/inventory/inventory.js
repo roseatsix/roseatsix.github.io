@@ -17,6 +17,12 @@ const ui = { loaded: false, view: 'items', q: '', room: '', spot: '', cat: '', s
 const VIEWS = ['items', 'rooms', 'due', 'declutter', 'wishlist'];
 
 function onRoute() {
+  const [, kind, id] = (location.hash || '').split('/');
+  if (kind === 'item' && M.get('item:' + id)) {
+    const st = M.get('item:' + id).status;
+    history.replaceState(null, '', st === 'wish' ? '#/wishlist' : st === 'gone' ? '#/declutter' : '#/items');
+    setTimeout(() => D.openItemDialog(id), 0);
+  }
   let v = (location.hash || '').split('/')[1];
   if (v === 'replace') v = 'due';   // old links
   ui.view = VIEWS.includes(v) ? v : 'items';

@@ -23,6 +23,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Nunito+Sans:opsz,wght@6..12,400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
 </head>
 <body>
   <!-- Reusable flower shapes -->
@@ -94,6 +95,15 @@
           <use href="#blossom" class="b b4" x="49.8" y="107.4" width="13" height="13"/>
         </svg>
       </section>
+
+      <div class="hub-search" id="hub-search" hidden>
+        <label class="searchbox hub-searchbox">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input class="inline-input" type="search" placeholder="Search everything" aria-label="Search all your tools" autocomplete="off" enterkeyhint="search">
+          <button class="sr-clear" type="button" data-clear aria-label="Clear search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+        </label>
+        <div class="sr-results" data-results aria-live="polite" hidden></div>
+      </div>
 
       <section id="today-panel" class="today" aria-labelledby="today-h" hidden></section>
 

@@ -370,7 +370,19 @@ main.addEventListener('toggle', e => { if (e.target.classList?.contains('s-old')
 document.querySelector('[data-act=add]')?.addEventListener('click', () => (ui.loaded ? openSubDialog(null) : toast('Unlock first')));
 document.querySelector('[data-act=settings]')?.addEventListener('click', () => (ui.loaded ? openSettings() : toast('Unlock first')));
 
-store.subscribe(list => { M.setItems(list); ui.loaded = true; render(); });
+function openLinked() {
+  const [, kind, id] = (location.hash || '').split('/');
+  if (kind === 'sub' && M.get('sub:' + id)) { history.replaceState(null, '', '#/'); openSubDialog(id); }
+}
+
+store.subscribe(list => {
+  M.setItems(list);
+  const first = !ui.loaded;
+  ui.loaded = true;
+  render();
+  if (first) openLinked();
+});
+addEventListener('hashchange', () => { if (ui.loaded) openLinked(); });
 S.onChange(st => { if (st.status !== 'unlocked') { ui.loaded = false; M.setItems([]); render(); } });
 mountHeader({ autoUnlock: true });
 render();
