@@ -847,3 +847,5 @@ a.card:hover {
 }
 .b-summary p { margin: 0 0 4px; color: var(--text); }
 .b-summary .dialog-actions { margin-top: 12px; }
+
+.tag.card-badge { color: var(--danger); background: color-mix(in oklab, var(--danger) 10%, var(--surface)); border-color: transparent; }

@@ -17,7 +17,7 @@ import * as C from './crypto.js';
 import { same } from './merge.js';
 
 /** Every synced store on the site. Add new tools here. */
-export const KNOWN_STORES = ['settings', 'journal'];
+export const KNOWN_STORES = ['settings', 'journal', 'inventory'];
 
 const APP = 'rose-at-six';
 

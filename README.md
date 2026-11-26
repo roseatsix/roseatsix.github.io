@@ -16,4 +16,5 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `assets/js/ui/`: shared header, account menu, dialogs, appearance panel
 - `firestore.rules`: database rules (owner-only, append-only history)
 - `tools/journal/`: tasks, interstitial log, week/month/year calendars with holidays and events, budget, activity, habits
+- `tools/inventory/`: home inventory (items, rooms, replacements, declutter suggestions, wishlist)
 - `tools/<name>/`: each further tool gets its own folder

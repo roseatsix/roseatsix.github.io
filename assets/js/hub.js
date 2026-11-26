@@ -18,7 +18,7 @@ const TOOLS = [
   { group: 'everyday', name: 'Journal', desc: 'Tasks, interstitial log, calendars, budget and habits.',
     href: 'tools/journal/', icon: 'journal', status: 'ready' },
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
-    href: 'tools/inventory/', icon: 'home', status: 'soon' },
+    href: 'tools/inventory/', icon: 'home', status: 'ready' },
 
   { group: 'money', name: 'Bill splitter', desc: 'Split costs with friends, settle up fairly.',
     href: 'tools/split/', icon: 'receipt', status: 'soon' },
@@ -114,9 +114,30 @@ renderTools();
 mountThemeControls();
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
-  .then(m => m.mountHeader())
+  .then(m => { m.mountHeader(); showInventoryBadge(); })
   .catch(err => {
     console.error('Sign-in failed to load', err);
     const slot = document.getElementById('account-slot');
     if (slot) slot.innerHTML = '<span class="chip" title="Sign-in failed to load. See the browser console.">Sign-in unavailable</span>';
   });
+
+/* Show replacements that are due on the inventory card (once unlocked). */
+async function showInventoryBadge() {
+  try {
+    const [{ openStore }, IM] = await Promise.all([import('./core/store.js'), import('../../tools/inventory/model.js')]);
+    const card = document.querySelector('a.card[href="tools/inventory/"]');
+    if (!card) return;
+    openStore('inventory').subscribe(list => {
+      IM.setItems(list);
+      const due = IM.replacementsDue(IM.today()).length;
+      let badge = card.querySelector('.card-badge');
+      if (!due) { badge?.remove(); return; }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'tag card-badge';
+        card.querySelector('.card-top').appendChild(badge);
+      }
+      badge.textContent = `${due} to replace`;
+    });
+  } catch (e) { console.warn('Inventory badge unavailable', e); }
+}

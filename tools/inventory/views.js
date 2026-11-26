@@ -1,0 +1,300 @@
+/* Home inventory views. Each returns HTML; inventory.js wires events. */
+
+import { esc } from '../../assets/js/ui/dom.js';
+import * as M from './model.js';
+
+export const ICONS = {
+  plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  repeat: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9.5a3 3 0 0 1 3-3h12"/><path d="m16 3.5 3 3-3 3"/><path d="M20 13v1.5a3 3 0 0 1-3 3H5"/><path d="m8 20.5-3-3 3-3"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12M11 11V5a1.5 1.5 0 0 1 3 0v6M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5A5.5 5.5 0 0 1 6 17.5l-1.6-3.2a1.4 1.4 0 0 1 2.4-1.4L8 14.5"/></svg>',
+  undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+};
+
+const qtyText = i => (Number(i.qty) > 1 ? `<span class="i-qty">×${Number(i.qty)}</span>` : '');
+const where = i => {
+  const r = i.room ? M.room(i.room).name : '';
+  return [r, i.spot].filter(Boolean).join(' › ');
+};
+
+/* ---------- gate ---------- */
+
+export function renderGate(st) {
+  const copy = {
+    signedOut: ['Your inventory is private', 'Sign in with Google to start. Everything is encrypted on your device before it syncs.', 'Sign in'],
+    unconfigured: ["Sync isn't set up", 'The inventory needs sign-in to be connected first.', null],
+    needsSetup: ['Set up your vault', 'Choose a passphrase to encrypt your data.', 'Set up vault'],
+    locked: ['Unlock your inventory', 'Enter your passphrase to open it on this device.', 'Unlock'],
+    denied: ["Can't open your data", 'The database refused access for this account.', null],
+    error: ['Something went wrong', st.error || '', 'Try again'],
+  }[st.status];
+  if (!copy) return '<div class="j-gate"><span class="spinner" aria-hidden="true"></span><p>Opening your inventory…</p></div>';
+  const [title, text, action] = copy;
+  return `
+    <div class="j-gate">
+      <svg class="j-gate-blossom" aria-hidden="true"><use href="#blossom"/></svg>
+      <h1>${esc(title)}</h1><p>${esc(text)}</p>
+      ${action ? `<button class="btn btn-primary" type="button" data-act="gate">${esc(action)}</button>` : ''}
+    </div>`;
+}
+
+/* ---------- shared row ---------- */
+
+export function itemRow(i, { showWhere = true, showDue = true } = {}) {
+  const r = M.replaceInfo(i);
+  const chips = [];
+  if (showDue && r && r.state !== 'ok') chips.push(`<span class="i-chip is-${r.state}">${ICONS.repeat}${esc(M.dueText(r))}</span>`);
+  if (i.condition === 'broken') chips.push('<span class="i-chip is-broken">Broken</span>');
+  else if (i.condition === 'worn') chips.push('<span class="i-chip">Worn</span>');
+  if (i.sentimental) chips.push(`<span class="i-chip is-heart" title="Sentimental">${ICONS.heart}</span>`);
+  const w = where(i);
+  return `
+    <li>
+      <button type="button" class="i-row" data-act="open-item" data-id="${i.id}">
+        <span class="i-row-main">
+          <span class="i-name">${esc(i.name || 'Untitled')} ${qtyText(i)}</span>
+          <span class="i-meta">
+            ${showWhere && w ? `<span>${ICONS.pin}${esc(w)}</span>` : ''}
+            ${M.isDate(i.acquired) ? `<span>here ${esc(M.duration(i.acquired))}</span>` : ''}
+          </span>
+        </span>
+        ${chips.length ? `<span class="i-chips">${chips.join('')}</span>` : ''}
+      </button>
+    </li>`;
+}
+
+function filterSelect(name, label, list, value) {
+  return `<select class="input i-filter" data-filter="${name}" aria-label="${label}">
+    <option value="">${label}</option>
+    ${list.map(c => `<option value="${c.id}" ${c.id === value ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+  </select>`;
+}
+
+const SORTS = { name: 'Name', newest: 'Newest', oldest: 'Longest in the house', price: 'Price', used: 'Least recently used' };
+
+function sortItems(list, how) {
+  const by = {
+    name: (a, b) => (a.name || '').localeCompare(b.name || ''),
+    newest: (a, b) => (b.acquired || '').localeCompare(a.acquired || ''),
+    oldest: (a, b) => (a.acquired || '9999').localeCompare(b.acquired || '9999'),
+    price: (a, b) => (Number(b.price) || 0) * (Number(b.qty) || 1) - (Number(a.price) || 0) * (Number(a.qty) || 1),
+    used: (a, b) => (a.lastUsed || '0000').localeCompare(b.lastUsed || '0000'),
+  }[how] || ((a, b) => (a.name || '').localeCompare(b.name || ''));
+  return [...list].sort(by);
+}
+
+export function matches(i, q) {
+  if (!q) return true;
+  const hay = [i.name, i.notes, i.spot, M.category(i.category).name, i.room ? M.room(i.room).name : ''].join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
+/* ---------- Items ---------- */
+
+export function renderItems(ui) {
+  const cfg = M.config();
+  const all = M.owned();
+  let list = all.filter(i => matches(i, ui.q) && (!ui.room || i.room === ui.room) && (!ui.cat || i.category === ui.cat));
+  list = sortItems(list, ui.sort);
+  const value = all.reduce((n, i) => n + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
+  const due = M.replacementsDue(M.today()).length;
+  const toReview = all.filter(i => M.verdict(i, all).kind !== 'keep').length;
+
+  const groups = new Map();
+  for (const i of list) {
+    const c = M.category(i.category);
+    if (!groups.has(c.id)) groups.set(c.id, { c, items: [] });
+    groups.get(c.id).items.push(i);
+  }
+  const ordered = [...groups.values()].sort((a, b) => (a.c.order ?? 99) - (b.c.order ?? 99));
+
+  return `
+    <section class="j-view i-items">
+      <div class="j-stats">
+        <div class="j-stat"><span>${all.reduce((n, i) => n + (Number(i.qty) || 1), 0)}</span>things</div>
+        <a class="j-stat is-link" href="#/replace"><span>${due}</span>to replace</a>
+        <a class="j-stat is-link" href="#/declutter"><span>${toReview}</span>to review</a>
+        <div class="j-stat"><span class="j-full">${esc(M.money(value))}</span><span class="j-compact">${esc(M.money(value, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated value</div>
+      </div>
+
+      <div class="i-toolbar">
+        <label class="j-searchbox">
+          ${ICONS.search}
+          <input type="search" class="j-inline" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Search name, place, notes…" aria-label="Search items" autocomplete="off">
+        </label>
+        <div class="i-filters">
+          ${filterSelect('room', 'All rooms', M.activeList(cfg.rooms), ui.room)}
+          ${filterSelect('cat', 'All categories', M.activeList(cfg.categories), ui.cat)}
+          <select class="input i-filter" data-filter="sort" aria-label="Sort">
+            ${Object.entries(SORTS).map(([k, v]) => `<option value="${k}" ${k === ui.sort ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      ${!all.length ? `
+        <div class="j-card i-empty">
+          <h2>Nothing here yet</h2>
+          <p>Start with the things you lose most often, or the ones that need replacing, like scissors, toothbrushes or water filters.</p>
+          <button class="btn btn-primary" type="button" data-act="new-item">${ICONS.plus}Add your first item</button>
+        </div>`
+      : !list.length ? '<p class="j-empty">Nothing matches. Try another search or filter.</p>'
+      : ordered.map(g => `
+        <section class="j-card i-group">
+          <div class="j-card-head"><h2>${esc(g.c.name)}</h2><span class="j-count">${g.items.length}</span></div>
+          <ul class="i-list">${g.items.map(i => itemRow(i)).join('')}</ul>
+        </section>`).join('')}
+    </section>`;
+}
+
+/* ---------- Rooms ---------- */
+
+export function renderRooms(ui) {
+  const cfg = M.config();
+  const all = M.owned().filter(i => matches(i, ui.q));
+  const rooms = M.activeList(cfg.rooms);
+  const unplaced = all.filter(i => !i.room || !cfg.rooms[i.room]);
+  const cards = rooms.map(r => {
+    const items = all.filter(i => i.room === r.id);
+    const spots = new Map();
+    for (const i of items) {
+      const s = (i.spot || '').trim() || 'No spot set';
+      if (!spots.has(s)) spots.set(s, []);
+      spots.get(s).push(i);
+    }
+    const spotList = [...spots.entries()].sort((a, b) => a[0] === 'No spot set' ? 1 : b[0] === 'No spot set' ? -1 : a[0].localeCompare(b[0]));
+    return `
+      <section class="j-card i-room">
+        <div class="j-card-head"><h2>${esc(r.name)}</h2><span class="j-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</span></div>
+        ${spotList.length ? spotList.map(([s, list]) => `
+          <div class="i-spot">
+            <p class="i-spot-name">${ICONS.pin}${esc(s)}</p>
+            <ul class="i-list">${sortItems(list, 'name').map(i => itemRow(i, { showWhere: false })).join('')}</ul>
+          </div>`).join('') : '<p class="j-empty">Nothing here yet.</p>'}
+      </section>`;
+  });
+  if (unplaced.length) {
+    cards.push(`<section class="j-card i-room"><div class="j-card-head"><h2>No room set</h2><span class="j-count">${unplaced.length}</span></div>
+      <ul class="i-list">${unplaced.map(i => itemRow(i, { showWhere: false })).join('')}</ul></section>`);
+  }
+  return `
+    <section class="j-view">
+      <label class="j-searchbox">
+        ${ICONS.search}
+        <input type="search" class="j-inline" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Where is my…" aria-label="Search items" autocomplete="off">
+      </label>
+      <div class="i-rooms">${cards.join('')}</div>
+    </section>`;
+}
+
+/* ---------- Replace ---------- */
+
+export function renderReplace() {
+  const scheduled = M.owned().map(i => ({ i, r: M.replaceInfo(i) })).filter(x => x.r).sort((a, b) => a.r.next.localeCompare(b.r.next));
+  const groups = {
+    overdue: scheduled.filter(x => x.r.state === 'overdue'),
+    now: scheduled.filter(x => x.r.state === 'today' || x.r.state === 'soon'),
+    later: scheduled.filter(x => x.r.state === 'ok'),
+  };
+  const row = ({ i, r }) => `
+    <li class="i-rep is-${r.state}">
+      <button type="button" class="i-rep-main" data-act="open-item" data-id="${i.id}">
+        <span class="i-name">${esc(i.name)} ${qtyText(i)}</span>
+        <span class="i-meta"><span>${ICONS.repeat}${esc(M.periodText(i.replace))}</span><span>${esc(M.dueText(r))} · ${esc(M.fmt.short(r.next))}</span>${where(i) ? `<span>${ICONS.pin}${esc(where(i))}</span>` : ''}</span>
+        <span class="i-progress"><span style="width:${r.pct}%"></span></span>
+      </button>
+      <button class="btn btn-ghost btn-sm" type="button" data-act="replaced" data-id="${i.id}">${ICONS.check}Replaced</button>
+    </li>`;
+  const section = (title, list, empty, cls = '') => `
+    <section class="j-card ${cls}">
+      <div class="j-card-head"><h2>${title}</h2><span class="j-count">${list.length}</span></div>
+      ${list.length ? `<ul class="i-reps">${list.map(row).join('')}</ul>` : `<p class="j-empty">${empty}</p>`}
+    </section>`;
+  return `
+    <section class="j-view">
+      <div class="j-head-title i-title"><p class="eyebrow">Replacements</p><h1>What needs renewing</h1></div>
+      ${scheduled.length ? '' : `<div class="j-card i-empty"><p>Nothing is on a schedule yet. When adding or editing an item, turn on <strong>Replace periodically</strong> and choose how often, e.g. scissors every 2 years, a toothbrush every 3 months.</p></div>`}
+      ${scheduled.length ? section('Overdue', groups.overdue, 'Nothing overdue.', 'tone-flower') : ''}
+      ${scheduled.length ? section('Coming up', groups.now, 'Nothing due in the next few weeks.', 'tone-sun') : ''}
+      ${scheduled.length ? section('Later', groups.later, 'Nothing else scheduled.', 'tone-leaf') : ''}
+    </section>`;
+}
+
+/* ---------- Declutter ---------- */
+
+export function renderDeclutter(ui) {
+  const all = M.owned();
+  const rated = all.map(i => ({ i, v: M.verdict(i, all) }));
+  const letgo = rated.filter(x => x.v.kind === 'letgo').sort((a, b) => b.v.score - a.v.score);
+  const review = rated.filter(x => x.v.kind === 'review').sort((a, b) => b.v.score - a.v.score);
+  const keep = rated.filter(x => x.v.kind === 'keep');
+  const goneList = M.gone();
+
+  const card = ({ i, v }) => `
+    <li class="i-dc is-${v.kind}">
+      <button type="button" class="i-dc-main" data-act="open-item" data-id="${i.id}">
+        <span class="i-name">${esc(i.name)} ${qtyText(i)}</span>
+        ${where(i) ? `<span class="i-meta"><span>${ICONS.pin}${esc(where(i))}</span></span>` : ''}
+        <span class="i-reasons">${v.reasons.map(r => `<span>${esc(r)}</span>`).join('')}</span>
+      </button>
+      <div class="i-dc-actions">
+        <button class="btn btn-ghost btn-sm" type="button" data-act="used" data-id="${i.id}">${ICONS.hand}Used it</button>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="keep" data-id="${i.id}">Keep</button>
+        <button class="btn btn-primary btn-sm" type="button" data-act="let-go" data-id="${i.id}">Let go</button>
+      </div>
+    </li>`;
+
+  return `
+    <section class="j-view">
+      <div class="j-head-title i-title"><p class="eyebrow">Declutter</p><h1>Keep or let go?</h1></div>
+      <p class="i-explain">Suggestions come from condition, when you last used something, how long it's been here and duplicates. Sentimental items are never suggested. <strong>Keep</strong> hides an item from here for 6 months.</p>
+      <div class="j-stats">
+        <div class="j-stat"><span>${letgo.length}</span>to let go</div>
+        <div class="j-stat"><span>${review.length}</span>to review</div>
+        <div class="j-stat"><span>${keep.length}</span>keeping</div>
+      </div>
+      <section class="j-card tone-flower"><div class="j-card-head"><h2>Consider letting go</h2><span class="j-count">${letgo.length}</span></div>
+        ${letgo.length ? `<ul class="i-dcs">${letgo.map(card).join('')}</ul>` : '<p class="j-empty">Nothing stands out. Nice.</p>'}</section>
+      <section class="j-card tone-sun"><div class="j-card-head"><h2>Worth a look</h2><span class="j-count">${review.length}</span></div>
+        ${review.length ? `<ul class="i-dcs">${review.map(card).join('')}</ul>` : '<p class="j-empty">Nothing to review.</p>'}</section>
+      <details class="j-card i-gone" ${ui.showGone ? 'open' : ''}>
+        <summary class="j-card-head"><h2>Already let go</h2><span class="j-count">${goneList.length}</span></summary>
+        ${goneList.length ? `<ul class="i-list">${goneList.map(i => `
+          <li class="i-gone-row">
+            <span class="i-row-main"><span class="i-name">${esc(i.name)}</span>
+              <span class="i-meta"><span>${esc(M.GONE_HOW[i.goneHow] || 'Gone')}${M.isDate(i.goneAt) ? ' · ' + esc(M.fmt.long(i.goneAt)) : ''}</span></span></span>
+            <button class="btn btn-ghost btn-sm" type="button" data-act="restore" data-id="${i.id}">${ICONS.undo}Undo</button>
+          </li>`).join('')}</ul>` : '<p class="j-empty">Nothing yet.</p>'}
+      </details>
+    </section>`;
+}
+
+/* ---------- Wishlist ---------- */
+
+export function renderWishlist() {
+  const list = M.wishlist().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const total = list.reduce((n, i) => n + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
+  return `
+    <section class="j-view">
+      <div class="j-head-title i-title"><p class="eyebrow">Wishlist</p><h1>Things to get</h1></div>
+      <div class="j-head-extra"><button class="btn btn-primary btn-sm" type="button" data-act="new-wish">${ICONS.plus}Add to wishlist</button></div>
+      ${list.length ? `
+        <div class="j-stats"><div class="j-stat"><span>${list.length}</span>items</div><div class="j-stat"><span class="j-full">${esc(M.money(total))}</span><span class="j-compact">${esc(M.money(total, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated total</div></div>
+        <section class="j-card"><ul class="i-reps">${list.map(i => `
+          <li class="i-rep">
+            <button type="button" class="i-rep-main" data-act="open-item" data-id="${i.id}">
+              <span class="i-name">${esc(i.name)} ${qtyText(i)}</span>
+              <span class="i-meta">
+                ${Number(i.price) ? `<span>${esc(M.money(Number(i.price) * (Number(i.qty) || 1)))}</span>` : ''}
+                ${where(i) ? `<span>${ICONS.pin}${esc(where(i))}</span>` : ''}
+                ${i.link ? `<span>${ICONS.link}link</span>` : ''}
+              </span>
+            </button>
+            <button class="btn btn-ghost btn-sm" type="button" data-act="bought" data-id="${i.id}">${ICONS.check}Bought</button>
+          </li>`).join('')}</ul></section>`
+      : '<div class="j-card i-empty"><p>Nothing on your wishlist. Add things you plan to buy, with an estimated price and where they\'ll go. When you get one, tap <strong>Bought</strong> and it moves into your inventory.</p></div>'}
+    </section>`;
+}
