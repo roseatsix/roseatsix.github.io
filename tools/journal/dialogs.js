@@ -37,12 +37,14 @@ export function openTaskDialog(id, defaults = {}) {
     render(el, close) {
       el.innerHTML = `
         <form class="j-taskform" novalidate>
-          <label class="j-done-toggle">
-            <input type="checkbox" name="done" ${task.done ? 'checked' : ''}>
-            <span class="j-box">${ICONS.check}</span>
-            <span class="visually-hidden">Done</span>
-          </label>
-          <textarea class="j-title-input" name="title" rows="1" placeholder="Task" aria-label="Task title" autofocus>${esc(task.title)}</textarea>
+          <div class="j-task-titlerow">
+            <label class="j-done-toggle">
+              <input type="checkbox" name="done" ${task.done ? 'checked' : ''}>
+              <span class="j-box">${ICONS.check}</span>
+              <span class="visually-hidden">Done</span>
+            </label>
+            <textarea class="j-title-input" name="title" rows="1" placeholder="Task" aria-label="Task title">${esc(task.title)}</textarea>
+          </div>
 
           <div class="j-task-fields">
             <label class="field"><span class="field-label">Due date</span>

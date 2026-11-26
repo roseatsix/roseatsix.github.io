@@ -48,8 +48,12 @@ export function openDialog({ label, render, dismissible = true }) {
     }
 
     dlg.showModal();
+    // On touch screens, don't focus a text field (it would pop up the
+    // keyboard); focus the dialog itself so screen readers still land in it.
+    const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
     const first = inner.querySelector('[autofocus]');
-    if (first) first.focus();
+    if (touch) { dlg.tabIndex = -1; dlg.focus(); }
+    else if (first) first.focus();
   });
 }
 
