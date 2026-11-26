@@ -15,8 +15,8 @@ const GROUPS = [
 ];
 
 const TOOLS = [
-  { group: 'everyday', name: 'Journal', desc: 'Daily planner, notes and reflections.',
-    href: 'tools/journal/', icon: 'journal', status: 'soon' },
+  { group: 'everyday', name: 'Journal', desc: 'Tasks, interstitial log, calendars, budget and habits.',
+    href: 'tools/journal/', icon: 'journal', status: 'ready' },
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
     href: 'tools/inventory/', icon: 'home', status: 'soon' },
 

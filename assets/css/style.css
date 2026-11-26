@@ -796,3 +796,20 @@ a.card:hover {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation-duration: 0s !important; }
 }
+
+/* ---------- Tool pages: breadcrumb ---------- */
+
+.crumbs { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.crumb-sep { color: var(--text-muted); opacity: .6; }
+.crumb {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 100;
+  font-size: 1.2rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .crumbs .brand-name { display: none; }
+}
+
+.btn-sm { min-height: 32px; padding: 4px 12px; font-size: .82rem; }
