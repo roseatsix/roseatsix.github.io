@@ -849,3 +849,15 @@ a.card:hover {
 .b-summary .dialog-actions { margin-top: 12px; }
 
 .tag.card-badge { color: var(--danger); background: color-mix(in oklab, var(--danger) 10%, var(--surface)); border-color: transparent; }
+
+/* iOS Safari gives date/time inputs a fixed minimum width that can
+   overflow narrow layouts; let them shrink like other fields. */
+input[type="date"], input[type="time"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value { text-align: left; }
+dialog.dialog { overflow-x: hidden; }
