@@ -1,0 +1,61 @@
+# Publishes the site to GitHub Pages from the `public` branch,
+# inserting the Firebase config from the repository variable
+# FIREBASE_CONFIG (Settings → Secrets and variables → Actions → Variables).
+name: Deploy site
+
+on:
+  push:
+    branches: [public]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Insert Firebase config
+        env:
+          FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
+        run: |
+          node - <<'JS'
+          const fs = require('fs');
+          const raw = (process.env.FIREBASE_CONFIG || '').trim()
+            .replace(/^(?:const|let|var)\s+firebaseConfig\s*=\s*/, '').replace(/;\s*$/, '');
+          if (!raw) { console.error('::error::The FIREBASE_CONFIG repository variable is empty or missing.'); process.exit(1); }
+          let config;
+          try { config = Function('"use strict"; return (' + raw + ');')(); } catch (e) {
+            console.error('::error::FIREBASE_CONFIG is not a valid config object: ' + e.message); process.exit(1);
+          }
+          for (const k of ['apiKey', 'authDomain', 'projectId', 'appId']) {
+            if (typeof config?.[k] !== 'string' || !config[k]) { console.error('::error::FIREBASE_CONFIG is missing ' + k); process.exit(1); }
+          }
+          const file = 'assets/js/config.js';
+          const src = fs.readFileSync(file, 'utf8');
+          const out = src.replace(/export const firebaseConfig = null;/, 'export const firebaseConfig = ' + JSON.stringify(config, null, 2) + ';');
+          if (out === src) { console.error('::error::Could not find the placeholder in ' + file); process.exit(1); }
+          fs.writeFileSync(file, out);
+          console.log('Inserted config for project ' + config.projectId);
+          JS
+
+      - name: Leave out repository-only files
+        run: rm -rf .git .github
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
