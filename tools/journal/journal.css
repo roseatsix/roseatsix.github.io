@@ -560,7 +560,7 @@ button.j-pill { cursor: pointer; }
 
 /* ---------- Dialogs ---------- */
 
-dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
+@media (min-width: 520px) { dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); } }
 
 .j-taskform { --accent: var(--flower); }
 .j-task-titlerow { display: flex; align-items: flex-start; gap: 8px; margin-right: 40px; }
@@ -701,3 +701,7 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
 
 .j-reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .j-erase-btn:not([disabled]) { background: var(--danger); color: #fff; }
+
+.j-pill.is-replace { --c: var(--sun-base); text-decoration: none; }
+.j-rep .j-task-main { cursor: default; }
+.j-rep .btn { flex: none; }

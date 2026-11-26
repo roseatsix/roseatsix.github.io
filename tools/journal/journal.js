@@ -13,10 +13,12 @@ import * as V from './views.js';
 import * as D from './dialogs.js';
 import { onHolidaysUpdate } from './holidays.js';
 import { applyFieldClick, collectFields } from './fields.js';
+import * as IM from '../inventory/model.js';
 
 const main = document.getElementById('journal');
 const tabs = document.querySelector('.j-tabs');
 const store = openStore('journal');
+const inventory = openStore('inventory');
 D.useStore(store);
 
 const ui = {
@@ -182,6 +184,15 @@ main.addEventListener('click', async e => {
       if (spend) { ui.logCat = spend.id; writePref('logCat', spend.id); }
       return;   // the link itself goes to today
     }
+    case 'inv-replaced': {
+      const item = IM.clone(IM.get('item:' + id));
+      if (!item) return;
+      item.lastReplaced = M.today();
+      if (item.condition === 'worn' || item.condition === 'broken') item.condition = 'good';
+      await inventory.put('item:' + id, item).catch(fail);
+      toast(`${item.name} replaced`);
+      return;
+    }
     case 'copy-budget': {
       const prev = M.get('budget:' + M.addMonths(ui.route.month, -1));
       if (prev) await store.put('budget:' + ui.route.month, M.clone(prev)).catch(fail);
@@ -296,6 +307,12 @@ S.onChange(st => {
     M.setItems([]);
     render();
   }
+});
+
+// Replacements from the home inventory show on Today and Week.
+inventory.subscribe(list => {
+  IM.setItems(list);
+  if (ui.loaded && !isTyping()) render(); else ui.stale = true;
 });
 
 onHolidaysUpdate(() => { if (!ui.loaded) return; if (!isTyping()) render(); else ui.stale = true; });

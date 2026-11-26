@@ -7,6 +7,7 @@ import { esc } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import { holidaysOn, holidaysFor } from './holidays.js';
 import { renderFieldInputs, renderFieldSummary, fieldsText } from './fields.js';
+import * as IM from '../inventory/model.js';
 
 export const ICONS = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
@@ -202,6 +203,8 @@ export function renderDay(date, ui) {
             ${addTaskForm(date, isToday ? 'Add a task for today' : 'Add a task for this day')}
           </section>
 
+          ${replaceCard(date, isToday)}
+
           <section class="j-card tone-leaf" aria-labelledby="h-habits">
             <div class="j-card-head"><h2 id="h-habits">Habits</h2>
               <button class="btn btn-text" type="button" data-act="edit-habits">${habits.length ? 'Edit' : 'Add habits'}</button></div>
@@ -216,6 +219,22 @@ export function renderDay(date, ui) {
           </section>` : ''}
         </div>
       </div>
+    </section>`;
+}
+
+/* Home inventory: things due for replacement */
+function replaceCard(date, isToday) {
+  const list = isToday ? IM.replacementsDue(date) : IM.replacementsOn(date);
+  if (!list.length) return '';
+  return `
+    <section class="j-card tone-sun" aria-labelledby="h-replace">
+      <div class="j-card-head"><h2 id="h-replace">To replace</h2><a class="btn btn-text" href="../inventory/#/replace">Inventory</a></div>
+      <ul class="j-list">${list.map(({ item, r }) => `
+        <li class="j-task j-rep">
+          <span class="j-task-main"><span class="j-task-title">${esc(item.name)}</span>
+            <span class="j-task-meta"><span class="${r.state === 'overdue' ? 'is-overdue' : ''}">${esc(IM.dueText(r))}</span></span></span>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="inv-replaced" data-id="${item.id}">Replaced</button>
+        </li>`).join('')}</ul>
     </section>`;
 }
 
@@ -250,7 +269,7 @@ export function renderWeek(date) {
     entries += logs.length;
     const daySpent = M.sum(logs.filter(e => M.isSpendCat(e.cat) && typeof e.amount === 'number'));
     spent += daySpent;
-    const markers = dayMarkers(d);
+    const markers = dayMarkers(d) + IM.replacementsOn(d).map(({ item }) => `<a class="j-pill is-replace" href="../inventory/#/replace" title="Replace ${esc(item.name)}">↻ ${esc(item.name)}</a>`).join('');
     days.push(`
       <section class="j-card j-weekday${d === t ? ' is-today' : ''}${d < t ? ' is-past' : ''}">
         <a class="j-weekday-head" href="#/day/${d}">
