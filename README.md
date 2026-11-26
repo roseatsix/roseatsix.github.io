@@ -15,4 +15,5 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `assets/js/core/`: encryption, sign-in/vault session, item-level sync store
 - `assets/js/ui/`: shared header, account menu, dialogs, appearance panel
 - `firestore.rules`: database rules (owner-only, append-only history)
-- `tools/<name>/`: each tool gets its own folder (coming soon)
+- `tools/journal/`: daily planner + journal (tasks, schedule, habits, notes, month view, search)
+- `tools/<name>/`: each further tool gets its own folder
