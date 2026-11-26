@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Journal · rose at six</title>
-  <meta name="description" content="Daily planner and journal.">
+  <meta name="description" content="Planner, interstitial journal, calendars and budget.">
   <meta name="theme-color" content="#F5EFE6" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1E1916" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
@@ -64,11 +64,22 @@
       </div>
     </header>
 
-    <nav class="j-tabs" aria-label="Journal views">
-      <a href="#/day" data-tab="day">Day</a>
-      <a href="#/month" data-tab="month">Month</a>
-      <a href="#/search" data-tab="search">Search</a>
-    </nav>
+    <div class="j-tabbar">
+      <nav class="j-tabs" aria-label="Journal views">
+        <a href="#/day" data-tab="day">Today</a>
+        <a href="#/week" data-tab="week">Week</a>
+        <a href="#/month" data-tab="month">Month</a>
+        <a href="#/year" data-tab="year">Year</a>
+        <a href="#/budget" data-tab="budget">Budget</a>
+        <a href="#/activity" data-tab="activity">Activity</a>
+        <a href="#/search" data-tab="search" aria-label="Search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        </a>
+      </nav>
+      <button class="icon-btn" type="button" data-act="settings" aria-label="Journal settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/></svg>
+      </button>
+    </div>
 
     <main id="journal" class="journal" aria-live="polite"></main>
 
