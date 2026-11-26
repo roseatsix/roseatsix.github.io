@@ -13,7 +13,7 @@ const tabs = document.querySelector('.j-tabs');
 const store = openStore('inventory');
 D.useStore(store);
 
-const ui = { loaded: false, view: 'items', q: '', room: '', cat: '', sort: 'name', showGone: false };
+const ui = { loaded: false, view: 'items', q: '', room: '', spot: '', cat: '', sort: 'name', showGone: false };
 const VIEWS = ['items', 'rooms', 'replace', 'declutter', 'wishlist'];
 
 function onRoute() {
@@ -72,7 +72,7 @@ main.addEventListener('input', e => {
 
 main.addEventListener('change', e => {
   const f = e.target.dataset.filter;
-  if (f) { ui[f] = e.target.value; render(); }
+  if (f) { ui[f] = e.target.value; if (f === 'room') ui.spot = ''; render(); }
 });
 
 main.addEventListener('toggle', e => {

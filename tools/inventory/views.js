@@ -18,7 +18,7 @@ export const ICONS = {
 const qtyText = i => (Number(i.qty) > 1 ? `<span class="i-qty">×${Number(i.qty)}</span>` : '');
 const where = i => {
   const r = i.room ? M.room(i.room).name : '';
-  return [r, i.spot].filter(Boolean).join(' › ');
+  return [r, M.spotName(i)].filter(Boolean).join(' › ');
 };
 
 /* ---------- gate ---------- */
@@ -59,12 +59,20 @@ export function itemRow(i, { showWhere = true, showDue = true } = {}) {
           <span class="i-name">${esc(i.name || 'Untitled')} ${qtyText(i)}</span>
           <span class="i-meta">
             ${showWhere && w ? `<span>${ICONS.pin}${esc(w)}</span>` : ''}
-            ${M.isDate(i.acquired) ? `<span>here ${esc(M.duration(i.acquired))}</span>` : ''}
+            ${M.isDate(i.acquired) ? `<span>${i.acquired >= M.today() ? 'new today' : `here ${esc(M.duration(i.acquired))}`}</span>` : ''}
           </span>
         </span>
         ${chips.length ? `<span class="i-chips">${chips.join('')}</span>` : ''}
       </button>
     </li>`;
+}
+
+/** Spot choices for the filter: predefined spots plus any typed ones in use. */
+function spotOptions(roomId, items) {
+  const opts = M.roomSpots(roomId).map(s => ({ id: s.id, name: s.name }));
+  const typed = new Set(items.filter(i => i.room === roomId && !i.spotId && i.spot).map(i => i.spot));
+  for (const t of typed) if (!opts.some(o => o.name === t)) opts.push({ id: 'text:' + t, name: t });
+  return opts;
 }
 
 function filterSelect(name, label, list, value) {
@@ -89,7 +97,7 @@ function sortItems(list, how) {
 
 export function matches(i, q) {
   if (!q) return true;
-  const hay = [i.name, i.notes, i.spot, M.category(i.category).name, i.room ? M.room(i.room).name : ''].join(' ').toLowerCase();
+  const hay = [i.name, i.notes, M.spotName(i), M.category(i.category).name, i.room ? M.room(i.room).name : ''].join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
@@ -98,7 +106,9 @@ export function matches(i, q) {
 export function renderItems(ui) {
   const cfg = M.config();
   const all = M.owned();
-  let list = all.filter(i => matches(i, ui.q) && (!ui.room || i.room === ui.room) && (!ui.cat || i.category === ui.cat));
+  const spotKey = i => i.spotId || (i.spot ? 'text:' + i.spot : '');
+  let list = all.filter(i => matches(i, ui.q) && (!ui.room || i.room === ui.room) && (!ui.cat || i.category === ui.cat)
+    && (!ui.room || !ui.spot || spotKey(i) === ui.spot));
   list = sortItems(list, ui.sort);
   const value = all.reduce((n, i) => n + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
   const due = M.replacementsDue(M.today()).length;
@@ -128,6 +138,7 @@ export function renderItems(ui) {
         </label>
         <div class="i-filters">
           ${filterSelect('room', 'All rooms', M.activeList(cfg.rooms), ui.room)}
+          ${ui.room ? filterSelect('spot', 'All spots', spotOptions(ui.room, all), ui.spot) : ''}
           ${filterSelect('cat', 'All categories', M.activeList(cfg.categories), ui.cat)}
           <select class="input i-filter" data-filter="sort" aria-label="Sort">
             ${Object.entries(SORTS).map(([k, v]) => `<option value="${k}" ${k === ui.sort ? 'selected' : ''}>${v}</option>`).join('')}
@@ -159,13 +170,15 @@ export function renderRooms(ui) {
   const unplaced = all.filter(i => !i.room || !cfg.rooms[i.room]);
   const cards = rooms.map(r => {
     const items = all.filter(i => i.room === r.id);
-    const spots = new Map();
+    const defined = M.roomSpots(r.id);
+    const spots = new Map(defined.map(s => [s.name, []]));
     for (const i of items) {
-      const s = (i.spot || '').trim() || 'No spot set';
+      const s = M.spotName(i).trim() || 'No spot set';
       if (!spots.has(s)) spots.set(s, []);
       spots.get(s).push(i);
     }
-    const spotList = [...spots.entries()].sort((a, b) => a[0] === 'No spot set' ? 1 : b[0] === 'No spot set' ? -1 : a[0].localeCompare(b[0]));
+    const rank = n => { const k = defined.findIndex(s => s.name === n); return n === 'No spot set' ? 1e6 : k < 0 ? 1e5 : k; };
+    const spotList = [...spots.entries()].filter(([, l]) => l.length).sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]));
     return `
       <section class="j-card i-room">
         <div class="j-card-head"><h2>${esc(r.name)}</h2><span class="j-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</span></div>

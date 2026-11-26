@@ -87,6 +87,20 @@ export const activeList = map => Object.values(map).filter(v => !v.archived).sor
 export const category = id => config().categories[id] || { id, name: 'Other', order: 99 };
 export const room = id => config().rooms[id] || { id, name: 'Other', order: 99 };
 
+/** Predefined spots in a room (rooms[id].spots = { <sid>: { name, order, archived } }). */
+export const roomSpots = roomId => {
+  const r = config().rooms[roomId];
+  return r && r.spots ? Object.entries(r.spots).map(([id, s]) => ({ id, ...s })).filter(s => !s.archived)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) : [];
+};
+
+/** The spot's display name: a predefined spot, or the text typed before spots existed. */
+export function spotName(item) {
+  const r = config().rooms[item.room];
+  const s = item.spotId && r && r.spots && r.spots[item.spotId];
+  return (s && s.name) || item.spot || '';
+}
+
 /* ---------- items ---------- */
 
 let listMemo = null, listVer = -1;

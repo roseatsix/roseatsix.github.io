@@ -118,9 +118,10 @@ export function openItemDialog(id, defaults = {}) {
             <label class="field"><span class="field-label">${wish ? 'Room it will go in' : 'Room'}</span>
               <select class="input" name="room">${opt(M.activeList(cfg.rooms), item.room, 'Choose…')}</select></label>
             <label class="field"><span class="field-label">Spot</span>
-              <input class="input" name="spot" value="${esc(item.spot || '')}" placeholder="e.g. top drawer" list="i-spots" maxlength="60"></label>
+              <select class="input" name="spotSel" data-spot-select></select></label>
           </div>
-          <datalist id="i-spots">${[...new Set(M.allItems().map(i => (i.spot || '').trim()).filter(Boolean))].sort().map(s => `<option value="${esc(s)}">`).join('')}</datalist>
+          <label class="field i-newspot" hidden><span class="field-label">New spot in this room</span>
+            <input class="input" name="newSpot" placeholder="e.g. Top drawer" maxlength="60" autocomplete="off"></label>
 
           <div class="i-grid">
             <label class="field"><span class="field-label">Estimated price (${esc(cfg.currency)})${Number(item.qty) > 1 ? ', each' : ''}</span>
@@ -165,6 +166,30 @@ export function openItemDialog(id, defaults = {}) {
 
       const form = el.querySelector('form');
       let condition = item.condition || '';
+
+      // Spot choices follow the selected room.
+      const spotSel = form.spotSel;
+      const newSpotRow = el.querySelector('.i-newspot');
+      const fillSpots = keep => {
+        const roomId = form.room.value;
+        const spots = M.roomSpots(roomId);
+        const typed = item.room === roomId && !item.spotId && item.spot ? item.spot : '';
+        let cur = keep ?? spotSel.value;
+        if (keep === undefined && !cur) cur = item.room === roomId ? (item.spotId || (typed ? '__text' : '')) : '';
+        spotSel.innerHTML = `<option value="">${roomId ? (spots.length ? 'Choose…' : 'No spots yet') : 'Pick a room first'}</option>`
+          + spots.map(sp => `<option value="${sp.id}">${esc(sp.name)}</option>`).join('')
+          + (typed ? `<option value="__text">${esc(typed)} (not in the list)</option>` : '')
+          + (roomId ? '<option value="__new">+ New spot…</option>' : '');
+        spotSel.disabled = !roomId;
+        spotSel.value = [...spotSel.options].some(o => o.value === cur) ? cur : '';
+        newSpotRow.hidden = spotSel.value !== '__new';
+      };
+      fillSpots(undefined);
+      form.room.addEventListener('change', () => fillSpots(''));
+      spotSel.addEventListener('change', () => {
+        newSpotRow.hidden = spotSel.value !== '__new';
+        if (!newSpotRow.hidden) form.newSpot.focus();
+      });
       el.querySelector('.i-cond')?.addEventListener('click', e => {
         const b = e.target.closest('[data-cond]');
         if (!b) return;
@@ -197,8 +222,22 @@ export function openItemDialog(id, defaults = {}) {
         const name = form.name.value.trim();
         if (!name) { err.textContent = 'Give it a name.'; form.name.focus(); return; }
         const next = { ...item, name, qty: Math.max(1, Math.round(Number(form.qty.value) || 1)),
-          category: form.category.value, room: form.room.value, spot: form.spot.value.trim(),
+          category: form.category.value, room: form.room.value,
           price: M.parseAmount(form.price.value), notes: form.notes.value.trim() };
+        // Spot: a predefined one, a new one (added to the room), or the old typed text.
+        const sel = form.spotSel.value;
+        if (!next.room || !sel) { next.spotId = null; next.spot = ''; }
+        else if (sel === '__text') { next.spotId = null; }
+        else if (sel === '__new') {
+          const name = form.newSpot.value.trim();
+          if (!name) { err.textContent = 'Type a name for the new spot.'; form.newSpot.focus(); return; }
+          const existingSpot = M.roomSpots(next.room).find(sp => sp.name.toLowerCase() === name.toLowerCase());
+          next.spotId = existingSpot ? existingSpot.id : await addSpot(next.room, name);
+          next.spot = existingSpot ? existingSpot.name : name;
+        } else {
+          next.spotId = sel;
+          next.spot = (M.roomSpots(next.room).find(sp => sp.id === sel) || {}).name || '';
+        }
         if (wish) {
           next.link = (form.link.value || '').trim();
         } else {
@@ -254,29 +293,58 @@ const saveConfig = async mutate => {
   await save('config', stored);
 };
 
+/** Add a spot to a room; returns its id. */
+async function addSpot(roomId, name) {
+  const sid = M.newId();
+  const r = M.config().rooms[roomId];
+  const order = Math.max(0, ...Object.values((r && r.spots) || {}).map(x => x.order ?? 0)) + 1;
+  await saveConfig(c => {
+    const cur = { ...M.config().rooms[roomId] };
+    delete cur.id;
+    c.rooms = { ...(c.rooms || {}), [roomId]: { ...cur, spots: { ...(cur.spots || {}), [sid]: { name, order } } } };
+  });
+  return sid;
+}
+
+const xIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
+
 export function openSettingsDialog() {
   return openDialog({
     label: 'Inventory settings',
     render(el, close) {
-      const section = map => M.activeList(M.config()[map]).map(c => `
-        <li class="j-setrow" data-map="${map}" data-id="${c.id}">
-          <input class="input" value="${esc(c.name)}" data-rename aria-label="Name" maxlength="40">
-          <button class="icon-btn" type="button" data-remove aria-label="Remove ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+      el.closest('dialog').classList.add('is-wide');
+      const roomsHtml = () => M.activeList(M.config().rooms).map(r => `
+        <li class="i-roomset" data-room="${r.id}">
+          <div class="j-setrow">
+            <input class="input i-roomname" value="${esc(r.name)}" data-rename-room aria-label="Room name" maxlength="40">
+            <button class="icon-btn" type="button" data-remove-room aria-label="Remove ${esc(r.name)}">${xIcon}</button>
+          </div>
+          <ul class="i-spotset">${M.roomSpots(r.id).map(sp => `
+            <li class="j-setrow" data-spot="${sp.id}">
+              <input class="input" value="${esc(sp.name)}" data-rename-spot aria-label="Spot name" maxlength="60">
+              <button class="icon-btn" type="button" data-remove-spot aria-label="Remove ${esc(sp.name)}">${xIcon}</button>
+            </li>`).join('')}</ul>
+          <form class="j-habit-new i-addspot" data-add-spot><input class="input" name="name" placeholder="Add a spot, e.g. Wardrobe" maxlength="60"><button class="btn btn-ghost" type="submit">Add</button></form>
+        </li>`).join('');
+      const catsHtml = () => M.activeList(M.config().categories).map(c => `
+        <li class="j-setrow" data-cat="${c.id}">
+          <input class="input" value="${esc(c.name)}" data-rename-cat aria-label="Category name" maxlength="40">
+          <button class="icon-btn" type="button" data-remove-cat aria-label="Remove ${esc(c.name)}">${xIcon}</button>
         </li>`).join('');
       const draw = () => {
-        el.querySelector('[data-list=rooms]').innerHTML = section('rooms');
-        el.querySelector('[data-list=categories]').innerHTML = section('categories');
+        el.querySelector('[data-list=rooms]').innerHTML = roomsHtml();
+        el.querySelector('[data-list=categories]').innerHTML = catsHtml();
         el.querySelector('[data-currency]').value = M.config().currency;
       };
       el.innerHTML = `
         <h2>Inventory settings</h2>
-        <p>Names save when you leave the field. Removing one hides it from pickers; items keep it.</p>
-        <h3>Rooms</h3>
-        <ul class="j-setlist" data-list="rooms"></ul>
-        <form class="j-habit-new" data-add="rooms"><input class="input" name="name" placeholder="Add a room, e.g. Balcony" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
+        <p>Names save when you leave the field. Removing a room, spot or category hides it from pickers; items keep it.</p>
+        <h3>Rooms &amp; spots</h3>
+        <ul class="i-roomsets" data-list="rooms"></ul>
+        <form class="j-habit-new" data-add-room><input class="input" name="name" placeholder="Add a room, e.g. Balcony" maxlength="40"><button class="btn btn-ghost" type="submit">Add room</button></form>
         <h3>Categories</h3>
         <ul class="j-setlist" data-list="categories"></ul>
-        <form class="j-habit-new" data-add="categories"><input class="input" name="name" placeholder="Add a category, e.g. Plants" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
+        <form class="j-habit-new" data-add-cat><input class="input" name="name" placeholder="Add a category, e.g. Plants" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
         <h3>Currency</h3>
         <select class="input j-currency" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
         <h3>Backup &amp; reset</h3>
@@ -288,45 +356,69 @@ export function openSettingsDialog() {
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
 
-      el.addEventListener('change', async e => {
-        const row = e.target.closest('[data-map]');
-        if (row && e.target.matches('[data-rename]')) {
-          const name = e.target.value.trim();
-          if (!name) { draw(); return; }
-          const { map, id } = row.dataset;
-          await saveConfig(c => { c[map] = { ...(c[map] || {}), [id]: { ...M.config()[map][id], name } }; delete c[map][id].id; });
-        }
-        if (e.target.matches('[data-currency]')) {
-          const v = e.target.value;
-          await saveConfig(c => { c.currency = v; });
-          toast('Currency saved');
-        }
+      const roomOf = elx => elx.closest('[data-room]')?.dataset.room;
+      const setRoom = (rid, mutateRoom) => saveConfig(c => {
+        const cur = { ...M.config().rooms[rid] };
+        delete cur.id;
+        mutateRoom(cur);
+        c.rooms = { ...(c.rooms || {}), [rid]: cur };
       });
+      const setCat = (cid, mutateCat) => saveConfig(c => {
+        const cur = { ...M.config().categories[cid] };
+        delete cur.id;
+        mutateCat(cur);
+        c.categories = { ...(c.categories || {}), [cid]: cur };
+      });
+
+      el.addEventListener('change', async e => {
+        const t = e.target;
+        const name = (t.value || '').trim();
+        if (t.matches('[data-rename-room]')) { if (name) await setRoom(roomOf(t), r => { r.name = name; }); else draw(); }
+        if (t.matches('[data-rename-spot]')) {
+          const sid = t.closest('[data-spot]').dataset.spot;
+          if (name) await setRoom(roomOf(t), r => { r.spots = { ...(r.spots || {}), [sid]: { ...(r.spots || {})[sid], name } }; }); else draw();
+        }
+        if (t.matches('[data-rename-cat]')) { if (name) await setCat(t.closest('[data-cat]').dataset.cat, c => { c.name = name; }); else draw(); }
+        if (t.matches('[data-currency]')) { await saveConfig(c => { c.currency = t.value; }); toast('Currency saved'); }
+      });
+
       el.addEventListener('click', async e => {
-        const rm = e.target.closest('[data-remove]');
-        if (rm) {
-          const { map, id } = rm.closest('[data-map]').dataset;
-          await saveConfig(c => { c[map] = { ...(c[map] || {}), [id]: { ...M.config()[map][id], archived: true } }; delete c[map][id].id; });
+        const t = e.target;
+        if (t.closest('[data-remove-room]')) { await setRoom(roomOf(t), r => { r.archived = true; }); draw(); }
+        if (t.closest('[data-remove-spot]')) {
+          const sid = t.closest('[data-spot]').dataset.spot;
+          await setRoom(roomOf(t), r => { r.spots = { ...(r.spots || {}), [sid]: { ...(r.spots || {})[sid], archived: true } }; });
           draw();
         }
-        if (e.target.closest('[data-close]')) close();
-        if (e.target.closest('[data-backup]')) openBackupDialog();
-        if (e.target.closest('[data-erase]')) openEraseDialog();
+        if (t.closest('[data-remove-cat]')) { await setCat(t.closest('[data-cat]').dataset.cat, c => { c.archived = true; }); draw(); }
+        if (t.closest('[data-close]')) close();
+        if (t.closest('[data-backup]')) openBackupDialog();
+        if (t.closest('[data-erase]')) openEraseDialog();
       });
-      el.querySelectorAll('[data-add]').forEach(f => f.addEventListener('submit', async e => {
+
+      el.addEventListener('submit', async e => {
         e.preventDefault();
-        const name = f.name.value.trim();
+        const f = e.target;
+        const name = (f.name.value || '').trim();
         if (!name) return;
-        const map = f.dataset.add;
-        const order = Math.max(0, ...Object.values(M.config()[map]).map(c => c.order ?? 0)) + 1;
-        await saveConfig(c => { c[map] = { ...(c[map] || {}), [M.newId()]: { name, order } }; });
-        f.reset();
+        if (f.matches('[data-add-spot]')) await addSpot(roomOf(f), name);
+        if (f.matches('[data-add-room]')) {
+          const order = Math.max(0, ...Object.values(M.config().rooms).map(c => c.order ?? 0)) + 1;
+          await saveConfig(c => { c.rooms = { ...(c.rooms || {}), [M.newId()]: { name, order } }; });
+        }
+        if (f.matches('[data-add-cat]')) {
+          const order = Math.max(0, ...Object.values(M.config().categories).map(c => c.order ?? 0)) + 1;
+          await saveConfig(c => { c.categories = { ...(c.categories || {}), [M.newId()]: { name, order } }; });
+        }
+        const focusKey = f.matches('[data-add-spot]') ? roomOf(f) : null;
         draw();
-      }));
+        if (focusKey) el.querySelector(`[data-room="${focusKey}"] [data-add-spot] input`)?.focus();
+      });
+
       confirmButton(el.querySelector('[data-reset]'), 'Tap again to reset', async () => {
         if (M.get('config')) await remove('config');
         draw();
-        toast('Rooms, categories and currency are back to the defaults. Your items are untouched.');
+        toast('Rooms, spots, categories and currency are back to the defaults. Your items are untouched.');
       });
     },
   });
