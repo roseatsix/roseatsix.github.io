@@ -23,8 +23,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Nunito+Sans:opsz,wght@6..12,400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/style.css">
-  <link rel="stylesheet" href="../journal/journal.css">
-  <link rel="stylesheet" href="../inventory/inventory.css">
+  <link rel="stylesheet" href="../../assets/css/components.css">
   <link rel="stylesheet" href="subs.css">
 </head>
 <body>
@@ -73,9 +72,9 @@
       </div>
     </header>
 
-    <div class="j-tabbar t-bar">
-      <h1 class="t-title">Subscriptions</h1>
-      <button class="icon-btn i-add" type="button" data-act="add" aria-label="Add a subscription">
+    <div class="toolbar toolbar-titled">
+      <h1 class="toolbar-title">Subscriptions</h1>
+      <button class="icon-btn add-btn" type="button" data-act="add" aria-label="Add a subscription">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <button class="icon-btn" type="button" data-act="settings" aria-label="Settings">
@@ -83,7 +82,7 @@
       </button>
     </div>
 
-    <main id="subs" class="journal" aria-live="polite"></main>
+    <main id="subs" class="tool-main" aria-live="polite"></main>
 
     <footer class="footer">
       <svg class="footer-blossom" aria-hidden="true"><use href="#blossom"/></svg>

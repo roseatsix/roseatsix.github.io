@@ -33,11 +33,11 @@ export function renderGate(st) {
     denied: ["Can't open your data", 'The database refused access for this account.', null],
     error: ['Something went wrong', st.error || '', 'Try again'],
   }[st.status];
-  if (!copy) return '<div class="j-gate"><span class="spinner" aria-hidden="true"></span><p>Opening your inventory…</p></div>';
+  if (!copy) return '<div class="gate"><span class="spinner" aria-hidden="true"></span><p>Opening your inventory…</p></div>';
   const [title, text, action] = copy;
   return `
-    <div class="j-gate">
-      <svg class="j-gate-blossom" aria-hidden="true"><use href="#blossom"/></svg>
+    <div class="gate">
+      <svg class="gate-blossom" aria-hidden="true"><use href="#blossom"/></svg>
       <h1>${esc(title)}</h1><p>${esc(text)}</p>
       ${action ? `<button class="btn btn-primary" type="button" data-act="gate">${esc(action)}</button>` : ''}
     </div>`;
@@ -126,18 +126,18 @@ export function renderItems(ui) {
   const ordered = [...groups.values()].sort((a, b) => (a.c.order ?? 99) - (b.c.order ?? 99));
 
   return `
-    <section class="j-view i-items">
-      <div class="j-stats">
-        <div class="j-stat"><span>${all.reduce((n, i) => n + (Number(i.qty) || 1), 0)}</span>things</div>
-        <a class="j-stat is-link" href="#/due"><span>${due}</span>due soon</a>
-        <a class="j-stat is-link" href="#/declutter"><span>${toReview}</span>to review</a>
-        <div class="j-stat"><span class="j-full">${esc(M.money(value))}</span><span class="j-compact">${esc(M.money(value, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated value</div>
+    <section class="view i-items">
+      <div class="stats">
+        <div class="stat"><span>${all.reduce((n, i) => n + (Number(i.qty) || 1), 0)}</span>things</div>
+        <a class="stat is-link" href="#/due"><span>${due}</span>due soon</a>
+        <a class="stat is-link" href="#/declutter"><span>${toReview}</span>to review</a>
+        <div class="stat"><span class="full">${esc(M.money(value))}</span><span class="compact">${esc(M.money(value, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated value</div>
       </div>
 
       <div class="i-toolbar">
-        <label class="j-searchbox">
+        <label class="searchbox">
           ${ICONS.search}
-          <input type="search" class="j-inline" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Search name, place, notes…" aria-label="Search items" autocomplete="off">
+          <input type="search" class="inline-input" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Search name, place, notes…" aria-label="Search items" autocomplete="off">
         </label>
         <div class="i-filters">
           ${filterSelect('room', 'All rooms', M.activeList(cfg.rooms), ui.room)}
@@ -150,15 +150,15 @@ export function renderItems(ui) {
       </div>
 
       ${!all.length ? `
-        <div class="j-card i-empty">
+        <div class="panel empty-panel">
           <h2>Nothing here yet</h2>
           <p>Start with the things you lose most often, or the ones that need replacing, like scissors, toothbrushes or water filters.</p>
           <button class="btn btn-primary" type="button" data-act="new-item">${ICONS.plus}Add your first item</button>
         </div>`
-      : !list.length ? '<p class="j-empty">Nothing matches. Try another search or filter.</p>'
+      : !list.length ? '<p class="empty">Nothing matches. Try another search or filter.</p>'
       : ordered.map(g => `
-        <section class="j-card i-group">
-          <div class="j-card-head"><h2>${esc(g.c.name)}</h2><span class="j-count">${g.items.length}</span></div>
+        <section class="panel i-group">
+          <div class="panel-head"><h2>${esc(g.c.name)}</h2><span class="count">${g.items.length}</span></div>
           <ul class="i-list">${g.items.map(i => itemRow(i)).join('')}</ul>
         </section>`).join('')}
     </section>`;
@@ -183,24 +183,24 @@ export function renderRooms(ui) {
     const rank = n => { const k = defined.findIndex(s => s.name === n); return n === 'No spot set' ? 1e6 : k < 0 ? 1e5 : k; };
     const spotList = [...spots.entries()].filter(([, l]) => l.length).sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]));
     return `
-      <section class="j-card i-room">
-        <div class="j-card-head"><h2>${esc(r.name)}</h2><span class="j-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</span></div>
+      <section class="panel i-room">
+        <div class="panel-head"><h2>${esc(r.name)}</h2><span class="count">${items.length} ${items.length === 1 ? 'item' : 'items'}</span></div>
         ${spotList.length ? spotList.map(([s, list]) => `
           <div class="i-spot">
             <p class="i-spot-name">${ICONS.pin}${esc(s)}</p>
             <ul class="i-list">${sortItems(list, 'name').map(i => itemRow(i, { showWhere: false })).join('')}</ul>
-          </div>`).join('') : '<p class="j-empty">Nothing here yet.</p>'}
+          </div>`).join('') : '<p class="empty">Nothing here yet.</p>'}
       </section>`;
   });
   if (unplaced.length) {
-    cards.push(`<section class="j-card i-room"><div class="j-card-head"><h2>No room set</h2><span class="j-count">${unplaced.length}</span></div>
+    cards.push(`<section class="panel i-room"><div class="panel-head"><h2>No room set</h2><span class="count">${unplaced.length}</span></div>
       <ul class="i-list">${unplaced.map(i => itemRow(i, { showWhere: false })).join('')}</ul></section>`);
   }
   return `
-    <section class="j-view">
-      <label class="j-searchbox">
+    <section class="view">
+      <label class="searchbox">
         ${ICONS.search}
-        <input type="search" class="j-inline" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Where is my…" aria-label="Search items" autocomplete="off">
+        <input type="search" class="inline-input" data-field="q" data-focus="q" value="${esc(ui.q)}" placeholder="Where is my…" aria-label="Search items" autocomplete="off">
       </label>
       <div class="i-rooms">${cards.join('')}</div>
     </section>`;
@@ -240,14 +240,14 @@ export function renderDue() {
         : `<button class="btn btn-ghost btn-sm" type="button" data-act="renew" data-id="${d.i.id}">${ICONS.check}New one</button>`}
     </li>`;
   const section = (title, list, empty, cls) => `
-    <section class="j-card ${cls}">
-      <div class="j-card-head"><h2>${title}</h2><span class="j-count">${list.length}</span></div>
-      ${list.length ? `<ul class="i-reps">${list.map(row).join('')}</ul>` : `<p class="j-empty">${empty}</p>`}
+    <section class="panel ${cls}">
+      <div class="panel-head"><h2>${title}</h2><span class="count">${list.length}</span></div>
+      ${list.length ? `<ul class="i-reps">${list.map(row).join('')}</ul>` : `<p class="empty">${empty}</p>`}
     </section>`;
   return `
-    <section class="j-view">
-      <div class="j-head-title i-title"><p class="eyebrow">Due</p><h1>What needs attention</h1></div>
-      ${rows.length ? '' : `<div class="j-card i-empty"><p>Nothing is being tracked yet. When adding or editing an item, turn on <strong>Replace periodically</strong> (scissors every 2 years, a toothbrush every 3 months) or <strong>Track expiry</strong> (medicine, food, skincare).</p></div>`}
+    <section class="view">
+      <div class="view-title i-title"><p class="eyebrow">Due</p><h1>What needs attention</h1></div>
+      ${rows.length ? '' : `<div class="panel empty-panel"><p>Nothing is being tracked yet. When adding or editing an item, turn on <strong>Replace periodically</strong> (scissors every 2 years, a toothbrush every 3 months) or <strong>Track expiry</strong> (medicine, food, skincare).</p></div>`}
       ${rows.length ? section('Overdue or expired', rows.filter(d => d.state === 'overdue'), 'Nothing overdue.', 'tone-flower') : ''}
       ${rows.length ? section('Coming up', rows.filter(d => d.state === 'soon'), 'Nothing due in the next few weeks.', 'tone-sun') : ''}
       ${rows.length ? section('Later', rows.filter(d => d.state === 'ok'), 'Nothing else tracked.', 'tone-leaf') : ''}
@@ -279,26 +279,26 @@ export function renderDeclutter(ui) {
     </li>`;
 
   return `
-    <section class="j-view">
-      <div class="j-head-title i-title"><p class="eyebrow">Declutter</p><h1>Keep or let go?</h1></div>
+    <section class="view">
+      <div class="view-title i-title"><p class="eyebrow">Declutter</p><h1>Keep or let go?</h1></div>
       <p class="i-explain">Suggestions come from condition, when you last used something, how long it's been here and duplicates. Sentimental items are never suggested. <strong>Keep</strong> hides an item from here for 6 months.</p>
-      <div class="j-stats">
-        <div class="j-stat"><span>${letgo.length}</span>to let go</div>
-        <div class="j-stat"><span>${review.length}</span>to review</div>
-        <div class="j-stat"><span>${keep.length}</span>keeping</div>
+      <div class="stats">
+        <div class="stat"><span>${letgo.length}</span>to let go</div>
+        <div class="stat"><span>${review.length}</span>to review</div>
+        <div class="stat"><span>${keep.length}</span>keeping</div>
       </div>
-      <section class="j-card tone-flower"><div class="j-card-head"><h2>Consider letting go</h2><span class="j-count">${letgo.length}</span></div>
-        ${letgo.length ? `<ul class="i-dcs">${letgo.map(card).join('')}</ul>` : '<p class="j-empty">Nothing stands out. Nice.</p>'}</section>
-      <section class="j-card tone-sun"><div class="j-card-head"><h2>Worth a look</h2><span class="j-count">${review.length}</span></div>
-        ${review.length ? `<ul class="i-dcs">${review.map(card).join('')}</ul>` : '<p class="j-empty">Nothing to review.</p>'}</section>
-      <details class="j-card i-gone" ${ui.showGone ? 'open' : ''}>
-        <summary class="j-card-head"><h2>Already let go</h2><span class="j-count">${goneList.length}</span></summary>
+      <section class="panel tone-flower"><div class="panel-head"><h2>Consider letting go</h2><span class="count">${letgo.length}</span></div>
+        ${letgo.length ? `<ul class="i-dcs">${letgo.map(card).join('')}</ul>` : '<p class="empty">Nothing stands out. Nice.</p>'}</section>
+      <section class="panel tone-sun"><div class="panel-head"><h2>Worth a look</h2><span class="count">${review.length}</span></div>
+        ${review.length ? `<ul class="i-dcs">${review.map(card).join('')}</ul>` : '<p class="empty">Nothing to review.</p>'}</section>
+      <details class="panel i-gone" ${ui.showGone ? 'open' : ''}>
+        <summary class="panel-head"><h2>Already let go</h2><span class="count">${goneList.length}</span></summary>
         ${goneList.length ? `<ul class="i-list">${goneList.map(i => `
           <li class="i-gone-row">
             <span class="i-row-main"><span class="i-name">${esc(i.name)}</span>
               <span class="i-meta"><span>${esc(M.GONE_HOW[i.goneHow] || 'Gone')}${M.isDate(i.goneAt) ? ' · ' + esc(M.fmt.long(i.goneAt)) : ''}</span></span></span>
             <button class="btn btn-ghost btn-sm" type="button" data-act="restore" data-id="${i.id}">${ICONS.undo}Undo</button>
-          </li>`).join('')}</ul>` : '<p class="j-empty">Nothing yet.</p>'}
+          </li>`).join('')}</ul>` : '<p class="empty">Nothing yet.</p>'}
       </details>
     </section>`;
 }
@@ -309,12 +309,12 @@ export function renderWishlist() {
   const list = M.wishlist().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const total = list.reduce((n, i) => n + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
   return `
-    <section class="j-view">
-      <div class="j-head-title i-title"><p class="eyebrow">Wishlist</p><h1>Things to get</h1></div>
-      <div class="j-head-extra"><button class="btn btn-primary btn-sm" type="button" data-act="new-wish">${ICONS.plus}Add to wishlist</button></div>
+    <section class="view">
+      <div class="view-title i-title"><p class="eyebrow">Wishlist</p><h1>Things to get</h1></div>
+      <div class="view-actions"><button class="btn btn-primary btn-sm" type="button" data-act="new-wish">${ICONS.plus}Add to wishlist</button></div>
       ${list.length ? `
-        <div class="j-stats"><div class="j-stat"><span>${list.length}</span>items</div><div class="j-stat"><span class="j-full">${esc(M.money(total))}</span><span class="j-compact">${esc(M.money(total, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated total</div></div>
-        <section class="j-card"><ul class="i-reps">${list.map(i => `
+        <div class="stats"><div class="stat"><span>${list.length}</span>items</div><div class="stat"><span class="full">${esc(M.money(total))}</span><span class="compact">${esc(M.money(total, { notation: 'compact', maximumFractionDigits: 1 }))}</span>estimated total</div></div>
+        <section class="panel"><ul class="i-reps">${list.map(i => `
           <li class="i-rep">
             <button type="button" class="i-rep-main" data-act="open-item" data-id="${i.id}">
               <span class="i-name">${esc(i.name)} ${qtyText(i)}</span>
@@ -326,6 +326,6 @@ export function renderWishlist() {
             </button>
             <button class="btn btn-ghost btn-sm" type="button" data-act="bought" data-id="${i.id}">${ICONS.check}Bought</button>
           </li>`).join('')}</ul></section>`
-      : '<div class="j-card i-empty"><p>Nothing on your wishlist. Add things you plan to buy, with an estimated price and where they\'ll go. When you get one, tap <strong>Bought</strong> and it moves into your inventory.</p></div>'}
+      : '<div class="panel empty-panel"><p>Nothing on your wishlist. Add things you plan to buy, with an estimated price and where they\'ll go. When you get one, tap <strong>Bought</strong> and it moves into your inventory.</p></div>'}
     </section>`;
 }

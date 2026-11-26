@@ -9,7 +9,7 @@ import * as V from './views.js';
 import * as D from './dialogs.js';
 
 const main = document.getElementById('inventory');
-const tabs = document.querySelector('.j-tabs');
+const tabs = document.querySelector('.tabs');
 const store = openStore('inventory');
 D.useStore(store);
 

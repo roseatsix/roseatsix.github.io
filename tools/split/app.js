@@ -56,32 +56,32 @@ function gate(st) {
     denied: ["Can't open your data", 'The database refused access for this account.', null],
     error: ['Something went wrong', st.error || '', 'Try again'],
   }[st.status];
-  if (!copy) return '<div class="j-gate"><span class="spinner" aria-hidden="true"></span><p>Opening…</p></div>';
-  return `<div class="j-gate"><svg class="j-gate-blossom" aria-hidden="true"><use href="#blossom"/></svg><h1>${esc(copy[0])}</h1><p>${esc(copy[1])}</p>
+  if (!copy) return '<div class="gate"><span class="spinner" aria-hidden="true"></span><p>Opening…</p></div>';
+  return `<div class="gate"><svg class="gate-blossom" aria-hidden="true"><use href="#blossom"/></svg><h1>${esc(copy[0])}</h1><p>${esc(copy[1])}</p>
     ${copy[2] ? `<button class="btn btn-primary" type="button" data-act="gate">${esc(copy[2])}</button>` : ''}</div>`;
 }
 
 function render() {
   if (!ui.loaded) { main.innerHTML = gate(S.getState()); return; }
-  document.querySelector('.t-title').textContent = ui.trip ? '' : 'Splits';
+  document.querySelector('.toolbar-title').textContent = ui.trip ? '' : 'Splits';
   main.innerHTML = ui.trip ? tripView(getTrip(ui.trip)) : listView();
 }
 
 function listView() {
   const list = M.trips();
   if (!list.length) {
-    return `<section class="j-view"><div class="j-card i-empty">
+    return `<section class="view"><div class="panel empty-panel">
       <h2>No splits yet</h2>
       <p>Make one for a trip, a dinner or a shared flat. Add receipts from as many places as you like, say who paid and who shared what, and at the end everyone pays once.</p>
       <button class="btn btn-primary" type="button" data-act="new-trip">${ICON.plus}New split</button></div></section>`;
   }
-  return `<section class="j-view"><ul class="sp-trips">${list.map(t => {
+  return `<section class="view"><ul class="sp-trips">${list.map(t => {
     const c = M.tripCalc(t);
     const status = !c.receipts.length ? 'No receipts yet' : c.settled ? 'Settled' : c.transfers.length ? `${c.transfers.length - c.done} to settle` : 'All square';
-    return `<li><a class="j-card sp-trip ${c.settled ? 'is-settled' : ''}" href="#/t/${t.id}">
+    return `<li><a class="panel sp-trip ${c.settled ? 'is-settled' : ''}" href="#/t/${t.id}">
       <span class="sp-trip-main"><span class="sp-trip-title">${esc(t.title || 'Untitled split')}</span>
-        <span class="s-meta"><span>${esc(M.dateRange(t))}</span><span>${M.peopleOf(t).length} people</span><span>${c.receipts.length} receipts</span></span></span>
-      <span class="s-right"><span class="s-price">${esc(M.money(c.total))}</span><span class="sp-status ${c.settled ? 'is-done' : ''}">${esc(status)}</span></span>
+        <span class="meta"><span>${esc(M.dateRange(t))}</span><span>${M.peopleOf(t).length} people</span><span>${c.receipts.length} receipts</span></span></span>
+      <span class="row-end"><span class="amount">${esc(M.money(c.total))}</span><span class="sp-status ${c.settled ? 'is-done' : ''}">${esc(status)}</span></span>
     </a></li>`;
   }).join('')}</ul></section>`;
 }
@@ -95,15 +95,15 @@ function tripView(t) {
   const people = M.peopleOf(t);
   const me = M.meOf(t);
   return `
-    <section class="j-view sp-detail">
+    <section class="view sp-detail">
       <div class="sp-top">
         <a class="icon-btn" href="#/" aria-label="All splits">${ICON.back}</a>
         <button type="button" class="sp-titlebtn" data-act="edit-trip"><span class="sp-h1">${esc(t.title || 'Untitled split')}</span>
-          <span class="s-meta"><span>${esc(M.dateRange(t) || 'No date yet')}</span><span>Total ${esc(M.money(c.total))}</span></span></button>
+          <span class="meta"><span>${esc(M.dateRange(t) || 'No date yet')}</span><span>Total ${esc(M.money(c.total))}</span></span></button>
       </div>
 
-      <section class="j-card">
-        <div class="j-card-head"><h2>People</h2><span class="j-count">${people.length}</span></div>
+      <section class="panel">
+        <div class="panel-head"><h2>People</h2><span class="count">${people.length}</span></div>
         <div class="sp-people">
           ${people.map(p => `<button type="button" class="sp-person" data-act="edit-person" data-id="${p.id}">${esc(p.name)}${p.me ? ' <small>(me)</small>' : ''}</button>`).join('')}
           <form class="sp-addperson" data-form="add-person">
@@ -114,38 +114,38 @@ function tripView(t) {
         </div>
       </section>
 
-      <section class="j-card tone-flower">
-        <div class="j-card-head"><h2>Receipts</h2><span class="j-count">${c.receipts.length}</span></div>
+      <section class="panel tone-flower">
+        <div class="panel-head"><h2>Receipts</h2><span class="count">${c.receipts.length}</span></div>
         ${c.receipts.length ? `<ul class="sp-receipts">${c.receipts.map(({ r, c: rc }) => `
           <li><button type="button" class="sp-receipt" data-act="edit-receipt" data-id="${r.id}">
             <span class="sp-ricon">${ICON.receipt}</span>
-            <span class="sp-trip-main"><span class="s-name">${esc(r.shop || 'Receipt')}</span>
-              <span class="s-meta"><span>paid by ${esc(M.nameOf(t, r.paidBy))}</span>${M.isDate(r.date) ? `<span>${esc(M.fmt.short(r.date))}</span>` : ''}<span>${(r.mode || 'even') === 'items' ? `${M.itemsOf(r).length} items` : 'split evenly'}</span></span></span>
-            <span class="s-price">${esc(M.money(rc.total))}</span>
-          </button></li>`).join('')}</ul>` : '<p class="j-empty">Add each bill: a restaurant, a taxi, groceries, tickets…</p>'}
+            <span class="sp-trip-main"><span class="row-name">${esc(r.shop || 'Receipt')}</span>
+              <span class="meta"><span>paid by ${esc(M.nameOf(t, r.paidBy))}</span>${M.isDate(r.date) ? `<span>${esc(M.fmt.short(r.date))}</span>` : ''}<span>${(r.mode || 'even') === 'items' ? `${M.itemsOf(r).length} items` : 'split evenly'}</span></span></span>
+            <span class="amount">${esc(M.money(rc.total))}</span>
+          </button></li>`).join('')}</ul>` : '<p class="empty">Add each bill: a restaurant, a taxi, groceries, tickets…</p>'}
         <button class="btn btn-ghost btn-sm sp-addreceipt" type="button" data-act="new-receipt" ${people.length < 2 ? 'disabled title="Add people first"' : ''}>${ICON.plus}Add receipt</button>
-        ${people.length < 2 ? '<p class="j-empty">Add at least one more person first.</p>' : ''}
+        ${people.length < 2 ? '<p class="empty">Add at least one more person first.</p>' : ''}
       </section>
 
       ${c.receipts.length ? `
-      <section class="j-card tone-leaf">
-        <div class="j-card-head"><h2>Each person</h2></div>
+      <section class="panel tone-leaf">
+        <div class="panel-head"><h2>Each person</h2></div>
         <ul class="sp-balances">${people.map(p => {
           const n = c.net[p.id];
-          return `<li><span class="s-name">${esc(p.name)}${p.me ? ' <small>(me)</small>' : ''}</span>
+          return `<li><span class="row-name">${esc(p.name)}${p.me ? ' <small>(me)</small>' : ''}</span>
             <span class="sp-bal"><span>share <strong>${esc(M.money(c.owed[p.id]))}</strong></span><span>paid ${esc(M.money(c.paid[p.id]))}</span></span>
             <span class="sp-net ${n > 0 ? 'is-plus' : n < 0 ? 'is-minus' : ''}">${n > 0 ? 'gets ' + esc(M.money(n)) : n < 0 ? 'owes ' + esc(M.money(-n)) : 'square'}</span></li>`;
         }).join('')}</ul>
       </section>
 
-      <section class="j-card tone-sun">
-        <div class="j-card-head"><h2>Settle up</h2><span class="j-count">${c.transfers.length ? `${c.done} of ${c.transfers.length} paid` : ''}</span></div>
+      <section class="panel tone-sun">
+        <div class="panel-head"><h2>Settle up</h2><span class="count">${c.transfers.length ? `${c.done} of ${c.transfers.length} paid` : ''}</span></div>
         ${c.transfers.length ? `<ul class="sp-transfers">${c.transfers.map(x => `
           <li class="${x.done ? 'is-done' : ''}">
-            <label class="j-check"><input type="checkbox" data-act="toggle-paid" data-key="${x.key}" data-amount="${x.amount}" ${x.done ? 'checked' : ''} aria-label="Paid"><span class="j-box">${ICON.check}</span></label>
+            <label class="tick"><input type="checkbox" data-act="toggle-paid" data-key="${x.key}" data-amount="${x.amount}" ${x.done ? 'checked' : ''} aria-label="Paid"><span class="tick-box">${ICON.check}</span></label>
             <span class="sp-who"><strong>${esc(M.nameOf(t, x.from))}</strong> pays <strong>${esc(M.nameOf(t, x.to))}</strong></span>
-            <span class="s-price">${esc(M.money(x.amount))}</span>
-          </li>`).join('')}</ul>` : '<p class="j-empty">Everyone is square.</p>'}
+            <span class="amount">${esc(M.money(x.amount))}</span>
+          </li>`).join('')}</ul>` : '<p class="empty">Everyone is square.</p>'}
         <label class="field"><span class="field-label">Pay to (shown on the shared picture)</span>
           <input class="input" data-field="payTo" value="${esc(t.payTo || '')}" placeholder="e.g. BCA 1234567890 a.n. Rose" maxlength="100"></label>
         ${!(t.payTo || '').trim() && M.savedPayTo() ? `<button class="btn btn-text sp-usesaved" type="button" data-act="use-saved">Use saved: ${esc(M.savedPayTo())}</button>` : ''}
@@ -157,7 +157,7 @@ function tripView(t) {
         </div>
       </section>` : ''}
 
-      <div class="sp-danger"><button class="btn btn-text j-danger" type="button" data-act="delete-trip">Delete this split</button></div>
+      <div class="sp-danger"><button class="btn btn-text danger-text" type="button" data-act="delete-trip">Delete this split</button></div>
     </section>`;
 }
 
@@ -210,7 +210,7 @@ function openPersonDialog(tid, pid) {
           <label class="field"><span class="field-label">Name</span><input class="input" name="name" value="${esc(p.name)}" maxlength="30"></label>
           <label class="check"><input type="checkbox" name="me" ${p.me ? 'checked' : ''}><span>This is me<small>Used for "Log my share to journal".</small></span></label>
           <div class="dialog-actions">
-            <button class="btn btn-text j-danger" type="button" data-remove ${used ? 'disabled title="Used in a receipt"' : ''}>Remove</button>
+            <button class="btn btn-text danger-text" type="button" data-remove ${used ? 'disabled title="Used in a receipt"' : ''}>Remove</button>
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button><button class="btn btn-primary" type="submit">Save</button>
           </div>
@@ -263,15 +263,15 @@ function openReceiptDialog(tid, rid) {
 
       el.innerHTML = `
         <h2>${existing ? 'Edit receipt' : 'Add receipt'}</h2>
-        <form novalidate class="i-form">
-          <div class="i-grid">
+        <form novalidate class="entry-form">
+          <div class="field-grid">
             <label class="field"><span class="field-label">Where</span><input class="input" name="shop" value="${esc(r.shop || '')}" placeholder="e.g. Warung Babi Guling" maxlength="60" ${existing ? '' : 'autofocus'}></label>
             <label class="field"><span class="field-label">Date</span><input class="input" name="date" type="date" value="${esc(r.date || M.today())}"></label>
           </div>
           <label class="field"><span class="field-label">Paid by</span>
             <select class="input" name="paidBy">${people.map(p => `<option value="${p.id}" ${p.id === r.paidBy ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
           <div class="field"><span class="field-label">How to split</span>
-            <div class="segmented s-splitmode" role="radiogroup" aria-label="How to split">
+            <div class="segmented seg-2" role="radiogroup" aria-label="How to split">
               <button type="button" role="radio" data-mode="even" aria-checked="${(r.mode || 'even') === 'even'}">Evenly</button>
               <button type="button" role="radio" data-mode="items" aria-checked="${r.mode === 'items'}">By item</button>
             </div></div>
@@ -294,7 +294,7 @@ function openReceiptDialog(tid, rid) {
             <div class="sp-delivery">
               <label class="field"><span class="field-label">Delivery fee</span><input class="input" name="delivery" inputmode="decimal" value="${r.delivery ? esc(M.plainNumber(r.delivery)) : ''}" placeholder="0"></label>
               <div class="field"><span class="field-label">Split delivery</span>
-                <div class="segmented s-splitmode" role="radiogroup" aria-label="Split delivery">
+                <div class="segmented seg-2" role="radiogroup" aria-label="Split delivery">
                   <button type="button" role="radio" data-dby="price" aria-checked="${r.deliveryBy !== 'items'}">By price</button>
                   <button type="button" role="radio" data-dby="items" aria-checked="${r.deliveryBy === 'items'}">By items</button>
                 </div></div>
@@ -304,7 +304,7 @@ function openReceiptDialog(tid, rid) {
           <div class="sp-preview" data-preview></div>
           <div class="form-error" role="alert"></div>
           <div class="dialog-actions">
-            ${existing ? '<button class="btn btn-text j-danger" type="button" data-delete>Delete</button>' : ''}
+            ${existing ? '<button class="btn btn-text danger-text" type="button" data-delete>Delete</button>' : ''}
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
             <button class="btn btn-primary" type="submit">${existing ? 'Save' : 'Add receipt'}</button>
@@ -445,7 +445,7 @@ function openLogShareDialog(tid) {
         <p>Adds <strong>${esc(M.money(c.owed[me.id]))}</strong> to your journal as spending, so it counts in your budget.</p>
         ${t.loggedShare ? `<p class="hint">You already logged this on ${esc(M.fmt.long(t.loggedShare))}.</p>` : ''}
         <form novalidate>
-          <div class="i-grid">
+          <div class="field-grid">
             <label class="field"><span class="field-label">Date</span><input class="input" type="date" name="date" value="${esc(lastDate)}"></label>
             <label class="field"><span class="field-label">Spending category</span>
               <select class="input" name="cat">${J.activeList(cfg.spendCats).map(s => `<option value="${s.id}" ${s.id === 'fun' ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
@@ -479,7 +479,7 @@ function openSettings() {
         <p>Filled in as "Pay to" on new splits. Stored encrypted like everything else.</p>
         <textarea class="input" data-payto rows="2" maxlength="100" placeholder="e.g. BCA 1234567890 a.n. Rose · GoPay 0812…">${esc(M.savedPayTo())}</textarea>
         <h3>Currency</h3>
-        <select class="input j-currency" data-currency>${M.CURRENCIES.map(c => `<option ${c === M.currency() ? 'selected' : ''}>${c}</option>`).join('')}</select>
+        <select class="input currency-select" data-currency>${M.CURRENCIES.map(c => `<option ${c === M.currency() ? 'selected' : ''}>${c}</option>`).join('')}</select>
         <h3>Backup</h3><button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       el.querySelector('[data-currency]').addEventListener('change', async e => {

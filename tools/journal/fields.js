@@ -48,7 +48,7 @@ export function renderFieldInputs(cat, values = {}, scope = 'c') {
       case 'yesno': {
         const opts = f.type === 'yesno' ? ['Yes', 'No'] : (f.options || []).filter(Boolean);
         return `<div class="j-field">${head}
-          <div class="j-chips" role="radiogroup" aria-labelledby="fl-${scope}-${f.id}">
+          <div class="choice-chips" role="radiogroup" aria-labelledby="fl-${scope}-${f.id}">
             ${opts.map(o => `<button type="button" role="radio" aria-checked="${v === o}" data-act="set-field" data-fid="${f.id}" data-val="${esc(o)}">${esc(o)}</button>`).join('')}
           </div></div>`;
       }

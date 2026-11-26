@@ -98,7 +98,7 @@ export function openItemDialog(id, defaults = {}) {
         if (xi) bits.push(M.expiryText(xi));
         return `
           <p class="i-facts">${esc(bits.join(' · '))}</p>
-          <div class="i-quick">
+          <div class="quick-actions">
             <button class="btn btn-ghost btn-sm" type="button" data-quick="used">${ICONS.hand}Used it today</button>
             ${item.replace ? `<button class="btn btn-ghost btn-sm" type="button" data-quick="replaced">${ICONS.check}Replaced today</button>` : ''}
             ${item.afterOpen && !item.opened ? `<button class="btn btn-ghost btn-sm" type="button" data-quick="opened">Opened today</button>` : ''}
@@ -109,11 +109,11 @@ export function openItemDialog(id, defaults = {}) {
       el.innerHTML = `
         <h2>${existing ? esc(item.name) : (wish ? 'Add to wishlist' : 'Add an item')}</h2>
         ${info}
-        <form novalidate class="i-form">
+        <form novalidate class="entry-form">
           <label class="field"><span class="field-label">Name</span>
             <input class="input" name="name" value="${esc(item.name)}" required maxlength="80" placeholder="${wish ? 'e.g. Rattan floor lamp' : 'e.g. Kitchen scissors'}" ${existing ? '' : 'autofocus'}></label>
 
-          <div class="i-grid">
+          <div class="field-grid">
             <label class="field"><span class="field-label">Quantity</span>
               <input class="input" name="qty" type="number" inputmode="numeric" min="1" step="1" value="${Number(item.qty) || 1}"></label>
             <label class="field"><span class="field-label">Category</span>
@@ -126,7 +126,7 @@ export function openItemDialog(id, defaults = {}) {
           <label class="field i-newspot" hidden><span class="field-label">New spot in this room</span>
             <input class="input" name="newSpot" placeholder="e.g. Top drawer" maxlength="60" autocomplete="off"></label>
 
-          <div class="i-grid">
+          <div class="field-grid">
             <label class="field"><span class="field-label">Estimated price (${esc(cfg.currency)})${Number(item.qty) > 1 ? ', each' : ''}</span>
               <input class="input" name="price" inputmode="decimal" value="${item.price != null ? esc(M.plainNumber(item.price)) : ''}" autocomplete="off"></label>
             ${wish ? `<label class="field"><span class="field-label">Link (optional)</span>
@@ -136,10 +136,10 @@ export function openItemDialog(id, defaults = {}) {
           </div>
 
           ${wish ? '' : `
-          <div class="i-replace">
+          <div class="option-box">
             <label class="check"><input type="checkbox" name="doReplace" ${item.replace ? 'checked' : ''}>
               <span>Replace periodically<small>For things that wear out, like scissors, sponges or filters.</small></span></label>
-            <div class="i-every" ${item.replace ? '' : 'hidden'}>
+            <div class="every-row" ${item.replace ? '' : 'hidden'}>
               <span>Every</span>
               <input class="input" name="every" type="number" inputmode="numeric" min="1" step="1" value="${Number(r.every) || 1}" aria-label="How many">
               <select class="input" name="unit" aria-label="Unit">${Object.entries(M.UNITS).map(([u, [, many]]) => `<option value="${u}" ${u === r.unit ? 'selected' : ''}>${many}</option>`).join('')}</select>
@@ -148,17 +148,17 @@ export function openItemDialog(id, defaults = {}) {
               <input class="input" name="lastReplaced" type="date" value="${esc(item.lastReplaced || item.acquired || '')}"></label>
           </div>
 
-          <div class="i-replace i-expiry">
+          <div class="option-box i-expiry">
             <label class="check"><input type="checkbox" name="doExpiry" ${item.expires || item.afterOpen ? 'checked' : ''}>
               <span>Track expiry<small>For medicine, food, skincare and anything that goes off.</small></span></label>
             <div data-expiry ${item.expires || item.afterOpen ? '' : 'hidden'}>
-              <div class="i-grid">
+              <div class="field-grid">
                 <label class="field"><span class="field-label">Expiry date</span>
                   <input class="input" name="expires" type="date" value="${esc(item.expires || '')}"></label>
                 <label class="field"><span class="field-label">Opened on</span>
                   <input class="input" name="opened" type="date" value="${esc(item.opened || '')}"></label>
               </div>
-              <div class="i-every">
+              <div class="every-row">
                 <span>Use within</span>
                 <input class="input" name="aoEvery" type="number" inputmode="numeric" min="1" step="1" value="${item.afterOpen ? Number(item.afterOpen.every) : ''}" placeholder="–" aria-label="How long after opening">
                 <select class="input" name="aoUnit" aria-label="Unit">${Object.entries(M.UNITS).map(([u, [, many]]) => `<option value="${u}" ${u === ((item.afterOpen && item.afterOpen.unit) || 'months') ? 'selected' : ''}>${many}</option>`).join('')}</select>
@@ -168,7 +168,7 @@ export function openItemDialog(id, defaults = {}) {
           </div>
 
           <div class="field"><span class="field-label">Condition</span>
-            <div class="j-chips i-cond" role="radiogroup" aria-label="Condition">
+            <div class="choice-chips i-cond" role="radiogroup" aria-label="Condition">
               ${Object.entries(M.CONDITIONS).map(([k, v]) => `<button type="button" role="radio" data-cond="${k}" aria-checked="${item.condition === k}">${v}</button>`).join('')}
             </div></div>
           <label class="check"><input type="checkbox" name="sentimental" ${item.sentimental ? 'checked' : ''}>
@@ -179,7 +179,7 @@ export function openItemDialog(id, defaults = {}) {
 
           <div class="form-error" role="alert"></div>
           <div class="dialog-actions">
-            ${existing ? '<button class="btn btn-text j-danger" type="button" data-delete>Delete</button>' : ''}
+            ${existing ? '<button class="btn btn-text danger-text" type="button" data-delete>Delete</button>' : ''}
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
             <button class="btn btn-primary" type="submit">${existing ? 'Save' : (wish ? 'Add to wishlist' : 'Add item')}</button>
@@ -220,7 +220,7 @@ export function openItemDialog(id, defaults = {}) {
       });
       form.doExpiry?.addEventListener('change', () => { el.querySelector('[data-expiry]').hidden = !form.doExpiry.checked; });
       form.doReplace?.addEventListener('change', () => {
-        el.querySelector('.i-every').hidden = !form.doReplace.checked;
+        el.querySelector('.every-row').hidden = !form.doReplace.checked;
         el.querySelector('.i-lastrep').hidden = !form.doReplace.checked;
       });
       form.acquired?.addEventListener('change', () => {
@@ -230,7 +230,7 @@ export function openItemDialog(id, defaults = {}) {
       const del = el.querySelector('[data-delete]');
       if (del) confirmButton(del, 'Tap again to delete', async () => { await remove(key); toast('Deleted'); close(); });
 
-      el.querySelector('.i-quick')?.addEventListener('click', async e => {
+      el.querySelector('.quick-actions')?.addEventListener('click', async e => {
         const b = e.target.closest('[data-quick]');
         if (!b) return;
         const id2 = key.slice(5);
@@ -310,7 +310,7 @@ export function openRenewDialog(id) {
         <h2>New ${esc(i.name)}</h2>
         <p>Got a fresh one? Update its dates. Or, if it's simply finished, let it go instead.</p>
         <form novalidate>
-          <div class="i-grid">
+          <div class="field-grid">
             ${i.expires || !i.afterOpen ? `<label class="field"><span class="field-label">New expiry date</span><input class="input" type="date" name="expires"></label>` : ''}
             ${i.afterOpen ? `<label class="field"><span class="field-label">Opened on</span><input class="input" type="date" name="opened" value=""></label>` : ''}
           </div>
@@ -398,19 +398,19 @@ export function openSettingsDialog() {
       el.closest('dialog').classList.add('is-wide');
       const roomsHtml = () => M.activeList(M.config().rooms).map(r => `
         <li class="i-roomset" data-room="${r.id}">
-          <div class="j-setrow">
+          <div class="setting-row">
             <input class="input i-roomname" value="${esc(r.name)}" data-rename-room aria-label="Room name" maxlength="40">
             <button class="icon-btn" type="button" data-remove-room aria-label="Remove ${esc(r.name)}">${xIcon}</button>
           </div>
           <ul class="i-spotset">${M.roomSpots(r.id).map(sp => `
-            <li class="j-setrow" data-spot="${sp.id}">
+            <li class="setting-row" data-spot="${sp.id}">
               <input class="input" value="${esc(sp.name)}" data-rename-spot aria-label="Spot name" maxlength="60">
               <button class="icon-btn" type="button" data-remove-spot aria-label="Remove ${esc(sp.name)}">${xIcon}</button>
             </li>`).join('')}</ul>
-          <form class="j-habit-new i-addspot" data-add-spot><input class="input" name="name" placeholder="Add a spot, e.g. Wardrobe" maxlength="60"><button class="btn btn-ghost" type="submit">Add</button></form>
+          <form class="add-row i-addspot" data-add-spot><input class="input" name="name" placeholder="Add a spot, e.g. Wardrobe" maxlength="60"><button class="btn btn-ghost" type="submit">Add</button></form>
         </li>`).join('');
       const catsHtml = () => M.activeList(M.config().categories).map(c => `
-        <li class="j-setrow" data-cat="${c.id}">
+        <li class="setting-row" data-cat="${c.id}">
           <input class="input" value="${esc(c.name)}" data-rename-cat aria-label="Category name" maxlength="40">
           <button class="icon-btn" type="button" data-remove-cat aria-label="Remove ${esc(c.name)}">${xIcon}</button>
         </li>`).join('');
@@ -424,17 +424,17 @@ export function openSettingsDialog() {
         <p>Names save when you leave the field. Removing a room, spot or category hides it from pickers; items keep it.</p>
         <h3>Rooms &amp; spots</h3>
         <ul class="i-roomsets" data-list="rooms"></ul>
-        <form class="j-habit-new" data-add-room><input class="input" name="name" placeholder="Add a room, e.g. Balcony" maxlength="40"><button class="btn btn-ghost" type="submit">Add room</button></form>
+        <form class="add-row" data-add-room><input class="input" name="name" placeholder="Add a room, e.g. Balcony" maxlength="40"><button class="btn btn-ghost" type="submit">Add room</button></form>
         <h3>Categories</h3>
-        <ul class="j-setlist" data-list="categories"></ul>
-        <form class="j-habit-new" data-add-cat><input class="input" name="name" placeholder="Add a category, e.g. Plants" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
+        <ul class="setting-list" data-list="categories"></ul>
+        <form class="add-row" data-add-cat><input class="input" name="name" placeholder="Add a category, e.g. Plants" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
         <h3>Currency</h3>
-        <select class="input j-currency" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <select class="input currency-select" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
         <h3>Backup &amp; reset</h3>
-        <div class="j-reset-actions">
+        <div class="button-row">
           <button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
           <button class="btn btn-ghost btn-sm" type="button" data-reset>Reset rooms &amp; categories</button>
-          <button class="btn btn-ghost btn-sm j-danger" type="button" data-erase>Erase all inventory data…</button>
+          <button class="btn btn-ghost btn-sm danger-text" type="button" data-erase>Erase all inventory data…</button>
         </div>
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
@@ -521,7 +521,7 @@ function openEraseDialog() {
         <div class="form-error" role="alert"></div>
         <div class="dialog-actions">
           <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
-          <button class="btn btn-primary j-erase-btn" type="button" data-go disabled>Erase everything</button>
+          <button class="btn btn-primary erase-btn" type="button" data-go disabled>Erase everything</button>
         </div>`;
       const input = el.querySelector('[name=confirm]');
       const go = el.querySelector('[data-go]');

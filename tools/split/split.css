@@ -1,12 +1,5 @@
 /* Bill splitter (builds on journal, inventory and subscriptions styles) */
 
-.t-bar { justify-content: flex-end; }
-.t-title { flex: 1; margin: 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.5rem, 5vw, 2rem); }
-.s-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: .82rem; color: var(--text-muted); }
-.s-name { font-weight: 700; overflow-wrap: break-word; }
-.s-right { display: grid; justify-items: end; gap: 2px; flex: none; text-align: right; }
-.s-price { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-
 .sp-trips { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .sp-trip { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; transition: background-color .15s, transform .15s; }
 .sp-trip:hover { background: var(--surface-hover); transform: translateY(-1px); }
@@ -40,7 +33,7 @@
 .sp-balances { list-style: none; margin: 0; padding: 0; }
 .sp-balances li { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name net" "bal net"; gap: 2px 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent); }
 .sp-balances li:last-child { border-bottom: 0; }
-.sp-balances .s-name { grid-area: name; }
+.sp-balances .row-name { grid-area: name; }
 .sp-balances small { font-weight: 600; color: var(--text-muted); }
 .sp-bal { grid-area: bal; display: flex; flex-wrap: wrap; gap: 0 12px; font-size: .82rem; color: var(--text-muted); }
 .sp-bal strong { color: var(--text); }
@@ -50,7 +43,7 @@
 
 .sp-transfers { list-style: none; margin: 0 0 8px; padding: 0; --accent: var(--leaf); }
 .sp-transfers li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
-.sp-transfers li.is-done .sp-who, .sp-transfers li.is-done .s-price { color: var(--text-muted); text-decoration: line-through; }
+.sp-transfers li.is-done .sp-who, .sp-transfers li.is-done .amount { color: var(--text-muted); text-decoration: line-through; }
 .sp-who { flex: 1; min-width: 0; font-size: .95rem; }
 .sp-share { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .sp-danger { text-align: center; }
@@ -77,4 +70,3 @@
 .sp-delivery .segmented { margin-top: 0; }
 @media (max-width: 420px) { .sp-delivery { grid-template-columns: minmax(0, 1fr); } }
 .sp-usesaved { display: block; margin-top: 6px; font-size: .86rem; overflow-wrap: anywhere; text-align: left; }
-.segmented.s-splitmode { grid-template-columns: repeat(2, 1fr); }

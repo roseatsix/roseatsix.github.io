@@ -9,12 +9,12 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-26d';
+const VERSION = 'ras-2026-11-26e';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
   '/', '/index.html',
-  '/assets/css/style.css', '/assets/favicon.svg', '/assets/manifest.webmanifest',
+  '/assets/css/style.css', '/assets/css/components.css', '/assets/favicon.svg', '/assets/manifest.webmanifest',
   '/assets/icons/apple-touch-icon.png', '/assets/icons/icon-192.png',
   '/assets/js/theme-boot.js', '/assets/js/config.js', '/assets/js/hub.js', '/assets/js/hub-today.js',
   '/assets/js/core/backup.js', '/assets/js/core/crypto.js', '/assets/js/core/firebase.js', '/assets/js/core/idb.js',

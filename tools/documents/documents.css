@@ -43,8 +43,6 @@
 .d-result-info span { font-size: .84rem; color: var(--text-muted); }
 .d-result-actions { display: flex; gap: 8px; }
 
-.d-seg3 { grid-template-columns: repeat(3, 1fr); }
-
 .d-pagebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 10px; }
 .d-pagebar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .d-pages { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }

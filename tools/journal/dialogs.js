@@ -43,7 +43,7 @@ export function openTaskDialog(id, defaults = {}) {
           <div class="j-task-titlerow">
             <label class="j-done-toggle">
               <input type="checkbox" name="done" ${task.done ? 'checked' : ''}>
-              <span class="j-box">${ICONS.check}</span>
+              <span class="tick-box">${ICONS.check}</span>
               <span class="visually-hidden">Done</span>
             </label>
             <textarea class="j-title-input" name="title" rows="1" placeholder="Task" aria-label="Task title">${esc(task.title)}</textarea>
@@ -66,14 +66,14 @@ export function openTaskDialog(id, defaults = {}) {
           <ul class="j-subtasks" data-subs></ul>
           <div class="j-add j-add-sub">
             <span class="j-add-icon">${ICONS.plus}</span>
-            <input class="j-inline" data-newsub placeholder="Add a subtask" autocomplete="off" aria-label="New subtask">
+            <input class="inline-input" data-newsub placeholder="Add a subtask" autocomplete="off" aria-label="New subtask">
           </div>
 
           <h3>Notes</h3>
           <textarea class="input j-task-notes" name="notes" rows="3" placeholder="Details, links, anything…">${esc(task.notes || '')}</textarea>
 
           <div class="dialog-actions">
-            ${existing ? '<button class="btn btn-text j-danger" type="button" data-delete>Delete task</button>' : ''}
+            ${existing ? '<button class="btn btn-text danger-text" type="button" data-delete>Delete task</button>' : ''}
             <span class="spacer"></span>
             <button class="btn btn-primary" type="submit">${existing ? 'Done' : 'Add task'}</button>
           </div>
@@ -88,8 +88,8 @@ export function openTaskDialog(id, defaults = {}) {
         const subs = Object.entries(task.subtasks).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
         subsEl.innerHTML = subs.map(([sid, s]) => `
           <li class="j-task${s.done ? ' is-done' : ''}">
-            <label class="j-check"><input type="checkbox" data-sub-done="${sid}" ${s.done ? 'checked' : ''} aria-label="Done"><span class="j-box">${ICONS.check}</span></label>
-            <input class="j-inline" data-sub-text="${sid}" value="${esc(s.text)}" aria-label="Subtask">
+            <label class="tick"><input type="checkbox" data-sub-done="${sid}" ${s.done ? 'checked' : ''} aria-label="Done"><span class="tick-box">${ICONS.check}</span></label>
+            <input class="inline-input" data-sub-text="${sid}" value="${esc(s.text)}" aria-label="Subtask">
             <button class="j-del" type="button" data-sub-del="${sid}" aria-label="Delete subtask">${ICONS.x}</button>
           </li>`).join('');
       };
@@ -201,7 +201,7 @@ export function openLogDialog(id) {
           </div>
           <div class="form-error" role="alert"></div>
           <div class="dialog-actions">
-            <button class="btn btn-text j-danger" type="button" data-delete>Delete</button>
+            <button class="btn btn-text danger-text" type="button" data-delete>Delete</button>
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
             <button class="btn btn-primary" type="submit">Save</button>
@@ -273,7 +273,7 @@ export function openEventDialog(id, defaults = {}) {
           <label class="field"><span class="field-label">Note (optional)</span><textarea class="input" name="note" rows="2">${esc(ev.note || '')}</textarea></label>
           <div class="form-error" role="alert"></div>
           <div class="dialog-actions">
-            ${existing ? '<button class="btn btn-text j-danger" type="button" data-delete>Delete</button>' : ''}
+            ${existing ? '<button class="btn btn-text danger-text" type="button" data-delete>Delete</button>' : ''}
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
             <button class="btn btn-primary" type="submit">Save</button>
@@ -343,12 +343,12 @@ export function openSettingsDialog() {
         <ul class="j-setitems" data-list="spendCats"></ul>
         <button class="btn btn-ghost btn-sm" type="button" data-add="spendCats">${ICONS.plus}Add spending category</button>
         <h3>Currency</h3>
-        <select class="input j-currency" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <select class="input currency-select" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
         <h3>Backup &amp; reset</h3>
-        <div class="j-reset-actions">
+        <div class="button-row">
           <button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
           <button class="btn btn-ghost btn-sm" type="button" data-reset-cats>Reset categories to defaults</button>
-          <button class="btn btn-ghost btn-sm j-danger" type="button" data-erase>Erase all journal data…</button>
+          <button class="btn btn-ghost btn-sm danger-text" type="button" data-erase>Erase all journal data…</button>
         </div>
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
@@ -412,7 +412,7 @@ function openCategoryEditor(map, id) {
               <select class="input" data-q="type" aria-label="Answer type">${Object.entries(FIELD_TYPES).map(([t, l]) => `<option value="${t}" ${t === f.type ? 'selected' : ''}>${l}</option>`).join('')}</select>
               ${f.type === 'choice' ? `<input class="input" data-q="options" value="${esc((f.options || []).join(', '))}" placeholder="Options, separated by commas" aria-label="Options">` : ''}
             </div>
-          </li>`).join('') || '<li class="j-empty">No extra questions. Entries just use the prompt.</li>';
+          </li>`).join('') || '<li class="empty">No extra questions. Entries just use the prompt.</li>';
       };
       el.innerHTML = `
         <h2>${isNew ? `New ${kind} category` : esc(cat.name)}</h2>
@@ -429,7 +429,7 @@ function openCategoryEditor(map, id) {
             <button class="btn btn-ghost btn-sm" type="button" data-qadd>${ICONS.plus}Add question</button>` : ''}
           <div class="form-error" role="alert"></div>
           <div class="dialog-actions">
-            ${!isNew && !builtIn ? '<button class="btn btn-text j-danger" type="button" data-remove>Remove</button>' : ''}
+            ${!isNew && !builtIn ? '<button class="btn btn-text danger-text" type="button" data-remove>Remove</button>' : ''}
             <span class="spacer"></span>
             <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
             <button class="btn btn-primary" type="submit">Save</button>
@@ -512,7 +512,7 @@ function openEraseDialog() {
         <div class="form-error" role="alert"></div>
         <div class="dialog-actions">
           <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
-          <button class="btn btn-primary j-erase-btn" type="button" data-go disabled>Erase everything</button>
+          <button class="btn btn-primary erase-btn" type="button" data-go disabled>Erase everything</button>
         </div>`;
       const input = el.querySelector('[name=confirm]');
       const go = el.querySelector('[data-go]');
@@ -542,16 +542,16 @@ export function openHabitsDialog() {
       const rows = current.map(h => ({ id: h.id, name: h.name }));
       const draw = () => {
         el.querySelector('[data-rows]').innerHTML = rows.map((r, i) => `
-          <li class="j-setrow">
+          <li class="setting-row">
             <input class="input" data-row="${i}" value="${esc(r.name)}" aria-label="Habit name" maxlength="40">
             <button class="icon-btn" type="button" data-remove="${i}" aria-label="Remove ${esc(r.name)}">${ICONS.x}</button>
-          </li>`).join('') || '<li class="j-empty">No habits yet.</li>';
+          </li>`).join('') || '<li class="empty">No habits yet.</li>';
       };
       el.innerHTML = `
         <h2>Your habits</h2>
         <p>These show on every day so you can tick them off. Removing one keeps its past ticks.</p>
-        <ul class="j-setlist" data-rows></ul>
-        <form class="j-habit-new" data-new>
+        <ul class="setting-list" data-rows></ul>
+        <form class="add-row" data-new>
           <input class="input" name="name" placeholder="New habit, e.g. Walk 20 min" maxlength="40" autocomplete="off" autofocus>
           <button class="btn btn-ghost" type="submit">Add</button>
         </form>

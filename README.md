@@ -30,3 +30,13 @@ connection: pages load from the network first and fall back to the saved
 copy. When adding a new tool, add its files to `SHELL` in `sw.js` and bump
 `VERSION`, and add its store name to `KNOWN_STORES` in
 `assets/js/core/backup.js`.
+
+## Styles
+
+- `assets/css/style.css`: colours, fonts, buttons, fields, dialogs, header, hub (every page)
+- `assets/css/components.css`: shared pieces for tool pages: panels, toolbar and tabs,
+  unlock screen, stats, ticks, chips, search, settings rows, form helpers
+- `tools/<name>/<name>.css`: only layouts unique to that tool
+
+A tool page loads those three, in that order. Put anything two tools share in
+`components.css` with a neutral name, never in another tool's stylesheet.
