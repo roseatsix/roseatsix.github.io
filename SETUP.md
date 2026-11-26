@@ -1,8 +1,8 @@
 # Setting up sign-in and sync
 
-The site stores your data in **Firebase** (Google). Everything is encrypted in
-your browser before it's uploaded, and the database rules allow only your
-Google account in. The free Spark plan is plenty.
+The site stores data in **Firebase** (Google). Anyone can sign in with a
+Google account; each account gets its own private space, and everything is
+encrypted in the browser before it's uploaded. The free Spark plan is plenty.
 
 ## 1. Create the project
 
@@ -35,21 +35,38 @@ Google account in. The free Spark plan is plenty.
 
    These values are meant to be public; they only identify the project.
 
-## 3. Lock the database to your account
+## 3. Publish the database rules
 
 1. **Firestore Database → Rules** → replace everything with the contents of
    [`firestore.rules`](firestore.rules) → **Publish**.
-2. Open the site and **Sign in**. Because the rules still contain the
-   placeholder `OWNER_UID`, you'll see "This space is private" along with
-   your account ID. Copy it.
-3. Back in the Rules editor, replace `OWNER_UID` with your ID → **Publish**.
-4. On the site press **Check again**, then set up your vault passphrase.
+2. Open the site, **Sign in**, and set up your vault passphrase.
+
+The rules give every signed-in account its own space (`users/{their id}`)
+and block access to anyone else's. They also cap item sizes, so strangers
+can't use your project as free file storage.
 
 ## 4. Optional hardening
 
 - **Google Cloud console → APIs & Services → Credentials → Browser key** →
-  *Application restrictions: Websites* → add `https://roseatsix.github.io/*`.
-  This stops other sites from using your project's key.
+  *Application restrictions: Websites* → add **both**:
+  - `https://roseatsix.github.io/*`
+  - `https://roseatsix.firebaseapp.com/*` (the Google sign-in pop-up runs
+    here; leaving it out breaks sign-in with "The requested action is invalid")
+
+  This stops other sites from using your project's key. If you also set
+  *API restrictions*, the key needs at least **Identity Toolkit API**,
+  **Token Service API** and **Cloud Firestore API**.
+
+## Troubleshooting
+
+- **Pop-up says "The requested action is invalid"**: check that Google is
+  enabled under Authentication → Sign-in method, and that any website
+  restriction on the API key includes `https://roseatsix.firebaseapp.com/*`.
+  Changes to key restrictions can take a few minutes to apply.
+- **"This web address isn't authorised for sign-in"**: add
+  `roseatsix.github.io` under Authentication → Settings → Authorized domains.
+- **"Can't open your data"**: the Firestore rules haven't been published, or
+  are an old version. Paste `firestore.rules` into the Rules tab and publish.
 
 ## How the data is protected
 
@@ -60,8 +77,13 @@ Google account in. The free Spark plan is plenty.
 - **Remember on this device.** Keeps the unlocked key in this browser's
   storage, in a form that can't be exported. Use **Lock** or **Sign out** in
   the account menu to forget it.
-- **What the server can see:** how many items you have, when they changed, and
-  which device saved them. Not their contents, titles or names.
+- **What the server can see:** how many items each account has, when they
+  changed, and which device saved them. Not their contents, titles or names.
+- **Other people's accounts** are completely separate: different keys,
+  different passphrase, and the rules stop accounts reading each other.
+- **Usage limits:** everyone who signs up uses your Firebase project's free
+  quota. If that ever becomes a problem, Firebase App Check can limit access
+  to requests coming from this site.
 
 ## How syncing works
 

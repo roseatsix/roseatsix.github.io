@@ -132,7 +132,7 @@ export function mountHeader({ autoUnlock = false } = {}) {
         ${status}
       </div>
       ${st.status === 'denied' ? `
-        <p class="menu-note">This account doesn't have access to this space.</p>
+        <p class="menu-note">The database refused access for this account.</p>
         <button class="menu-item" role="menuitem" data-m="denied">${ICON.lock}Details</button>` : ''}
       ${st.status === 'unlocked' ? `
         <button class="menu-item" role="menuitem" data-m="lock">${ICON.lock}Lock on this device</button>` : ''}
@@ -195,7 +195,7 @@ function avatarButton(u, sync) {
     : `<span class="avatar-initial">${initial}</span>`;
   const dot = sync ? `<span class="sync-dot" data-state="${sync}"></span>` : '';
   return `<button class="icon-btn has-avatar" type="button" data-act="menu" aria-haspopup="menu" aria-expanded="false"
-            aria-label="Account: ${esc(u.name || u.email)}" title="${esc(sync ? SYNC_TEXT[sync] : 'No access')}">${face}${dot}</button>`;
+            aria-label="Account: ${esc(u.name || u.email)}" title="${esc(sync ? SYNC_TEXT[sync] : 'No access to data')}">${face}${dot}</button>`;
 }
 
 /* ----- keep palette + custom colours in sync across devices ----- */

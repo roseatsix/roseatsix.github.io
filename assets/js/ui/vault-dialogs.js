@@ -213,27 +213,22 @@ export function openUnlockDialog() {
   });
 }
 
-/* ---------- Not the owner ---------- */
+/* ---------- Database refused access ---------- */
 
 export function openDeniedDialog() {
   const st = S.getState();
   return openDialog({
-    label: 'This space is private',
+    label: "Can't open your data",
     render(el, close) {
       el.innerHTML = `
         ${BLOSSOM}
-        <h2>This space is private</h2>
-        <p>You're signed in as <strong>${esc(st.user.email || st.user.name)}</strong>, but this account doesn't have access to the data here.</p>
-        <p>If this is your site and you're setting it up, add this account ID to your Firestore rules (see <strong>SETUP.md</strong>), then press Check again.</p>
-        <div class="copyable">
-          <code>${esc(st.user.uid)}</code>
-          <button class="btn btn-ghost" type="button" data-copy>${ICON.copy}Copy</button>
-        </div>
+        <h2>Can't open your data</h2>
+        <p>You're signed in as <strong>${esc(st.user.email || st.user.name)}</strong>, but the database refused access.</p>
+        <p>This usually means the Firestore rules haven't been published yet (see <strong>SETUP.md</strong>). Once they are, press Check again.</p>
         <div class="dialog-actions">
           <button class="btn btn-ghost" type="button" data-out>Sign out</button>
           <button class="btn btn-primary" type="button" data-retry>Check again</button>
         </div>`;
-      el.querySelector('[data-copy]').addEventListener('click', () => copyText(st.user.uid));
       el.querySelector('[data-out]').addEventListener('click', async () => { await S.signOut(); close(); });
       el.querySelector('[data-retry]').addEventListener('click', async e => {
         await busy(e.currentTarget, 'Checking…', () => S.retry());
