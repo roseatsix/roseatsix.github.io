@@ -924,7 +924,7 @@ dialog.dialog { overflow-x: hidden; }
 @media (max-width: 640px) {
   .hero { margin: 24px 0 20px; padding: 22px 20px 18px; }
   .hero .lede { font-size: .95rem; margin-top: 6px; }
-  .quick-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
+  body.has-today .quick-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
   .quick-tool {
     display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 6px 14px 6px 8px;
     border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep);

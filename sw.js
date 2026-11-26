@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-26';
+const VERSION = 'ras-2026-11-26b';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -49,7 +49,9 @@ self.addEventListener('activate', event => {
 
 async function networkFirst(request) {
   const cache = await caches.open(VERSION);
-  const network = fetch(request).then(res => {
+  // 'no-cache' asks the server whether each file changed, instead of using
+  // the browser's short-lived copy, so all files of an update arrive together.
+  const network = fetch(request, { cache: 'no-cache' }).then(res => {
     if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
     return res;
   });
