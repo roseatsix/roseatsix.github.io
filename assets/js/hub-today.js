@@ -23,10 +23,11 @@ export function mountToday() {
   let jReady = false;
 
   const render = () => {
-    if (S.getState().status !== 'unlocked' || !jReady) { box.hidden = true; return; }
+    if (S.getState().status !== 'unlocked' || !jReady) { box.hidden = true; document.body.classList.remove('has-today'); return; }
     const html = view();
     box.innerHTML = html;
     box.hidden = !html;
+    document.body.classList.toggle('has-today', !!html);
   };
 
   journal.subscribe(list => { J.setItems(list); jReady = true; render(); });
