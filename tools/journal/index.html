@@ -23,6 +23,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Nunito+Sans:opsz,wght@6..12,400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/style.css">
+  <link rel="stylesheet" href="../../assets/css/components.css">
   <link rel="stylesheet" href="journal.css">
 </head>
 <body>
@@ -71,22 +72,22 @@
       </div>
     </header>
 
-    <div class="j-tabbar">
-      <nav class="j-tabs" aria-label="Journal views">
-        <a href="#/day" data-tab="day" aria-label="Today" title="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/></svg><span class="j-tab-label">Today</span></a>
-        <a href="#/week" data-tab="week" aria-label="Week" title="Week"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M9.2 5v14M14.8 5v14"/></svg><span class="j-tab-label">Week</span></a>
-        <a href="#/month" data-tab="month" aria-label="Month" title="Month"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M9.3 10v10M14.7 10v10M4 15h16"/></svg><span class="j-tab-label">Month</span></a>
-        <a href="#/year" data-tab="year" aria-label="Year" title="Year"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></svg><span class="j-tab-label">Year</span></a>
-        <a href="#/budget" data-tab="budget" aria-label="Budget" title="Budget"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8V7a2 2 0 0 1 2-2H17v3"/><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M15.5 13.5h1.5"/></svg><span class="j-tab-label">Budget</span></a>
-        <a href="#/activity" data-tab="activity" aria-label="Activity" title="Activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7M10 20V5M15 20v-9M20 20v-4"/></svg><span class="j-tab-label">Activity</span></a>
-        <a href="#/search" data-tab="search" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><span class="j-tab-label">Search</span></a>
+    <div class="toolbar">
+      <nav class="tabs" aria-label="Journal views">
+        <a href="#/day" data-tab="day" aria-label="Today" title="Today"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/></svg><span class="tab-label">Today</span></a>
+        <a href="#/week" data-tab="week" aria-label="Week" title="Week"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M9.2 5v14M14.8 5v14"/></svg><span class="tab-label">Week</span></a>
+        <a href="#/month" data-tab="month" aria-label="Month" title="Month"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4M9.3 10v10M14.7 10v10M4 15h16"/></svg><span class="tab-label">Month</span></a>
+        <a href="#/year" data-tab="year" aria-label="Year" title="Year"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></svg><span class="tab-label">Year</span></a>
+        <a href="#/budget" data-tab="budget" aria-label="Budget" title="Budget"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8V7a2 2 0 0 1 2-2H17v3"/><rect x="4" y="8" width="16" height="11" rx="2.5"/><path d="M15.5 13.5h1.5"/></svg><span class="tab-label">Budget</span></a>
+        <a href="#/activity" data-tab="activity" aria-label="Activity" title="Activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7M10 20V5M15 20v-9M20 20v-4"/></svg><span class="tab-label">Activity</span></a>
+        <a href="#/search" data-tab="search" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><span class="tab-label">Search</span></a>
       </nav>
       <button class="icon-btn" type="button" data-act="settings" aria-label="Journal settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/></svg>
       </button>
     </div>
 
-    <main id="journal" class="journal" aria-live="polite"></main>
+    <main id="journal" class="tool-main" aria-live="polite"></main>
 
     <footer class="footer">
       <svg class="footer-blossom" aria-hidden="true"><use href="#blossom"/></svg>

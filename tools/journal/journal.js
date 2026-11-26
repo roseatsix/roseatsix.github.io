@@ -17,7 +17,7 @@ import * as IM from '../inventory/model.js';
 import * as SM from '../subscriptions/model.js';
 
 const main = document.getElementById('journal');
-const tabs = document.querySelector('.j-tabs');
+const tabs = document.querySelector('.tabs');
 const store = openStore('journal');
 const inventory = openStore('inventory');
 const subscriptions = openStore('subscriptions');

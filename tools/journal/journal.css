@@ -4,76 +4,6 @@
    with the theme, so they work in light and dark mode.
    ========================================================== */
 
-:where(.journal, .dialog, .j-tabbar) :where(*) {
-  --cc: color-mix(in oklab, var(--c, var(--flower)), white var(--accent-lift));
-  --cc-soft: color-mix(in oklab, var(--cc) var(--soft-amount), var(--surface));
-  --cc-deep: color-mix(in oklab, var(--cc) 68%, var(--text));
-}
-
-/* ---------- Tab bar ---------- */
-
-.j-tabbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 26px 0 22px;
-}
-
-.j-tabs {
-  display: flex;
-  gap: 2px;
-  min-width: 0;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.j-tabs::-webkit-scrollbar { display: none; }
-.j-tabs a {
-  display: grid;
-  place-items: center;
-  flex: none;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: .92rem;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.j-tabs a { grid-auto-flow: column; gap: 7px; }
-.j-tabs a svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-@media (max-width: 720px) {
-  .j-tabbar { margin: 20px 0 18px; }
-  .j-tabs { flex: 1; justify-content: space-between; overflow: visible; }
-  .j-tabs a { flex: 1; min-width: 0; min-height: 38px; padding: 0; }
-  .j-tabs a svg { width: 20px; height: 20px; }
-  .j-tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-}
-.j-tabs a:hover { color: var(--text); }
-.j-tabs a[aria-current="page"] { background: var(--flower-soft); color: var(--flower-deep); }
-.j-tabbar > .icon-btn { flex: none; }
-.j-tabbar > .icon-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-
-.journal { min-height: 50vh; }
-.j-view { display: grid; gap: 16px; }
-
-/* ---------- Gate ---------- */
-
-.j-gate {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  max-width: 440px; margin: 40px auto; padding: 36px 28px;
-  border-radius: var(--radius-lg); background: var(--surface);
-  border: 1px solid var(--border); box-shadow: var(--shadow); text-align: center;
-}
-.j-gate h1 { margin: 6px 0 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: 1.6rem; }
-.j-gate p { margin: 4px 0 16px; color: var(--text-muted); }
-.j-gate-blossom { width: 40px; height: 40px; color: var(--flower); }
-.j-gate .spinner { width: 24px; height: 24px; color: var(--flower); }
-
 /* ---------- View header: centred title ---------- */
 
 .j-head {
@@ -84,27 +14,6 @@
 }
 .j-head .icon-btn { text-decoration: none; }
 .j-head .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.j-head-title { min-width: 0; text-align: center; }
-.j-head-title .eyebrow { margin: 0; }
-.j-head-title h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-variation-settings: "SOFT" 100;
-  font-weight: 500;
-  font-size: clamp(1.5rem, 5vw, 2.2rem);
-  line-height: 1.15;
-  letter-spacing: -.015em;
-}
-.j-head-extra {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: -6px;
-}
-.j-head-extra .btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.j-head-extra .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 
 .j-datepick { position: relative; overflow: hidden; width: 32px; height: 32px; }
 .j-datepick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; border: 0; padding: 0; }
@@ -143,71 +52,12 @@ button.j-pill { cursor: pointer; }
   .j-activity .j-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 .j-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
-
-.j-card {
-  min-width: 0;
-  padding: 18px 18px 14px;
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-@media (max-width: 480px) { .j-card { padding: 16px 14px 12px; } }
-
-.j-card-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  margin-bottom: 8px;
-}
-.j-card-head h2 {
-  display: flex; align-items: center; gap: 8px; margin: 0;
-  font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: 1.2rem;
-}
-.j-card-head h2::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent, var(--flower)); }
-.j-count { font-size: .82rem; font-weight: 600; color: var(--text-muted); }
-.j-empty { margin: 6px 0 8px; font-size: .9rem; color: var(--text-muted); }
 .j-sub { margin: 8px 0 0; font-size: .76rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
 .j-hint { font-size: .8rem; color: var(--text-muted); }
 .j-big { margin: 2px 0 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: 1.7rem; font-weight: 500; }
-.j-danger { color: var(--danger) !important; }
-
-.j-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-.j-week .j-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.j-stat .j-compact { display: none; }
-@media (max-width: 560px) {
-  .j-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .j-stat { padding: 10px; font-size: .74rem; line-height: 1.3; }
-  .j-stat span { font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .j-stat .j-full { display: none; }
-  .j-stat .j-compact { display: block; }
-}
-.j-stat {
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  font-size: .82rem;
-  color: var(--text-muted);
-}
-.j-stat span {
-  display: block;
-  font-family: var(--font-display);
-  font-variation-settings: "SOFT" 100;
-  font-size: 1.45rem;
-  font-weight: 500;
-  color: var(--text);
-  overflow-wrap: anywhere;
-}
+.j-week .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 /* ---------- Inputs shared ---------- */
-
-.j-inline {
-  flex: 1; min-width: 0; min-height: 38px; padding: 6px 8px;
-  border: 0; border-radius: 8px; background: transparent; color: var(--text);
-  font: inherit; font-size: 1rem;
-}
-.j-inline:hover { background: color-mix(in oklab, var(--bg) 60%, transparent); }
-.j-inline:focus { outline: none; background: var(--bg); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--accent, var(--flower)) 60%, transparent); }
-.j-inline::placeholder { color: var(--text-muted); opacity: .85; }
 
 .j-time {
   flex: none; width: 128px; min-height: 40px; padding: 6px 8px;
@@ -306,16 +156,7 @@ button.j-pill { cursor: pointer; }
   border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 }
 .j-task.is-compact { min-height: 38px; }
-.j-check { position: relative; display: grid; place-items: center; width: 32px; height: 32px; flex: none; cursor: pointer; }
-.j-check input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-.j-box {
-  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px;
-  border: 2px solid color-mix(in oklab, var(--accent, var(--flower)) 70%, var(--border));
-  color: transparent; transition: background-color .15s, border-color .15s;
-}
-.j-box svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.j-check input:checked + .j-box, .j-done-toggle input:checked + .j-box { background: var(--accent, var(--flower)); border-color: var(--accent, var(--flower)); color: var(--surface); }
-.j-check input:focus-visible + .j-box { outline: 2px solid var(--accent, var(--flower)); outline-offset: 2px; }
+.j-done-toggle input:checked + .tick-box { background: var(--accent, var(--flower)); border-color: var(--accent, var(--flower)); color: var(--surface); }
 
 .j-task-main {
   flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px;
@@ -369,7 +210,7 @@ button.j-pill { cursor: pointer; }
 .j-weekday-name { font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
 .j-weekday-num { font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: 1.5rem; font-weight: 500; }
 .j-today-tag { margin-left: auto; padding: 1px 8px; border-radius: 999px; background: var(--flower-soft); color: var(--flower-deep); font-size: .72rem; font-weight: 800; }
-.j-weekday .j-add .j-inline { font-size: .9rem; min-height: 32px; }
+.j-weekday .j-add .inline-input { font-size: .9rem; min-height: 32px; }
 .j-weekday-foot { margin: 6px 0 0; font-size: .8rem; color: var(--text-muted); }
 
 /* ---------- Month ---------- */
@@ -540,16 +381,6 @@ button.j-pill { cursor: pointer; }
 .j-mbar b { font-size: .72rem; font-weight: 700; }
 
 /* ---------- Search ---------- */
-
-.j-searchbox {
-  display: flex; align-items: center; gap: 10px; padding: 6px 16px; border-radius: 999px;
-  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
-}
-.j-searchbox svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--text-muted); stroke-width: 1.8; stroke-linecap: round; }
-.j-searchbox .j-inline { font-size: 1.05rem; }
-.j-searchbox .j-inline:focus { background: transparent; box-shadow: none; }
-.j-searchbox input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
-.j-searchbox:focus-within { outline: 2px solid var(--flower); outline-offset: 1px; }
 .j-search-note { margin: 0 4px; font-size: .88rem; color: var(--text-muted); }
 .j-results { display: grid; gap: 10px; }
 .j-result { display: grid; gap: 4px; width: 100%; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -559,8 +390,6 @@ button.j-pill { cursor: pointer; }
 .j-result-hit mark { background: var(--sun-soft); color: var(--text); border-radius: 3px; padding: 0 2px; }
 
 /* ---------- Dialogs ---------- */
-
-@media (min-width: 520px) { dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); } }
 
 .j-taskform { --accent: var(--flower); }
 .j-task-titlerow { display: flex; align-items: flex-start; gap: 8px; margin-right: 40px; }
@@ -575,28 +404,17 @@ button.j-pill { cursor: pointer; }
 .j-quick-due { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .j-subtasks { list-style: none; margin: 0; padding: 0; }
 .j-subtasks .j-task { min-height: 40px; }
-.j-subtasks .j-task.is-done .j-inline { text-decoration: line-through; color: var(--text-muted); }
+.j-subtasks .j-task.is-done .inline-input { text-decoration: line-through; color: var(--text-muted); }
 .j-task-notes { resize: vertical; min-height: 80px; }
 @media (max-width: 480px) {
   .j-title-input { font-size: 1.2rem; }
   .j-quick-due .btn { flex: 1 1 auto; }
 }
-
-.j-setlist { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
-.j-setrow { display: flex; align-items: center; gap: 8px; }
-.j-setrow .input { min-height: 40px; padding: 8px 12px; }
-.j-setrow .input[data-k="name"] { flex: 0 1 170px; min-width: 0; }
-.j-setrow .j-prompt { flex: 1; min-width: 0; }
-.j-setrow > .input:only-of-type { flex: 1; }
+.setting-row .j-prompt { flex: 1; min-width: 0; }
 .j-lock { flex: none; width: 40px; font-size: .66rem; font-weight: 700; color: var(--text-muted); text-align: center; }
 @media (max-width: 520px) {
-  .j-setrow { flex-wrap: wrap; }
-  .j-setrow .j-prompt { flex-basis: 100%; order: 5; }
-  .j-setrow .input[data-k="name"] { flex: 1; }
+  .setting-row .j-prompt { flex-basis: 100%; order: 5; }
 }
-.j-currency { max-width: 160px; }
-.j-habit-new { display: flex; gap: 8px; margin-top: 12px; }
-.j-habit-new .input { flex: 1; }
 
 .j-swatch { position: relative; flex: none; }
 .j-swatch summary {
@@ -615,7 +433,7 @@ button.j-pill { cursor: pointer; }
    so the whole year fits on one screen. */
 @media (max-width: 640px) {
   .j-year { gap: 10px; }
-  .j-year .j-head-extra { display: none; }
+  .j-year .view-actions { display: none; }
   .j-year-legend { margin: -2px 0 0; gap: 4px 10px; font-size: .72rem; }
   .j-yeargrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .j-mini { padding: 7px 6px 6px; border-radius: var(--radius-sm); box-shadow: none; }
@@ -649,15 +467,6 @@ button.j-pill { cursor: pointer; }
 .j-rating button:active { transform: scale(.9); }
 .j-rating button.is-on { color: var(--cc); --blossom-center: var(--sun); }
 .j-rating .j-blossom { width: 30px; height: 30px; }
-
-.j-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.j-chips button {
-  min-height: 34px; padding: 4px 12px; border-radius: 999px;
-  border: 1px solid color-mix(in oklab, var(--cc) 35%, var(--surface));
-  background: var(--surface); color: var(--text);
-  font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer;
-}
-.j-chips button[aria-checked="true"] { background: var(--cc-deep); border-color: var(--cc-deep); color: var(--surface); }
 
 .dialog .j-fields { margin: 14px 0 0; }
 .dialog .j-field-label { font-size: .88rem; color: var(--text); }
@@ -698,9 +507,6 @@ button.j-pill { cursor: pointer; }
   .j-qrow-bottom { flex-wrap: wrap; }
   .j-qrow-bottom select, .j-qrow-bottom .input[data-q="options"] { flex: 1 1 100%; }
 }
-
-.j-reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.j-erase-btn:not([disabled]) { background: var(--danger); color: #fff; }
 
 .j-pill.is-replace { --c: var(--sun-base); text-decoration: none; }
 .j-rep .j-task-main { cursor: default; }

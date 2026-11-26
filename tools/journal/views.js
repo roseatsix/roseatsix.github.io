@@ -32,13 +32,13 @@ function headNav({ prev, next, eyebrow = '', title, extra = '' }) {
   return `
     <div class="j-head">
       <a class="icon-btn" href="${prev}" aria-label="Previous">${ICONS.prev}</a>
-      <div class="j-head-title">
+      <div class="view-title">
         ${eyebrow ? `<p class="eyebrow">${eyebrow}</p>` : ''}
         <h1>${title}</h1>
       </div>
       <a class="icon-btn" href="${next}" aria-label="Next">${ICONS.next}</a>
     </div>
-    ${extra ? `<div class="j-head-extra">${extra}</div>` : ''}`;
+    ${extra ? `<div class="view-actions">${extra}</div>` : ''}`;
 }
 
 function dayMarkers(date) {
@@ -62,9 +62,9 @@ export function taskRow(t, { showDue = false, compact = false } = {}) {
   if ((t.notes || '').trim()) meta.push(`<span title="Has notes">${ICONS.note}</span>`);
   return `
     <li class="j-task${t.done ? ' is-done' : ''}${compact ? ' is-compact' : ''}">
-      <label class="j-check">
+      <label class="tick">
         <input type="checkbox" data-act="toggle-task" data-id="${t.id}" ${t.done ? 'checked' : ''} aria-label="Done: ${esc(t.title)}">
-        <span class="j-box">${ICONS.check}</span>
+        <span class="tick-box">${ICONS.check}</span>
       </label>
       <button type="button" class="j-task-main" data-act="open-task" data-id="${t.id}">
         <span class="j-task-title">${esc(t.title || 'Untitled')}</span>
@@ -77,7 +77,7 @@ function addTaskForm(due, label = 'Add a task') {
   return `
     <form class="j-add" data-form="add-task" data-due="${due || ''}">
       <span class="j-add-icon">${ICONS.plus}</span>
-      <input class="j-inline" name="title" data-focus="add-task:${due || 'none'}" data-keep placeholder="${esc(label)}" autocomplete="off" aria-label="${esc(label)}">
+      <input class="inline-input" name="title" data-focus="add-task:${due || 'none'}" data-keep placeholder="${esc(label)}" autocomplete="off" aria-label="${esc(label)}">
     </form>`;
 }
 
@@ -110,11 +110,11 @@ export function renderGate(st) {
     denied: ["Can't open your data", 'The database refused access for this account.', null],
     error: ['Something went wrong', st.error || '', 'Try again'],
   }[st.status];
-  if (!copy) return `<div class="j-gate"><span class="spinner" aria-hidden="true"></span><p>Opening your journal…</p></div>`;
+  if (!copy) return `<div class="gate"><span class="spinner" aria-hidden="true"></span><p>Opening your journal…</p></div>`;
   const [title, text, action] = copy;
   return `
-    <div class="j-gate">
-      <svg class="j-gate-blossom" aria-hidden="true"><use href="#blossom"/></svg>
+    <div class="gate">
+      <svg class="gate-blossom" aria-hidden="true"><use href="#blossom"/></svg>
       <h1>${esc(title)}</h1>
       <p>${esc(text)}</p>
       ${action ? `<button class="btn btn-primary" type="button" data-act="gate">${esc(action)}</button>` : ''}
@@ -167,7 +167,7 @@ export function renderDay(date, ui) {
 
   const timeline = logs.length
     ? `<ol class="j-timeline">${logs.map(logEntry).join('')}</ol>`
-    : `<p class="j-empty">${isToday ? 'Nothing logged yet today. Jot down what you\'re doing as you go.' : 'Nothing logged on this day.'}</p>`;
+    : `<p class="empty">${isToday ? 'Nothing logged yet today. Jot down what you\'re doing as you go.' : 'Nothing logged on this day.'}</p>`;
 
   const habitChips = habits.map(h => `
     <button type="button" class="j-habit" data-act="toggle-habit" data-id="${h.id}" aria-pressed="${!!ticks[h.id]}">
@@ -177,7 +177,7 @@ export function renderDay(date, ui) {
     </button>`).join('');
 
   return `
-    <section class="j-view j-day">
+    <section class="view j-day">
       ${headNav({
         prev: '#/day/' + M.addDays(date, -1), next: '#/day/' + M.addDays(date, 1),
         eyebrow: esc(M.fmt.weekday(date)) + (rel ? ' · ' + rel : ''),
@@ -189,16 +189,16 @@ export function renderDay(date, ui) {
 
       <div class="j-grid">
         <div class="j-col">
-          <section class="j-card j-log-card" aria-labelledby="h-log">
-            <div class="j-card-head"><h2 id="h-log">Log</h2>${logs.length ? `<span class="j-count">${logs.length} ${logs.length === 1 ? 'entry' : 'entries'}</span>` : ''}</div>
+          <section class="panel j-log-card" aria-labelledby="h-log">
+            <div class="panel-head"><h2 id="h-log">Log</h2>${logs.length ? `<span class="count">${logs.length} ${logs.length === 1 ? 'entry' : 'entries'}</span>` : ''}</div>
             ${composer}
             ${timeline}
           </section>
         </div>
         <div class="j-col">
-          <section class="j-card tone-flower" aria-labelledby="h-tasks">
-            <div class="j-card-head"><h2 id="h-tasks">Tasks</h2>
-              ${due.length ? `<span class="j-count">${due.filter(t => t.done).length} of ${due.length} done</span>` : ''}</div>
+          <section class="panel tone-flower" aria-labelledby="h-tasks">
+            <div class="panel-head"><h2 id="h-tasks">Tasks</h2>
+              ${due.length ? `<span class="count">${due.filter(t => t.done).length} of ${due.length} done</span>` : ''}</div>
             ${overdue.length ? `<p class="j-sub">Overdue</p><ul class="j-list">${overdue.map(t => taskRow(t, { showDue: true })).join('')}</ul><p class="j-sub">Due ${isToday ? 'today' : 'this day'}</p>` : ''}
             ${due.length ? `<ul class="j-list">${due.map(t => taskRow(t)).join('')}</ul>` : ''}
             ${addTaskForm(date, isToday ? 'Add a task for today' : 'Add a task for this day')}
@@ -207,17 +207,17 @@ export function renderDay(date, ui) {
           ${replaceCard(date, isToday)}
           ${billsCard(date)}
 
-          <section class="j-card tone-leaf" aria-labelledby="h-habits">
-            <div class="j-card-head"><h2 id="h-habits">Habits</h2>
+          <section class="panel tone-leaf" aria-labelledby="h-habits">
+            <div class="panel-head"><h2 id="h-habits">Habits</h2>
               <button class="btn btn-text" type="button" data-act="edit-habits">${habits.length ? 'Edit' : 'Add habits'}</button></div>
-            ${habits.length ? `<div class="j-habits">${habitChips}</div>` : '<p class="j-empty">Track a few small daily things, like a walk, water or reading.</p>'}
+            ${habits.length ? `<div class="j-habits">${habitChips}</div>` : '<p class="empty">Track a few small daily things, like a walk, water or reading.</p>'}
           </section>
 
           ${spent.length ? `
-          <section class="j-card tone-sun" aria-labelledby="h-spent">
-            <div class="j-card-head"><h2 id="h-spent">Spent</h2><a class="btn btn-text" href="#/budget/${date.slice(0, 7)}">Budget</a></div>
+          <section class="panel tone-sun" aria-labelledby="h-spent">
+            <div class="panel-head"><h2 id="h-spent">Spent</h2><a class="btn btn-text" href="#/budget/${date.slice(0, 7)}">Budget</a></div>
             <p class="j-big">${esc(M.money(M.sum(spent)))}</p>
-            <p class="j-empty">${spent.length} ${spent.length === 1 ? 'purchase' : 'purchases'} on this day</p>
+            <p class="empty">${spent.length} ${spent.length === 1 ? 'purchase' : 'purchases'} on this day</p>
           </section>` : ''}
         </div>
       </div>
@@ -230,8 +230,8 @@ function replaceCard(date, isToday) {
     text: a.kind === 'replace' ? IM.dueText(IM.replaceInfo(a.item)) : IM.expiryText(IM.expiryInfo(a.item)) }));
   if (!list.length) return '';
   return `
-    <section class="j-card tone-sun" aria-labelledby="h-replace">
-      <div class="j-card-head"><h2 id="h-replace">At home</h2><a class="btn btn-text" href="../inventory/#/due">Inventory</a></div>
+    <section class="panel tone-sun" aria-labelledby="h-replace">
+      <div class="panel-head"><h2 id="h-replace">At home</h2><a class="btn btn-text" href="../inventory/#/due">Inventory</a></div>
       <ul class="j-list">${list.map(({ item, kind, text, overdue }) => `
         <li class="j-task j-rep">
           <span class="j-task-main"><span class="j-task-title">${esc(item.name)}</span>
@@ -248,15 +248,15 @@ function billsCard(date) {
   const list = SM.renewalsOn(date);
   if (!list.length) return '';
   return `
-    <section class="j-card tone-sun" aria-labelledby="h-bills">
-      <div class="j-card-head"><h2 id="h-bills">Renewing</h2><a class="btn btn-text" href="../subscriptions/">Subscriptions</a></div>
+    <section class="panel tone-sun" aria-labelledby="h-bills">
+      <div class="panel-head"><h2 id="h-bills">Renewing</h2><a class="btn btn-text" href="../subscriptions/">Subscriptions</a></div>
       <ul class="j-list">${list.map(({ sub }) => {
         const logged = sub.logged && sub.logged[date];
         return `
         <li class="j-task j-rep">
           <span class="j-task-main"><span class="j-task-title">${esc(sub.name)}</span>
             <span class="j-task-meta"><span>${esc(SM.money(SM.myCost(sub, date)))}${sub.split ? ' (your share)' : ''}</span></span></span>
-          ${logged ? '<span class="j-count">Logged</span>' : `<button class="btn btn-ghost btn-sm" type="button" data-act="sub-log" data-id="${sub.id}">Log payment</button>`}
+          ${logged ? '<span class="count">Logged</span>' : `<button class="btn btn-ghost btn-sm" type="button" data-act="sub-log" data-id="${sub.id}">Log payment</button>`}
         </li>`;
       }).join('')}</ul>
     </section>`;
@@ -295,7 +295,7 @@ export function renderWeek(date) {
     spent += daySpent;
     const markers = dayMarkers(d) + SM.renewalsOn(d).map(({ sub }) => `<a class="j-pill is-replace" href="../subscriptions/" title="Renews: ${esc(sub.name)}">↺ ${esc(sub.name)}</a>`).join('') + IM.attentionOn(d).map(({ item, kind }) => `<a class="j-pill is-replace" href="../inventory/#/due" title="${kind === 'replace' ? 'Replace' : 'Expires:'} ${esc(item.name)}">${kind === 'replace' ? '↻' : '⏳'} ${esc(item.name)}</a>`).join('');
     days.push(`
-      <section class="j-card j-weekday${d === t ? ' is-today' : ''}${d < t ? ' is-past' : ''}">
+      <section class="panel j-weekday${d === t ? ' is-today' : ''}${d < t ? ' is-past' : ''}">
         <a class="j-weekday-head" href="#/day/${d}">
           <span class="j-weekday-name">${esc(M.fmt.wd(d))}</span>
           <span class="j-weekday-num">${M.parseDate(d).getDate()}</span>
@@ -311,26 +311,26 @@ export function renderWeek(date) {
   const someday = M.idx().undated.filter(x => !x.done);
 
   return `
-    <section class="j-view j-week">
+    <section class="view j-week">
       ${headNav({
         prev: '#/week/' + M.addDays(start, -7), next: '#/week/' + M.addDays(start, 7),
         eyebrow: 'Week',
         title,
         extra: containsToday ? '' : `<a class="btn btn-ghost btn-sm" href="#/week/${t}">This week</a>`,
       })}
-      <div class="j-stats">
-        <div class="j-stat"><span>${allDone}/${allDue}</span>tasks done</div>
-        <div class="j-stat"><span>${entries}</span>log entries</div>
-        <div class="j-stat"><span class="j-full">${esc(M.money(spent))}</span><span class="j-compact">${esc(M.money(spent, { notation: 'compact', maximumFractionDigits: 1 }))}</span>spent</div>
+      <div class="stats">
+        <div class="stat"><span>${allDone}/${allDue}</span>tasks done</div>
+        <div class="stat"><span>${entries}</span>log entries</div>
+        <div class="stat"><span class="full">${esc(M.money(spent))}</span><span class="compact">${esc(M.money(spent, { notation: 'compact', maximumFractionDigits: 1 }))}</span>spent</div>
       </div>
       ${overdue.length ? `
-        <section class="j-card j-overdue tone-flower">
-          <div class="j-card-head"><h2>Overdue</h2><span class="j-count">${overdue.length}</span></div>
+        <section class="panel j-overdue tone-flower">
+          <div class="panel-head"><h2>Overdue</h2><span class="count">${overdue.length}</span></div>
           <ul class="j-list">${overdue.map(x => taskRow(x, { showDue: true })).join('')}</ul>
         </section>` : ''}
       <div class="j-weekgrid">${days.join('')}</div>
-      <section class="j-card j-someday tone-leaf">
-        <div class="j-card-head"><h2>Someday</h2><span class="j-count">Tasks without a date</span></div>
+      <section class="panel j-someday tone-leaf">
+        <div class="panel-head"><h2>Someday</h2><span class="count">Tasks without a date</span></div>
         ${someday.length ? `<ul class="j-list">${someday.map(x => taskRow(x)).join('')}</ul>` : ''}
         ${addTaskForm('', 'Add a task without a date')}
       </section>
@@ -391,14 +391,14 @@ export function renderMonth(month) {
   ].join('');
 
   return `
-    <section class="j-view j-month">
+    <section class="view j-month">
       ${headNav({
         prev: '#/month/' + M.addMonths(month, -1), next: '#/month/' + M.addMonths(month, 1),
         title: esc(M.fmt.month(month)),
         extra: `${month === t.slice(0, 7) ? '' : `<a class="btn btn-ghost btn-sm" href="#/month/${t.slice(0, 7)}">This month</a>`}
                 <button class="btn btn-ghost btn-sm" type="button" data-act="new-event">${ICONS.plus}Event</button>`,
       })}
-      <div class="j-card j-calendar">
+      <div class="panel j-calendar">
         <div class="j-weekdays">${names.join('')}</div>
         <div class="j-cells">${cells}</div>
         <div class="j-legend">${legend}</div>
@@ -421,7 +421,7 @@ function monthEventList(month) {
     }
   }
   if (!rows.length) return '';
-  return `<section class="j-card j-events"><div class="j-card-head"><h2>Holidays & events</h2></div><ul>${rows.join('')}</ul></section>`;
+  return `<section class="panel j-events"><div class="panel-head"><h2>Holidays & events</h2></div><ul>${rows.join('')}</ul></section>`;
 }
 
 /* ---------- Year ---------- */
@@ -451,7 +451,7 @@ export function renderYear(year) {
         ${color ? `style="${colorVar(color)}"` : ''} title="${esc([M.fmt.long(date), ...names].join(' · '))}">${d}</a>`;
     }
     months.push(`
-      <section class="j-card j-mini">
+      <section class="panel j-mini">
         <a class="j-mini-title" href="#/month/${month}">${esc(M.fmt.monthName(month))}</a>
         <div class="j-mini-grid">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(l => `<b>${l}</b>`).join('')}${cells}</div>
       </section>`);
@@ -463,7 +463,7 @@ export function renderYear(year) {
   ].join('');
 
   return `
-    <section class="j-view j-year">
+    <section class="view j-year">
       ${headNav({
         prev: '#/year/' + (y - 1), next: '#/year/' + (y + 1), title: String(y),
         extra: `${String(y) === t.slice(0, 4) ? '' : `<a class="btn btn-ghost btn-sm" href="#/year/${t.slice(0, 4)}">This year</a>`}
@@ -521,14 +521,14 @@ export function renderBudget(month) {
     </li>`).join('');
 
   return `
-    <section class="j-view j-budget">
+    <section class="view j-budget">
       ${headNav({
         prev: '#/budget/' + M.addMonths(month, -1), next: '#/budget/' + M.addMonths(month, 1),
         eyebrow: 'Budget', title: esc(M.fmt.month(month)),
         extra: `<a class="btn btn-primary btn-sm" href="#/day/${M.today()}" data-act="log-spending">${ICONS.plus}Log spending</a>`,
       })}
 
-      <section class="j-card j-bsum${left != null && left < 0 ? ' is-over' : ''}">
+      <section class="panel j-bsum${left != null && left < 0 ? ' is-over' : ''}">
         <div class="j-bsum-grid">
           <label class="j-bsum-total">
             <span>Monthly budget (${esc(cfg.currency)})</span>
@@ -543,14 +543,14 @@ export function renderBudget(month) {
         ${total == null && prevB && typeof prevB.total === 'number' ? `<button class="btn btn-ghost btn-sm" type="button" data-act="copy-budget">Use last month's budget</button>` : ''}
       </section>
 
-      <section class="j-card">
-        <div class="j-card-head"><h2>By category</h2><span class="j-count">Leave blank for no limit</span></div>
+      <section class="panel">
+        <div class="panel-head"><h2>By category</h2><span class="count">Leave blank for no limit</span></div>
         <ul class="j-brows">${rows}</ul>
       </section>
 
-      <section class="j-card">
-        <div class="j-card-head"><h2>Spending</h2><span class="j-count">${spending.length} ${spending.length === 1 ? 'entry' : 'entries'}</span></div>
-        ${spending.length ? `<ul class="j-spend-list">${list}</ul>` : '<p class="j-empty">No spending logged this month. Add entries in the Log with the Spending category.</p>'}
+      <section class="panel">
+        <div class="panel-head"><h2>Spending</h2><span class="count">${spending.length} ${spending.length === 1 ? 'entry' : 'entries'}</span></div>
+        ${spending.length ? `<ul class="j-spend-list">${list}</ul>` : '<p class="empty">No spending logged this month. Add entries in the Log with the Spending category.</p>'}
       </section>
     </section>`;
 }
@@ -607,7 +607,7 @@ export function renderActivity(year) {
 
   const catRows = [...byCat.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => {
     const c = M.logCat(id);
-    return `<li style="${colorVar(c.color)}"><span class="j-ev-dot"></span><span>${esc(c.name)}</span><span class="j-catbar"><span style="width:${Math.round(n / total * 100)}%"></span></span><span class="j-count">${n} · ${Math.round(n / total * 100)}%</span></li>`;
+    return `<li style="${colorVar(c.color)}"><span class="j-ev-dot"></span><span>${esc(c.name)}</span><span class="j-catbar"><span style="width:${Math.round(n / total * 100)}%"></span></span><span class="count">${n} · ${Math.round(n / total * 100)}%</span></li>`;
   }).join('');
   const maxMonth = Math.max(1, ...byMonth);
   const monthBars = byMonth.map((n, i) => `
@@ -617,16 +617,16 @@ export function renderActivity(year) {
     </a>`).join('');
 
   return `
-    <section class="j-view j-activity">
+    <section class="view j-activity">
       ${headNav({ prev: '#/activity/' + (y - 1), next: '#/activity/' + (y + 1), eyebrow: 'Journaling activity', title: String(y) })}
-      <div class="j-stats">
-        <div class="j-stat"><span>${total}</span>log entries</div>
-        <div class="j-stat"><span>${daysActive}</span>days journaled</div>
-        <div class="j-stat"><span>${current}</span>day streak now</div>
-        <div class="j-stat"><span>${longest}</span>longest streak</div>
-        <div class="j-stat"><span>${tasksDone}</span>tasks completed</div>
+      <div class="stats">
+        <div class="stat"><span>${total}</span>log entries</div>
+        <div class="stat"><span>${daysActive}</span>days journaled</div>
+        <div class="stat"><span>${current}</span>day streak now</div>
+        <div class="stat"><span>${longest}</span>longest streak</div>
+        <div class="stat"><span>${tasksDone}</span>tasks completed</div>
       </div>
-      <section class="j-card j-heat-card">
+      <section class="panel j-heat-card">
         <div class="j-heat-scroll">
           <div class="j-heat-months" style="grid-template-columns:repeat(${col}, 14px)">${monthLabels}</div>
           <div class="j-heat">
@@ -637,9 +637,9 @@ export function renderActivity(year) {
         <div class="j-heat-legend">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div>
       </section>
       <div class="j-grid">
-        <section class="j-card"><div class="j-card-head"><h2>By category</h2></div>
-          ${catRows ? `<ul class="j-catlist">${catRows}</ul>` : '<p class="j-empty">No entries this year yet.</p>'}</section>
-        <section class="j-card"><div class="j-card-head"><h2>By month</h2></div><div class="j-mbars">${monthBars}</div></section>
+        <section class="panel"><div class="panel-head"><h2>By category</h2></div>
+          ${catRows ? `<ul class="j-catlist">${catRows}</ul>` : '<p class="empty">No entries this year yet.</p>'}</section>
+        <section class="panel"><div class="panel-head"><h2>By month</h2></div><div class="j-mbars">${monthBars}</div></section>
       </div>
     </section>`;
 }
@@ -661,27 +661,27 @@ export function renderSearch(query) {
     for (const [date, list] of M.idx().logsByDate) {
       for (const e of list) {
         const h = snippet(e.text, q) || snippet(fieldsText(M.logCat(e.cat), e.fields), q);
-        if (h) results.push({ sort: date + (e.time || ''), html: `<button type="button" class="j-card j-result" data-act="edit-log" data-id="${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
+        if (h) results.push({ sort: date + (e.time || ''), html: `<button type="button" class="panel j-result" data-act="edit-log" data-id="${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
           <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.logCat(e.cat).name)} · ${esc(M.fmt.long(date))} ${esc(e.time || '')}</span><span class="j-result-hit">${h}</span></button>` });
       }
     }
     for (const t of M.idx().tasks) {
       const h = snippet(t.title, q) || snippet(t.notes, q) || Object.values(t.subtasks || {}).map(s => snippet(s.text, q)).find(Boolean);
-      if (h) results.push({ sort: t.due || '0000', html: `<button type="button" class="j-card j-result" data-act="open-task" data-id="${t.id}">
+      if (h) results.push({ sort: t.due || '0000', html: `<button type="button" class="panel j-result" data-act="open-task" data-id="${t.id}">
         <span class="j-result-top">Task${t.due ? ' · due ' + esc(M.fmt.long(t.due)) : ''}${t.done ? ' · done' : ''}</span><span class="j-result-hit">${h}</span></button>` });
     }
     for (const e of M.idx().events) {
       const h = snippet(e.title, q) || snippet(e.note, q);
-      if (h) results.push({ sort: e.date, html: `<button type="button" class="j-card j-result" data-act="edit-event" data-id="${e.id}" style="${colorVar(M.eventCat(e.cat).color)}">
+      if (h) results.push({ sort: e.date, html: `<button type="button" class="panel j-result" data-act="edit-event" data-id="${e.id}" style="${colorVar(M.eventCat(e.cat).color)}">
         <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.eventCat(e.cat).name)} · ${esc(M.fmt.long(e.date))}</span><span class="j-result-hit">${h}</span></button>` });
     }
   }
   results.sort((a, b) => b.sort.localeCompare(a.sort));
   return `
-    <section class="j-view j-search">
-      <label class="j-searchbox">
+    <section class="view j-search">
+      <label class="searchbox">
         ${ICONS.search}
-        <input type="search" class="j-inline" data-field="search" data-focus="search" value="${esc(query)}"
+        <input type="search" class="inline-input" data-field="search" data-focus="search" value="${esc(query)}"
                placeholder="Search log, tasks and events" aria-label="Search the journal" autocomplete="off">
       </label>
       <p class="j-search-note">${q ? (results.length ? `${results.length} found` : 'Nothing found.') : 'Search happens on this device, since your journal is encrypted.'}</p>

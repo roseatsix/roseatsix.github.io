@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Nunito+Sans:opsz,wght@6..12,400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/css/style.css">
-  <link rel="stylesheet" href="../journal/journal.css">
+  <link rel="stylesheet" href="../../assets/css/components.css">
   <link rel="stylesheet" href="inventory.css">
 </head>
 <body>
@@ -72,15 +72,15 @@
       </div>
     </header>
 
-    <div class="j-tabbar">
-      <nav class="j-tabs" aria-label="Inventory views">
-        <a href="#/items" data-tab="items" aria-label="Items" title="Items"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg><span class="j-tab-label">Items</span></a>
-        <a href="#/rooms" data-tab="rooms" aria-label="Rooms" title="Rooms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><rect x="9.5" y="13" width="5" height="6.5" rx="1"/></svg><span class="j-tab-label">Rooms</span></a>
-        <a href="#/due" data-tab="due" aria-label="Due" title="Due"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9.5a3 3 0 0 1 3-3h12"/><path d="m16 3.5 3 3-3 3"/><path d="M20 13v1.5a3 3 0 0 1-3 3H5"/><path d="m8 20.5-3-3 3-3"/></svg><span class="j-tab-label">Due</span></a>
-        <a href="#/declutter" data-tab="declutter" aria-label="Declutter" title="Declutter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/><path d="M6.5 7l1 12a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l1-12"/><path d="M10.5 11v6M13.5 11v6"/></svg><span class="j-tab-label">Declutter</span></a>
-        <a href="#/wishlist" data-tab="wishlist" aria-label="Wishlist" title="Wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span class="j-tab-label">Wishlist</span></a>
+    <div class="toolbar">
+      <nav class="tabs" aria-label="Inventory views">
+        <a href="#/items" data-tab="items" aria-label="Items" title="Items"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg><span class="tab-label">Items</span></a>
+        <a href="#/rooms" data-tab="rooms" aria-label="Rooms" title="Rooms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><rect x="9.5" y="13" width="5" height="6.5" rx="1"/></svg><span class="tab-label">Rooms</span></a>
+        <a href="#/due" data-tab="due" aria-label="Due" title="Due"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9.5a3 3 0 0 1 3-3h12"/><path d="m16 3.5 3 3-3 3"/><path d="M20 13v1.5a3 3 0 0 1-3 3H5"/><path d="m8 20.5-3-3 3-3"/></svg><span class="tab-label">Due</span></a>
+        <a href="#/declutter" data-tab="declutter" aria-label="Declutter" title="Declutter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2"/><path d="M6.5 7l1 12a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l1-12"/><path d="M10.5 11v6M13.5 11v6"/></svg><span class="tab-label">Declutter</span></a>
+        <a href="#/wishlist" data-tab="wishlist" aria-label="Wishlist" title="Wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span class="tab-label">Wishlist</span></a>
       </nav>
-      <button class="icon-btn i-add" type="button" data-act="add" aria-label="Add an item">
+      <button class="icon-btn add-btn" type="button" data-act="add" aria-label="Add an item">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <button class="icon-btn" type="button" data-act="settings" aria-label="Inventory settings">
@@ -88,7 +88,7 @@
       </button>
     </div>
 
-    <main id="inventory" class="journal" aria-live="polite"></main>
+    <main id="inventory" class="tool-main" aria-live="polite"></main>
 
     <footer class="footer">
       <svg class="footer-blossom" aria-hidden="true"><use href="#blossom"/></svg>

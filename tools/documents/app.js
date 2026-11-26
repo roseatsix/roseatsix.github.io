@@ -5,7 +5,7 @@ import { esc, toast } from '../../assets/js/ui/dom.js';
 import * as L from './lib.js';
 
 const main = document.getElementById('docs');
-const tabs = document.querySelector('.j-tabs');
+const tabs = document.querySelector('.tabs');
 const VIEWS = ['merge', 'pages', 'compress', 'convert', 'text'];
 
 const ICON = {
@@ -25,10 +25,10 @@ const state = { view: 'merge' };
 
 function picker(id, { multiple = true, accept = 'application/pdf,image/*,.heic,.heif', label = 'Choose files', hint = '' } = {}) {
   return `
-    <label class="d-drop" data-drop="${id}">
+    <label class="dropzone" data-drop="${id}">
       <input type="file" ${multiple ? 'multiple' : ''} accept="${accept}" data-pick="${id}" hidden>
-      <span class="d-drop-icon">${ICON.file}</span>
-      <span class="d-drop-text"><strong>${esc(label)}</strong><small>${esc(hint || (multiple ? 'or drop them here' : 'or drop it here'))}</small></span>
+      <span class="dropzone-icon">${ICON.file}</span>
+      <span class="dropzone-text"><strong>${esc(label)}</strong><small>${esc(hint || (multiple ? 'or drop them here' : 'or drop it here'))}</small></span>
     </label>`;
 }
 
@@ -58,8 +58,8 @@ const merge = { items: [] };   // { id, file, kind, pages, thumb }
 
 function renderMerge(root) {
   root.innerHTML = `
-    <section class="j-card">
-      <div class="j-card-head"><h2>Merge into one PDF</h2></div>
+    <section class="panel">
+      <div class="panel-head"><h2>Merge into one PDF</h2></div>
       <p class="d-intro">Combine PDFs and photos in the order you want.</p>
       ${picker('merge', { label: 'Add PDFs or images' })}
       <ol class="d-files" data-list></ol>
@@ -170,8 +170,8 @@ const pages = { file: null, bytes: null, list: [], selected: new Set() };   // l
 
 function renderPages(root) {
   root.innerHTML = `
-    <section class="j-card">
-      <div class="j-card-head"><h2>Pages</h2></div>
+    <section class="panel">
+      <div class="panel-head"><h2>Pages</h2></div>
       <p class="d-intro">Rotate, reorder, delete or pull out pages from a PDF. Tap pages to select them.</p>
       ${picker('pages', { multiple: false, accept: 'application/pdf', label: 'Choose a PDF' })}
       <div data-editor></div>
@@ -190,7 +190,7 @@ function renderPages(root) {
           <button class="btn btn-ghost btn-sm" type="button" data-a="rotate">${ICON.rotate}Rotate${sel.size ? '' : ' all'}</button>
           <button class="btn btn-ghost btn-sm" type="button" data-a="left" ${sel.size ? '' : 'disabled'}>${ICON.left}</button>
           <button class="btn btn-ghost btn-sm" type="button" data-a="right" ${sel.size ? '' : 'disabled'}>${ICON.right}</button>
-          <button class="btn btn-ghost btn-sm j-danger" type="button" data-a="delete" ${sel.size && sel.size < pages.list.length ? '' : 'disabled'}>Delete</button>
+          <button class="btn btn-ghost btn-sm danger-text" type="button" data-a="delete" ${sel.size && sel.size < pages.list.length ? '' : 'disabled'}>Delete</button>
         </span>
       </div>
       <ol class="d-pages">${pages.list.map((p, i) => `
@@ -269,19 +269,19 @@ const LEVELS = {
 
 function renderCompress(root) {
   root.innerHTML = `
-    <section class="j-card">
-      <div class="j-card-head"><h2>Compress</h2></div>
+    <section class="panel">
+      <div class="panel-head"><h2>Compress</h2></div>
       <p class="d-intro">Make photos and PDFs smaller to send or upload.</p>
       ${picker('compress', { label: 'Choose photos or a PDF' })}
       <div class="field"><span class="field-label">How much</span>
-        <div class="segmented d-seg3" role="radiogroup" aria-label="Compression">
+        <div class="segmented seg-3" role="radiogroup" aria-label="Compression">
           ${Object.entries(LEVELS).map(([k, v]) => `<button type="button" role="radio" data-level="${k}" aria-checked="${k === 'medium'}">${v.label}</button>`).join('')}
         </div></div>
       <p class="hint">PDFs are compressed by turning each page into an image, which works well for scans and photos, but text in the result can't be selected or searched.</p>
       <div data-out></div>
     </section>`;
   let level = 'medium';
-  root.querySelector('.d-seg3').addEventListener('click', e => {
+  root.querySelector('.seg-3').addEventListener('click', e => {
     const b = e.target.closest('[data-level]'); if (!b) return;
     level = b.dataset.level;
     root.querySelectorAll('[data-level]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
@@ -339,11 +339,11 @@ function renderCompress(root) {
 
 function renderConvert(root) {
   root.innerHTML = `
-    <section class="j-card">
-      <div class="j-card-head"><h2>Convert</h2></div>
+    <section class="panel">
+      <div class="panel-head"><h2>Convert</h2></div>
       <p class="d-intro">PDF pages to images, photos to another format, or photos into a PDF.</p>
       ${picker('convert', { label: 'Choose a PDF or images' })}
-      <div class="i-grid d-conv">
+      <div class="field-grid d-conv">
         <label class="field"><span class="field-label">Convert to</span>
           <select class="input" data-to>
             <option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option><option value="pdf">PDF (images only)</option>
@@ -403,11 +403,11 @@ function renderConvert(root) {
 
 function renderText(root) {
   root.innerHTML = `
-    <section class="j-card">
-      <div class="j-card-head"><h2>Text &amp; OCR</h2></div>
+    <section class="panel">
+      <div class="panel-head"><h2>Text &amp; OCR</h2></div>
       <p class="d-intro">Get the text out of a PDF, or read it from scans and photos.</p>
       ${picker('text', { label: 'Choose a PDF, scans or photos' })}
-      <div class="i-grid">
+      <div class="field-grid">
         <label class="field"><span class="field-label">Language (for scans and photos)</span>
           <select class="input" data-lang><option value="ind+eng">Indonesian + English</option><option value="eng">English</option><option value="ind">Indonesian</option></select></label>
         <label class="field"><span class="field-label">PDFs</span>
@@ -479,7 +479,7 @@ function onRoute() {
   for (const k of VIEWS) if (roots[k]) roots[k].hidden = k !== state.view;
   if (!roots[state.view]) {
     const el = document.createElement('div');
-    el.className = 'j-view';
+    el.className = 'view';
     main.appendChild(el);
     roots[state.view] = el;
     RENDER[state.view](el);

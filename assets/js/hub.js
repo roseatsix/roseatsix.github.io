@@ -27,8 +27,8 @@ const TOOLS = [
 
   { group: 'documents', name: 'Document toolkit', desc: 'Merge, pages, compress, convert, and text from scans. Files stay on your device.',
     href: 'tools/documents/', icon: 'toolkit', status: 'ready' },
-  { group: 'documents', name: 'Generate from DOCX', desc: 'Fill a Word template to make new documents.',
-    href: 'tools/generate/', icon: 'sparkdoc', status: 'soon' },
+  { group: 'documents', name: 'Generate from DOCX', desc: 'Fill Word templates through a form, with formulas and history.',
+    href: 'tools/generate/', icon: 'sparkdoc', status: 'ready' },
 ];
 
 /* Line icons, 24×24, stroke-based */
