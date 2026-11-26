@@ -103,3 +103,16 @@ npx firebase-tools emulators:start --only auth,firestore --project demo-ras
 python3 -m http.server 8000
 # open http://localhost:8000/?emulator
 ```
+
+## Backups
+
+Account menu (your avatar) → **Backup & restore**, or Journal → ⚙ → Backup & reset.
+
+- **Encrypted backup:** locked with a password you choose when downloading;
+  safe to keep in Google Drive or email. Without that password it can't be
+  opened, so store it with your recovery key.
+- **Readable backup:** plain JSON anyone can read; useful for other apps.
+- **Restoring merges:** missing or deleted items come back, and where an item
+  exists in both, the more recently changed version is kept.
+- New tools must be added to `KNOWN_STORES` in `assets/js/core/backup.js`
+  so they're included in backups.

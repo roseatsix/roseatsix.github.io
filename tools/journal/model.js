@@ -65,10 +65,16 @@ export const DEFAULT_CONFIG = {
   logCats: {
     work: { name: 'Work', color: 'sage', prompt: 'What did you just finish?', order: 1 },
     personal: { name: 'Personal', color: 'rose', prompt: "What's on your mind?", order: 2 },
-    mood: { name: 'Mood', color: 'lavender', prompt: 'How are you feeling right now?', order: 3 },
+    mood: { name: 'Mood', color: 'lavender', prompt: 'How are you feeling right now?', order: 3,
+      fields: { level: { label: 'Mood', type: 'rating', order: 1 } } },
     health: { name: 'Health', color: 'moss', prompt: "How's your body doing?", order: 4 },
     learning: { name: 'Learning', color: 'ochre', prompt: 'What did you learn?', order: 5 },
-    spending: { name: 'Spending', color: 'terracotta', prompt: 'What did you buy?', order: 6, spend: true },
+    travel: { name: 'Travel', color: 'teal', prompt: 'Anything to note about the trip?', order: 6,
+      fields: {
+        where: { label: 'Where to?', type: 'text', order: 1 },
+        how: { label: 'Getting there', type: 'choice', options: ['Walk', 'Car', 'Motorbike', 'Bus', 'Train', 'Plane', 'Boat'], order: 2 },
+      } },
+    spending: { name: 'Spending', color: 'terracotta', prompt: 'What did you buy?', order: 7, spend: true },
   },
   eventCats: {
     dayoff: { name: 'Day off / cuti', color: 'holiday', order: 1, dayoff: true },

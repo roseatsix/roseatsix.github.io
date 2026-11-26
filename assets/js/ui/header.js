@@ -13,6 +13,7 @@ import { openStore, onSyncStatus } from '../core/store.js';
 import { same } from '../core/merge.js';
 import { esc, ICON, toast } from './dom.js';
 import { mountThemeControls } from './theme-controls.js';
+import { openBackupDialog } from './backup.js';
 import {
   openSetupDialog, openUnlockDialog, openDeniedDialog, openUnconfiguredDialog,
 } from './vault-dialogs.js';
@@ -135,6 +136,7 @@ export function mountHeader({ autoUnlock = false } = {}) {
         <p class="menu-note">The database refused access for this account.</p>
         <button class="menu-item" role="menuitem" data-m="denied">${ICON.lock}Details</button>` : ''}
       ${st.status === 'unlocked' ? `
+        <button class="menu-item" role="menuitem" data-m="backup">${ICON.download}Backup &amp; restore</button>
         <button class="menu-item" role="menuitem" data-m="lock">${ICON.lock}Lock on this device</button>` : ''}
       <button class="menu-item" role="menuitem" data-m="signout">${ICON.logout}Sign out</button>`;
     slot.appendChild(menu);
@@ -145,6 +147,7 @@ export function mountHeader({ autoUnlock = false } = {}) {
       const item = e.target.closest('[data-m]');
       if (!item) return;
       closeMenu();
+      if (item.dataset.m === 'backup') openBackupDialog();
       if (item.dataset.m === 'lock') { await S.lock(); toast('Locked. Your passphrase is needed again on this device.'); }
       if (item.dataset.m === 'signout') { await S.signOut(); toast('Signed out'); }
       if (item.dataset.m === 'denied') runFlow(openDeniedDialog);

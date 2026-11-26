@@ -125,3 +125,25 @@ export function normalizeRecoveryCode(s) {
     .replace(/[^0-9A-Z]/g, '')
     .replace(/O/g, '0').replace(/[IL]/g, '1');
 }
+
+/* ---------- Password-protected files (backups) ---------- */
+
+const FILE_AAD = te.encode('ras/backup/v1');
+
+export async function encryptWithPassword(value, password, iterations = PASSPHRASE_ITERATIONS) {
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const key = await kekFrom(password, salt, iterations);
+  const ct = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv, additionalData: FILE_AAD }, key, te.encode(JSON.stringify(value))));
+  return { kdf: 'PBKDF2-SHA256', iterations, salt: toB64(salt), iv: toB64(iv), ct: toB64(ct) };
+}
+
+export async function decryptWithPassword(blob, password) {
+  const key = await kekFrom(password, fromB64(blob.salt), blob.iterations);
+  try {
+    const plain = await subtle.decrypt({ name: 'AES-GCM', iv: fromB64(blob.iv), additionalData: FILE_AAD }, key, fromB64(blob.ct));
+    return JSON.parse(td.decode(plain));
+  } catch (e) {
+    throw new WrongSecretError();
+  }
+}

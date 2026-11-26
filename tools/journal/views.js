@@ -6,6 +6,7 @@
 import { esc } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import { holidaysOn, holidaysFor } from './holidays.js';
+import { renderFieldInputs, renderFieldSummary, fieldsText } from './fields.js';
 
 export const ICONS = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
@@ -18,6 +19,7 @@ export const ICONS = {
   clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.5"/></svg>',
   gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h3.5L18.5 9a2.1 2.1 0 0 0-3-3L5.5 16z"/></svg>',
 };
 
 const colorVar = name => `--c:${M.swatch(name)}`;
@@ -87,6 +89,7 @@ function logEntry(e) {
         <span class="j-entry-dot" aria-hidden="true"></span>
         <span class="j-entry-body">
           <span class="j-entry-cat">${esc(c.name)}${spend ? ` · ${esc(M.spendCat(e.spendCat).name)}` : ''}</span>
+          ${renderFieldSummary(c, e.fields)}
           ${e.text ? `<span class="j-entry-text">${esc(e.text)}</span>` : ''}
           ${spend ? `<span class="j-entry-amount">${esc(M.money(e.amount))}</span>` : ''}
         </span>
@@ -142,11 +145,9 @@ export function renderDay(date, ui) {
   const composer = `
     <form class="j-composer" data-form="log" style="${colorVar(sel.color)}">
       <div class="j-cats" role="radiogroup" aria-label="Category">${chips}</div>
-      <div class="j-composer-row">
-        <input class="j-time" type="time" name="time" data-focus="log-time" data-keep data-auto="${autoTime}" value="${autoTime}" aria-label="Time" ${isToday ? '' : 'required'}>
-        <textarea class="j-composer-text" name="text" rows="2" data-focus="log-text" data-keep
-                  placeholder="${esc(sel.prompt || 'Write a quick note…')}" aria-label="${esc(sel.name)} entry"></textarea>
-      </div>
+      ${renderFieldInputs(sel, ui.fieldVals)}
+      <textarea class="j-composer-text" name="text" rows="2" data-focus="log-text" data-keep
+                placeholder="${esc(sel.prompt || 'Write a quick note…')}" aria-label="${esc(sel.name)} entry"></textarea>
       ${sel.spend ? `
         <div class="j-composer-row j-spend-row">
           <input class="input j-amount" name="amount" inputmode="decimal" data-focus="log-amount" data-keep placeholder="Amount (${esc(cfg.currency)})" aria-label="Amount" autocomplete="off">
@@ -155,7 +156,9 @@ export function renderDay(date, ui) {
           </select>
         </div>` : ''}
       <div class="j-composer-foot">
-        <span class="j-hint">${isToday ? 'Time is now unless you change it.' : 'Pick a time for this entry.'}</span>
+        <label class="j-time-field" title="${isToday ? 'Time is now unless you change it' : 'Pick a time for this entry'}">
+          <input class="j-time" type="time" name="time" data-focus="log-time" data-keep data-auto="${autoTime}" value="${autoTime}" aria-label="Time" ${isToday ? '' : 'required'}>
+        </label>
         <button class="btn btn-primary" type="submit">Log it</button>
       </div>
     </form>`;
@@ -275,7 +278,7 @@ export function renderWeek(date) {
       <div class="j-stats">
         <div class="j-stat"><span>${allDone}/${allDue}</span>tasks done</div>
         <div class="j-stat"><span>${entries}</span>log entries</div>
-        <div class="j-stat"><span>${esc(M.money(spent))}</span>spent</div>
+        <div class="j-stat"><span class="j-full">${esc(M.money(spent))}</span><span class="j-compact">${esc(M.money(spent, { notation: 'compact', maximumFractionDigits: 1 }))}</span>spent</div>
       </div>
       ${overdue.length ? `
         <section class="j-card j-overdue tone-flower">
@@ -330,8 +333,8 @@ export function renderMonth(month) {
         <span class="j-cell-pills">${pills.slice(0, 2).join('')}${pills.length > 2 ? `<span class="j-more">+${pills.length - 2}</span>` : ''}</span>
         <span class="j-cell-dots">${pills.map((p, k) => k < 4 ? `<i style="${hol.length > k ? colorVar('holiday') : colorVar(M.eventCat(evs[k - hol.length]?.cat).color)}"></i>` : '').join('')}</span>
         <span class="j-cell-marks">
-          ${tasks.length ? `<span class="j-mark-tasks${tasks.every(x => x.done) ? ' is-all' : ''}" title="Tasks due">${tasks.filter(x => x.done).length}/${tasks.length}</span>` : ''}
-          ${logs.length ? `<span class="j-mark-log" title="Log entries">${logs.length}</span>` : ''}
+          ${tasks.length ? `<span class="j-mark-tasks${tasks.every(x => x.done) ? ' is-all' : ''}" title="${tasks.filter(x => x.done).length} of ${tasks.length} tasks done">${ICONS.check}${tasks.filter(x => x.done).length}/${tasks.length}</span>` : ''}
+          ${logs.length ? `<span class="j-mark-log" title="${logs.length} log ${logs.length === 1 ? 'entry' : 'entries'}">${ICONS.pen}${logs.length}</span>` : ''}
         </span>
         ${habitCount && ticks ? `<span class="j-mark-habits"><span style="width:${Math.min(100, Math.round(ticks / habitCount * 100))}%"></span></span>` : ''}
       </a>`;
@@ -340,8 +343,8 @@ export function renderMonth(month) {
   const legend = [
     `<span><i style="${colorVar('holiday')}"></i>Holiday / day off</span>`,
     ...[...usedCats].map(id => M.eventCat(id)).filter(c => !c.dayoff).map(c => `<span><i style="${colorVar(c.color)}"></i>${esc(c.name)}</span>`),
-    '<span><b class="j-mark-tasks">1/2</b>Tasks done</span>',
-    '<span><b class="j-mark-log">3</b>Log entries</span>',
+    `<span><b class="j-mark-tasks">${ICONS.check}</b>Tasks done / due</span>`,
+    `<span><b class="j-mark-log">${ICONS.pen}</b>Log entries</span>`,
   ].join('');
 
   return `
@@ -614,7 +617,7 @@ export function renderSearch(query) {
   if (q) {
     for (const [date, list] of M.idx().logsByDate) {
       for (const e of list) {
-        const h = snippet(e.text, q);
+        const h = snippet(e.text, q) || snippet(fieldsText(M.logCat(e.cat), e.fields), q);
         if (h) results.push({ sort: date + (e.time || ''), html: `<button type="button" class="j-card j-result" data-act="edit-log" data-id="${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
           <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.logCat(e.cat).name)} · ${esc(M.fmt.long(date))} ${esc(e.time || '')}</span><span class="j-result-hit">${h}</span></button>` });
       }

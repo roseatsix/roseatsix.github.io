@@ -44,7 +44,15 @@
   text-decoration: none;
   white-space: nowrap;
 }
-.j-tabs a svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.j-tabs a { grid-auto-flow: column; gap: 7px; }
+.j-tabs a svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 720px) {
+  .j-tabbar { margin: 20px 0 18px; }
+  .j-tabs { flex: 1; justify-content: space-between; overflow: visible; }
+  .j-tabs a { flex: 1; min-width: 0; min-height: 38px; padding: 0; }
+  .j-tabs a svg { width: 20px; height: 20px; }
+  .j-tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .j-tabs a:hover { color: var(--text); }
 .j-tabs a[aria-current="page"] { background: var(--flower-soft); color: var(--flower-deep); }
 .j-tabbar > .icon-btn { flex: none; }
@@ -163,6 +171,15 @@ button.j-pill { cursor: pointer; }
 .j-danger { color: var(--danger) !important; }
 
 .j-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.j-week .j-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.j-stat .j-compact { display: none; }
+@media (max-width: 560px) {
+  .j-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .j-stat { padding: 10px; font-size: .74rem; line-height: 1.3; }
+  .j-stat span { font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .j-stat .j-full { display: none; }
+  .j-stat .j-compact { display: block; }
+}
 .j-stat {
   padding: 12px 14px;
   border-radius: var(--radius);
@@ -224,10 +241,9 @@ button.j-pill { cursor: pointer; }
 }
 .j-cat[aria-checked="true"] { background: var(--cc); border-color: var(--cc); color: var(--surface); }
 
-.j-composer-row { display: flex; gap: 8px; align-items: flex-start; }
-.j-composer-row + .j-composer-row { margin-top: 8px; }
+.j-composer-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
 .j-composer-text {
-  flex: 1; min-width: 0; min-height: 64px; padding: 9px 12px;
+  display: block; width: 100%; min-height: 64px; padding: 9px 12px;
   border: 1px solid color-mix(in oklab, var(--cc) 25%, var(--border));
   border-radius: var(--radius-sm);
   background: var(--surface); color: var(--text);
@@ -237,15 +253,19 @@ button.j-pill { cursor: pointer; }
 .j-spend-row .input { flex: 1; min-width: 0; background: var(--surface); }
 .j-amount { font-variant-numeric: tabular-nums; font-weight: 700; }
 .j-composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.j-time-field { display: inline-flex; align-items: center; gap: 6px; color: var(--cc-deep); }
+.j-time-field > svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.j-time-field .j-time { background: var(--surface); }
+.j-composer-foot .btn { min-width: 110px; }
 .j-composer .btn-primary { background: color-mix(in oklab, var(--cc) 82%, var(--text)); }
 :root[data-theme="dark"] .j-composer .btn-primary { background: var(--cc); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .j-composer .btn-primary { background: var(--cc); } }
 
 @media (max-width: 480px) {
-  .j-composer-row:first-of-type { flex-direction: column; }
-  .j-composer-row:first-of-type .j-time { width: 100%; }
-  .j-composer-foot .j-hint { display: none; }
-  .j-composer-foot { justify-content: flex-end; }
+  .j-composer { padding: 10px; }
+  .j-composer-foot .btn { flex: 1; }
+  .j-spend-row { flex-wrap: wrap; }
+  .j-spend-row .input { flex: 1 1 140px; }
 }
 
 /* ---------- Timeline ---------- */
@@ -378,8 +398,11 @@ button.j-pill { cursor: pointer; }
 .j-cell-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: auto; }
 
 .j-mark-tasks, .j-mark-log {
+  display: inline-flex; align-items: center; gap: 2px;
   padding: 0 6px; border-radius: 999px; font-size: .7rem; font-weight: 700; font-variant-numeric: tabular-nums;
 }
+.j-mark-tasks svg, .j-mark-log svg { width: 10px; height: 10px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.j-legend b.j-mark-tasks, .j-legend b.j-mark-log { padding: 2px 5px; }
 .j-mark-tasks { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
 .j-mark-tasks.is-all { background: var(--leaf-soft); border-color: transparent; color: var(--leaf-deep); }
 .j-mark-log { background: var(--flower-soft); color: var(--flower-deep); }
@@ -398,7 +421,9 @@ button.j-pill { cursor: pointer; }
   .j-cell-num { font-size: .82rem; }
   .j-cell-pills { display: none; }
   .j-cell-dots { display: flex; flex-wrap: wrap; }
-  .j-mark-tasks, .j-mark-log { padding: 0 4px; font-size: .62rem; }
+  .j-mark-tasks, .j-mark-log { padding: 0 3px; font-size: .6rem; gap: 1px; }
+  .j-mark-tasks svg, .j-mark-log svg { width: 8px; height: 8px; }
+  .j-legend { gap: 6px 12px; font-size: .76rem; }
 }
 
 .j-events ul { list-style: none; margin: 0; padding: 0; }
@@ -537,11 +562,12 @@ button.j-pill { cursor: pointer; }
 
 dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
 
-.j-taskform { --accent: var(--flower); position: relative; padding-left: 40px; }
-.j-done-toggle { position: absolute; left: 0; top: 4px; display: grid; place-items: center; width: 32px; height: 32px; cursor: pointer; }
+.j-taskform { --accent: var(--flower); }
+.j-task-titlerow { display: flex; align-items: flex-start; gap: 8px; margin-right: 40px; }
+.j-done-toggle { position: relative; flex: none; display: grid; place-items: center; width: 32px; height: 36px; cursor: pointer; }
 .j-done-toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
 .j-title-input {
-  display: block; width: calc(100% - 40px); padding: 4px 0; border: 0; background: none; color: var(--text); resize: none; overflow: hidden;
+  display: block; flex: 1; min-width: 0; padding: 4px 0; border: 0; background: none; color: var(--text); resize: none; overflow: hidden;
   font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: 1.4rem; font-weight: 500; line-height: 1.3;
 }
 .j-title-input:focus { outline: none; box-shadow: 0 2px 0 var(--flower); }
@@ -551,7 +577,10 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
 .j-subtasks .j-task { min-height: 40px; }
 .j-subtasks .j-task.is-done .j-inline { text-decoration: line-through; color: var(--text-muted); }
 .j-task-notes { resize: vertical; min-height: 80px; }
-@media (max-width: 480px) { .j-taskform { padding-left: 36px; } }
+@media (max-width: 480px) {
+  .j-title-input { font-size: 1.2rem; }
+  .j-quick-due .btn { flex: 1 1 auto; }
+}
 
 .j-setlist { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
 .j-setrow { display: flex; align-items: center; gap: 8px; }
@@ -581,3 +610,94 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
 }
 .j-swatch-list button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--cc); cursor: pointer; }
 .j-swatch-list button[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* Year on phones: 3 months per row, coloured squares instead of numbers,
+   so the whole year fits on one screen. */
+@media (max-width: 640px) {
+  .j-year { gap: 10px; }
+  .j-year .j-head-extra { display: none; }
+  .j-year-legend { margin: -2px 0 0; gap: 4px 10px; font-size: .72rem; }
+  .j-yeargrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .j-mini { padding: 7px 6px 6px; border-radius: var(--radius-sm); box-shadow: none; }
+  .j-mini-title { margin-bottom: 4px; font-size: .8rem; }
+  .j-mini-grid { gap: 2px; }
+  .j-legend .j-due-mark { width: 7px; height: 7px; border-radius: 50%; }
+  .j-mini-grid b { display: none; }
+  .j-ycell { border-radius: 2.5px; font-size: 0; background: color-mix(in oklab, var(--border) 55%, var(--bg)); }
+  .j-ycell.is-today { box-shadow: none; outline: 1.5px solid var(--flower-deep); outline-offset: 0; }
+  .j-ycell.has-color { background: color-mix(in oklab, var(--cc) 55%, var(--surface)); }
+  .j-ycell.is-off { background: var(--cc); }
+  .j-ycell.has-due::after { left: 30%; right: 30%; bottom: 30%; top: 30%; height: auto; border-radius: 50%; background: var(--text); }
+}
+
+/* ---------- Extra questions (category fields) ---------- */
+
+.j-fields { display: grid; gap: 10px; margin-bottom: 10px; }
+.j-field { display: grid; gap: 5px; }
+.j-field-label { font-size: .8rem; font-weight: 800; color: var(--cc-deep); }
+.j-composer .j-field-input { min-height: 40px; padding: 8px 12px; background: var(--surface); }
+.j-composer .j-field-input:focus { outline: 2px solid var(--cc); outline-offset: 1px; border-color: transparent; }
+
+.j-rating { display: flex; gap: 4px; }
+.j-rating button {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0;
+  border: 0; border-radius: 50%; background: none; cursor: pointer;
+  color: color-mix(in oklab, var(--cc) 34%, var(--surface));
+  --blossom-center: var(--surface);
+  transition: transform .12s, color .12s;
+}
+.j-rating button:active { transform: scale(.9); }
+.j-rating button.is-on { color: var(--cc); --blossom-center: var(--sun); }
+.j-rating .j-blossom { width: 30px; height: 30px; }
+
+.j-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.j-chips button {
+  min-height: 34px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--cc) 35%, var(--surface));
+  background: var(--surface); color: var(--text);
+  font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer;
+}
+.j-chips button[aria-checked="true"] { background: var(--cc-deep); border-color: var(--cc-deep); color: var(--surface); }
+
+.dialog .j-fields { margin: 14px 0 0; }
+.dialog .j-field-label { font-size: .88rem; color: var(--text); }
+
+.j-entry-fields { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 1px 0 2px; font-size: .88rem; }
+.j-ans { display: inline-flex; align-items: center; gap: 4px; }
+.j-ans-label { color: var(--text-muted); font-weight: 600; }
+.j-mini-rating { display: inline-flex; gap: 1px; }
+.j-mini-rating .j-blossom { width: 14px; height: 14px; color: color-mix(in oklab, var(--cc) 25%, var(--surface)); --blossom-center: var(--surface); }
+.j-mini-rating .j-blossom.is-on { color: var(--cc); --blossom-center: var(--sun); }
+
+/* ---------- Settings list + category editor ---------- */
+
+.j-setitems { list-style: none; margin: 0 0 8px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.j-setitems li + li { border-top: 1px solid var(--border); }
+.j-setitem {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 12px;
+  border: 0; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.j-setitem:hover { background: var(--surface-hover); }
+.j-setitem-main { flex: 1; min-width: 0; display: grid; }
+.j-setitem-name { font-weight: 700; }
+.j-setitem-sub { font-size: .82rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.j-chevron svg { width: 18px; height: 18px; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.j-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.j-swatches button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--cc); cursor: pointer; }
+.j-swatches button[aria-checked="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.j-qlist { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.j-qrow { display: grid; gap: 8px; padding: 10px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); }
+.j-qrow-top, .j-qrow-bottom { display: flex; gap: 8px; align-items: center; }
+.j-qrow .input { min-height: 40px; padding: 8px 12px; background: var(--surface); }
+.j-qrow-top .input { flex: 1; min-width: 0; }
+.j-qrow-bottom select { flex: 0 0 auto; width: auto; }
+.j-qrow-bottom .input[data-q="options"] { flex: 1; min-width: 0; }
+@media (max-width: 480px) {
+  .j-qrow-bottom { flex-wrap: wrap; }
+  .j-qrow-bottom select, .j-qrow-bottom .input[data-q="options"] { flex: 1 1 100%; }
+}
+
+.j-reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.j-erase-btn:not([disabled]) { background: var(--danger); color: #fff; }

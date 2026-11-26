@@ -47,25 +47,39 @@ export function openDialog({ label, render, dismissible = true }) {
       inner.appendChild(x);
     }
 
+    // On touch screens, don't focus a text field (it would pop up the
+    // keyboard); focus the dialog itself so screen readers still land in it.
+    const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+    if (touch) inner.querySelectorAll('[autofocus]').forEach(n => n.removeAttribute('autofocus'));
     dlg.showModal();
     const first = inner.querySelector('[autofocus]');
-    if (first) first.focus();
+    if (touch) { dlg.tabIndex = -1; dlg.focus(); }
+    else if (first) first.focus();
   });
 }
 
-let toastEl, toastTimer;
+let toastEl, toastTimer, toastHideTimer;
 export function toast(message) {
   if (!toastEl) {
     toastEl = document.createElement('div');
     toastEl.className = 'toast';
     toastEl.setAttribute('role', 'status');
     toastEl.hidden = true;
+    if ('popover' in toastEl) toastEl.popover = 'manual';
     document.body.appendChild(toastEl);
   }
   toastEl.textContent = message;
-  toastEl.hidden = false;
+  if (toastEl.showPopover) {
+    // Re-open so it lands on top of any dialog opened since.
+    clearTimeout(toastHideTimer);
+    try { if (toastEl.matches(':popover-open')) toastEl.hidePopover(); toastEl.showPopover(); } catch (e) { /* ignore */ }
+  }
+  requestAnimationFrame(() => { toastEl.hidden = false; });
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
+  toastTimer = setTimeout(() => {
+    toastEl.hidden = true;
+    toastHideTimer = setTimeout(() => { try { toastEl.hidePopover?.(); } catch (e) { /* ignore */ } }, 300);
+  }, 2800);
 }
 
 export async function copyText(text) {
