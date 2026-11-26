@@ -17,6 +17,8 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `firestore.rules`: database rules (owner-only, append-only history)
 - `tools/journal/`: tasks, interstitial log, week/month/year calendars with holidays and events, budget, activity, habits
 - `tools/inventory/`: home inventory (items, rooms, replacements, declutter suggestions, wishlist)
+- `tools/subscriptions/`: subscriptions (price changes, shared plans, renewals)
+- `tools/split/`: bill splitter (many receipts, by-item splits, settle up, share picture)
 - `tools/<name>/`: each further tool gets its own folder
 
 ## Offline

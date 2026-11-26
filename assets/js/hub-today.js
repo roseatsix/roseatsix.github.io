@@ -8,6 +8,7 @@ import { openStore } from './core/store.js';
 import { esc, toast } from './ui/dom.js';
 import * as J from '../../tools/journal/model.js';
 import * as IM from '../../tools/inventory/model.js';
+import * as SM from '../../tools/subscriptions/model.js';
 import { holidaysOn, onHolidaysUpdate } from '../../tools/journal/holidays.js';
 
 const ICON = {
@@ -20,6 +21,7 @@ export function mountToday() {
   if (!box) return;
   const journal = openStore('journal');
   const inventory = openStore('inventory');
+  const subscriptions = openStore('subscriptions');
   let jReady = false;
 
   const render = () => {
@@ -32,6 +34,7 @@ export function mountToday() {
 
   journal.subscribe(list => { J.setItems(list); jReady = true; render(); });
   inventory.subscribe(list => { IM.setItems(list); render(); });
+  subscriptions.subscribe(list => { SM.setItems(list); render(); });
   onHolidaysUpdate(render);
   S.onChange(st => { if (st.status !== 'unlocked') { jReady = false; render(); } });
 
@@ -108,6 +111,17 @@ function view() {
         <a class="today-title" href="tools/inventory/#/due"><h3 id="tb-home">At home</h3><span>${home.length} need attention</span>${ICON.arrow}</a>
         <ul class="today-list">${home.slice(0, rows).map(h => `
           <li><span class="today-name">${esc(h.item.name)}</span><span class="today-meta ${h.overdue ? 'is-late' : ''}">${esc(h.text)}</span></li>`).join('')}</ul>${more(home.length - rows)}
+      </section>`);
+  }
+
+  /* subscriptions renewing in the next 3 days */
+  const renew = SM.upcoming(3, t);
+  if (renew.length) {
+    sections.push(`
+      <section class="today-block tone-sun" aria-labelledby="tb-renew">
+        <a class="today-title" href="tools/subscriptions/"><h3 id="tb-renew">Renewing soon</h3><span>${esc(SM.money(renew.reduce((n, x) => n + SM.myCost(x.sub, x.date), 0)))}</span>${ICON.arrow}</a>
+        <ul class="today-list">${renew.slice(0, rows).map(x => `
+          <li><span class="today-when">${esc(SM.whenText(x.date))}</span><span class="today-name">${esc(x.sub.name)}</span><span class="today-meta">${esc(SM.money(SM.myCost(x.sub, x.date)))}</span></li>`).join('')}</ul>${more(renew.length - rows)}
       </section>`);
   }
 

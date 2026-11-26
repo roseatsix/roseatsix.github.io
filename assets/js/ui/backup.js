@@ -6,7 +6,7 @@ import { WrongSecretError } from '../core/crypto.js';
 import { openDialog, esc, toast, busy } from './dom.js';
 
 const MIN_PASSWORD = 8;
-const TOOL_NAMES = { journal: ['journal item', 'journal items'], inventory: ['inventory item', 'inventory items'], settings: ['setting', 'settings'] };
+const TOOL_NAMES = { journal: ['journal item', 'journal items'], inventory: ['inventory item', 'inventory items'], subscriptions: ['subscription item', 'subscription items'], splits: ['split item', 'split items'], settings: ['setting', 'settings'] };
 
 const fmtWhen = iso => {
   const d = new Date(iso);
@@ -26,7 +26,7 @@ export function openBackupDialog() {
       const last = B.lastBackupAt();
       el.innerHTML = `
         <h2>Backup &amp; restore</h2>
-        <p>A backup is a single file with everything on this site: your journal, your home inventory, their settings and your appearance.</p>
+        <p>A backup is a single file with everything on this site: your journal, inventory, subscriptions, bill splits, their settings and your appearance.</p>
 
         <h3>Make a backup</h3>
         <form data-make novalidate>

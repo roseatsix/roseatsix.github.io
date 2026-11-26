@@ -8,6 +8,7 @@ import * as M from './model.js';
 import { holidaysOn, holidaysFor } from './holidays.js';
 import { renderFieldInputs, renderFieldSummary, fieldsText } from './fields.js';
 import * as IM from '../inventory/model.js';
+import * as SM from '../subscriptions/model.js';
 
 export const ICONS = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
@@ -204,6 +205,7 @@ export function renderDay(date, ui) {
           </section>
 
           ${replaceCard(date, isToday)}
+          ${billsCard(date)}
 
           <section class="j-card tone-leaf" aria-labelledby="h-habits">
             <div class="j-card-head"><h2 id="h-habits">Habits</h2>
@@ -241,6 +243,25 @@ function replaceCard(date, isToday) {
     </section>`;
 }
 
+/* Subscriptions renewing on this day */
+function billsCard(date) {
+  const list = SM.renewalsOn(date);
+  if (!list.length) return '';
+  return `
+    <section class="j-card tone-sun" aria-labelledby="h-bills">
+      <div class="j-card-head"><h2 id="h-bills">Renewing</h2><a class="btn btn-text" href="../subscriptions/">Subscriptions</a></div>
+      <ul class="j-list">${list.map(({ sub }) => {
+        const logged = sub.logged && sub.logged[date];
+        return `
+        <li class="j-task j-rep">
+          <span class="j-task-main"><span class="j-task-title">${esc(sub.name)}</span>
+            <span class="j-task-meta"><span>${esc(SM.money(SM.myCost(sub, date)))}${sub.split ? ' (your share)' : ''}</span></span></span>
+          ${logged ? '<span class="j-count">Logged</span>' : `<button class="btn btn-ghost btn-sm" type="button" data-act="sub-log" data-id="${sub.id}">Log payment</button>`}
+        </li>`;
+      }).join('')}</ul>
+    </section>`;
+}
+
 function streak(habitId, upTo) {
   let date = upTo;
   if (!M.habitsOn(date)[habitId]) date = M.addDays(date, -1);
@@ -272,7 +293,7 @@ export function renderWeek(date) {
     entries += logs.length;
     const daySpent = M.sum(logs.filter(e => M.isSpendCat(e.cat) && typeof e.amount === 'number'));
     spent += daySpent;
-    const markers = dayMarkers(d) + IM.attentionOn(d).map(({ item, kind }) => `<a class="j-pill is-replace" href="../inventory/#/due" title="${kind === 'replace' ? 'Replace' : 'Expires:'} ${esc(item.name)}">${kind === 'replace' ? '↻' : '⏳'} ${esc(item.name)}</a>`).join('');
+    const markers = dayMarkers(d) + SM.renewalsOn(d).map(({ sub }) => `<a class="j-pill is-replace" href="../subscriptions/" title="Renews: ${esc(sub.name)}">↺ ${esc(sub.name)}</a>`).join('') + IM.attentionOn(d).map(({ item, kind }) => `<a class="j-pill is-replace" href="../inventory/#/due" title="${kind === 'replace' ? 'Replace' : 'Expires:'} ${esc(item.name)}">${kind === 'replace' ? '↻' : '⏳'} ${esc(item.name)}</a>`).join('');
     days.push(`
       <section class="j-card j-weekday${d === t ? ' is-today' : ''}${d < t ? ' is-past' : ''}">
         <a class="j-weekday-head" href="#/day/${d}">
