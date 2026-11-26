@@ -629,3 +629,72 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
   .j-ycell.is-off { background: var(--cc); }
   .j-ycell.has-due::after { left: 30%; right: 30%; bottom: 30%; top: 30%; height: auto; border-radius: 50%; background: var(--text); }
 }
+
+/* ---------- Extra questions (category fields) ---------- */
+
+.j-fields { display: grid; gap: 10px; margin-bottom: 10px; }
+.j-field { display: grid; gap: 5px; }
+.j-field-label { font-size: .8rem; font-weight: 800; color: var(--cc-deep); }
+.j-composer .j-field-input { min-height: 40px; padding: 8px 12px; background: var(--surface); }
+.j-composer .j-field-input:focus { outline: 2px solid var(--cc); outline-offset: 1px; border-color: transparent; }
+
+.j-rating { display: flex; gap: 4px; }
+.j-rating button {
+  display: grid; place-items: center; width: 40px; height: 40px; padding: 0;
+  border: 0; border-radius: 50%; background: none; cursor: pointer;
+  color: color-mix(in oklab, var(--cc) 34%, var(--surface));
+  --blossom-center: var(--surface);
+  transition: transform .12s, color .12s;
+}
+.j-rating button:active { transform: scale(.9); }
+.j-rating button.is-on { color: var(--cc); --blossom-center: var(--sun); }
+.j-rating .j-blossom { width: 30px; height: 30px; }
+
+.j-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.j-chips button {
+  min-height: 34px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--cc) 35%, var(--surface));
+  background: var(--surface); color: var(--text);
+  font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer;
+}
+.j-chips button[aria-checked="true"] { background: var(--cc-deep); border-color: var(--cc-deep); color: var(--surface); }
+
+.dialog .j-fields { margin: 14px 0 0; }
+.dialog .j-field-label { font-size: .88rem; color: var(--text); }
+
+.j-entry-fields { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 1px 0 2px; font-size: .88rem; }
+.j-ans { display: inline-flex; align-items: center; gap: 4px; }
+.j-ans-label { color: var(--text-muted); font-weight: 600; }
+.j-mini-rating { display: inline-flex; gap: 1px; }
+.j-mini-rating .j-blossom { width: 14px; height: 14px; color: color-mix(in oklab, var(--cc) 25%, var(--surface)); --blossom-center: var(--surface); }
+.j-mini-rating .j-blossom.is-on { color: var(--cc); --blossom-center: var(--sun); }
+
+/* ---------- Settings list + category editor ---------- */
+
+.j-setitems { list-style: none; margin: 0 0 8px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.j-setitems li + li { border-top: 1px solid var(--border); }
+.j-setitem {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 12px;
+  border: 0; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.j-setitem:hover { background: var(--surface-hover); }
+.j-setitem-main { flex: 1; min-width: 0; display: grid; }
+.j-setitem-name { font-weight: 700; }
+.j-setitem-sub { font-size: .82rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.j-chevron svg { width: 18px; height: 18px; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.j-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.j-swatches button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--cc); cursor: pointer; }
+.j-swatches button[aria-checked="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.j-qlist { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.j-qrow { display: grid; gap: 8px; padding: 10px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); }
+.j-qrow-top, .j-qrow-bottom { display: flex; gap: 8px; align-items: center; }
+.j-qrow .input { min-height: 40px; padding: 8px 12px; background: var(--surface); }
+.j-qrow-top .input { flex: 1; min-width: 0; }
+.j-qrow-bottom select { flex: 0 0 auto; width: auto; }
+.j-qrow-bottom .input[data-q="options"] { flex: 1; min-width: 0; }
+@media (max-width: 480px) {
+  .j-qrow-bottom { flex-wrap: wrap; }
+  .j-qrow-bottom select, .j-qrow-bottom .input[data-q="options"] { flex: 1 1 100%; }
+}

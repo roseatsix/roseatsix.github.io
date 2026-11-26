@@ -6,6 +6,7 @@
 import { esc } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import { holidaysOn, holidaysFor } from './holidays.js';
+import { renderFieldInputs, renderFieldSummary, fieldsText } from './fields.js';
 
 export const ICONS = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
@@ -88,6 +89,7 @@ function logEntry(e) {
         <span class="j-entry-dot" aria-hidden="true"></span>
         <span class="j-entry-body">
           <span class="j-entry-cat">${esc(c.name)}${spend ? ` · ${esc(M.spendCat(e.spendCat).name)}` : ''}</span>
+          ${renderFieldSummary(c, e.fields)}
           ${e.text ? `<span class="j-entry-text">${esc(e.text)}</span>` : ''}
           ${spend ? `<span class="j-entry-amount">${esc(M.money(e.amount))}</span>` : ''}
         </span>
@@ -143,6 +145,7 @@ export function renderDay(date, ui) {
   const composer = `
     <form class="j-composer" data-form="log" style="${colorVar(sel.color)}">
       <div class="j-cats" role="radiogroup" aria-label="Category">${chips}</div>
+      ${renderFieldInputs(sel, ui.fieldVals)}
       <textarea class="j-composer-text" name="text" rows="2" data-focus="log-text" data-keep
                 placeholder="${esc(sel.prompt || 'Write a quick note…')}" aria-label="${esc(sel.name)} entry"></textarea>
       ${sel.spend ? `
@@ -614,7 +617,7 @@ export function renderSearch(query) {
   if (q) {
     for (const [date, list] of M.idx().logsByDate) {
       for (const e of list) {
-        const h = snippet(e.text, q);
+        const h = snippet(e.text, q) || snippet(fieldsText(M.logCat(e.cat), e.fields), q);
         if (h) results.push({ sort: date + (e.time || ''), html: `<button type="button" class="j-card j-result" data-act="edit-log" data-id="${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
           <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.logCat(e.cat).name)} · ${esc(M.fmt.long(date))} ${esc(e.time || '')}</span><span class="j-result-hit">${h}</span></button>` });
       }

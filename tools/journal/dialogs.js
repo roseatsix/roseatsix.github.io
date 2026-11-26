@@ -3,6 +3,7 @@
 import { openDialog, esc, toast, busy } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import { ICONS } from './views.js';
+import { FIELD_TYPES, renderFieldInputs, applyFieldClick, collectFields, fieldList } from './fields.js';
 
 let store = null;
 export function useStore(s) { store = s; }
@@ -189,6 +190,7 @@ export function openLogDialog(id) {
             <label class="field"><span class="field-label">Time</span><input class="input" type="time" name="time" value="${esc(entry.time || '')}"></label>
           </div>
           <label class="field"><span class="field-label">Category</span><select class="input" name="cat">${catOpts}</select></label>
+          <div data-answers></div>
           <label class="field"><span class="field-label">Entry</span><textarea class="input" name="text" rows="4">${esc(entry.text || '')}</textarea></label>
           <div class="j-task-fields" data-spend ${M.isSpendCat(entry.cat) ? '' : 'hidden'}>
             <label class="field"><span class="field-label">Amount (${esc(cfg.currency)})</span>
@@ -204,7 +206,23 @@ export function openLogDialog(id) {
           </div>
         </form>`;
       const form = el.querySelector('form');
-      form.cat.addEventListener('change', () => { el.querySelector('[data-spend]').hidden = !M.isSpendCat(form.cat.value); });
+      const answersEl = el.querySelector('[data-answers]');
+      // Tapped answers live here; typed ones are read from the inputs on save.
+      let answers = { ...(entry.fields || {}) };
+      const drawAnswers = () => {
+        // keep anything typed before redrawing
+        answersEl.querySelectorAll('.j-field-input').forEach(i => { answers[i.dataset.fid] = i.value; });
+        answersEl.innerHTML = renderFieldInputs(M.logCat(form.cat.value), answers, 'd');
+      };
+      drawAnswers();
+      answersEl.addEventListener('click', e => {
+        const b = e.target.closest('[data-act=set-field]');
+        if (b) { applyFieldClick(answers, b); drawAnswers(); }
+      });
+      form.cat.addEventListener('change', () => {
+        el.querySelector('[data-spend]').hidden = !M.isSpendCat(form.cat.value);
+        drawAnswers();
+      });
       el.querySelector('[data-cancel]').addEventListener('click', () => close());
       confirmButton(el.querySelector('[data-delete]'), 'Tap again to delete', async () => {
         await remove(key); toast('Entry deleted'); close();
@@ -216,9 +234,11 @@ export function openLogDialog(id) {
         const amount = spend ? M.parseAmount(form.amount.value) : null;
         if (!M.isDate(form.date.value)) { err.textContent = 'Pick a date.'; return; }
         if (spend && amount == null) { err.textContent = 'Enter an amount.'; return; }
-        if (!spend && !form.text.value.trim()) { err.textContent = 'Write something, or delete the entry.'; return; }
+        const fields = collectFields(M.logCat(form.cat.value), answersEl, answers);
+        if (!spend && !form.text.value.trim() && !Object.keys(fields).length) { err.textContent = 'Write something, or delete the entry.'; return; }
         const next = { ...entry, date: form.date.value, time: form.time.value || '', cat: form.cat.value, text: form.text.value.trim(),
           amount, spendCat: spend ? form.spendCat.value : null };
+        if (Object.keys(fields).length) next.fields = fields; else delete next.fields;
         await busy(form.querySelector('[type=submit]'), 'Saving…', () => save(key, next));
         close();
       });
@@ -276,102 +296,183 @@ export function openEventDialog(id, defaults = {}) {
   });
 }
 
-/* ---------- Settings: categories + currency ---------- */
+/* ---------- Settings: a list; each category has its own editor ---------- */
 
-function swatchPicker(name, current, includeHoliday = false) {
+const saveConfig = async mutate => {
+  const stored = M.clone(M.get('config')) || {};
+  mutate(stored);
+  await save('config', stored);
+};
+
+function swatchRow(current, includeHoliday) {
   const names = Object.keys(M.SWATCHES).concat(includeHoliday ? ['holiday'] : []);
-  return `
-    <details class="j-swatch">
-      <summary style="--c:${M.swatch(current)}" aria-label="Colour"></summary>
-      <div class="j-swatch-list">${names.map(n => `<button type="button" data-swatch="${n}" data-for="${name}" style="--c:${M.swatch(n)}" aria-label="${n}" aria-pressed="${n === current}"></button>`).join('')}</div>
-    </details>`;
+  return `<div class="j-swatches" role="radiogroup" aria-label="Colour">${names.map(n => `
+    <button type="button" role="radio" data-swatch="${n}" style="--c:${M.swatch(n)}" aria-label="${n === 'holiday' ? 'Holiday red' : n}" aria-checked="${n === current}"></button>`).join('')}</div>`;
 }
 
 export function openSettingsDialog() {
-  const cfg = M.config();
-  const draft = {
-    logCats: M.clone(cfg.logCats),
-    eventCats: M.clone(cfg.eventCats),
-    spendCats: M.clone(cfg.spendCats),
-    currency: cfg.currency,
-  };
   return openDialog({
     label: 'Journal settings',
     render(el, close) {
-      el.closest('dialog').classList.add('is-wide');
-      const section = (map, kind) => M.activeList(draft[map]).map(c => `
-        <li class="j-setrow" data-map="${map}" data-id="${c.id}">
-          ${kind !== 'spend' ? swatchPicker(`${map}.${c.id}`, c.color, map === 'eventCats') : ''}
-          <input class="input" data-k="name" value="${esc(c.name)}" aria-label="Name" maxlength="30">
-          ${kind === 'log' ? `<input class="input j-prompt" data-k="prompt" value="${esc(c.prompt || '')}" placeholder="Prompt" aria-label="Prompt for ${esc(c.name)}">` : ''}
-          ${c.spend || c.dayoff ? `<span class="j-lock" title="Built-in">${c.spend ? 'Spending' : 'Day off'}</span>` : `<button class="icon-btn" type="button" data-remove aria-label="Remove ${esc(c.name)}">${ICONS.x}</button>`}
-        </li>`).join('');
       const draw = () => {
-        el.querySelector('[data-list=log]').innerHTML = section('logCats', 'log');
-        el.querySelector('[data-list=event]').innerHTML = section('eventCats', 'event');
-        el.querySelector('[data-list=spend]').innerHTML = section('spendCats', 'spend');
+        const cfg = M.config();
+        const row = (map, c) => `
+          <li><button type="button" class="j-setitem" data-edit="${map}" data-id="${c.id}" ${c.color ? `style="--c:${M.swatch(c.color)}"` : ''}>
+            ${c.color ? '<span class="j-ev-dot"></span>' : ''}
+            <span class="j-setitem-main"><span class="j-setitem-name">${esc(c.name)}</span>
+              ${map === 'logCats' ? `<span class="j-setitem-sub">${esc([c.prompt, ...fieldList(c).map(f => f.label)].filter(Boolean).join(' · ') || 'No prompt')}</span>` : ''}</span>
+            <span class="j-chevron">${ICONS.next}</span>
+          </button></li>`;
+        el.querySelector('[data-list=logCats]').innerHTML = M.activeList(cfg.logCats).map(c => row('logCats', c)).join('');
+        el.querySelector('[data-list=eventCats]').innerHTML = M.activeList(cfg.eventCats).map(c => row('eventCats', c)).join('');
+        el.querySelector('[data-list=spendCats]').innerHTML = M.activeList(cfg.spendCats).map(c => row('spendCats', c)).join('');
+        el.querySelector('[data-currency]').value = cfg.currency;
       };
       el.innerHTML = `
         <h2>Journal settings</h2>
-        <p>Removing a category hides it from pickers; past entries keep it.</p>
-        <h3>Log categories &amp; prompts</h3>
-        <ul class="j-setlist" data-list="log"></ul>
-        <button class="btn btn-ghost btn-sm" type="button" data-add="logCats">${ICONS.plus}Add category</button>
+        <p>Tap a category to edit it. Changes save straight away.</p>
+        <h3>Log categories</h3>
+        <ul class="j-setitems" data-list="logCats"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add="logCats">${ICONS.plus}Add log category</button>
         <h3>Event categories</h3>
-        <ul class="j-setlist" data-list="event"></ul>
-        <button class="btn btn-ghost btn-sm" type="button" data-add="eventCats">${ICONS.plus}Add category</button>
+        <ul class="j-setitems" data-list="eventCats"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add="eventCats">${ICONS.plus}Add event category</button>
         <h3>Spending categories</h3>
-        <ul class="j-setlist" data-list="spend"></ul>
-        <button class="btn btn-ghost btn-sm" type="button" data-add="spendCats">${ICONS.plus}Add category</button>
+        <ul class="j-setitems" data-list="spendCats"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add="spendCats">${ICONS.plus}Add spending category</button>
         <h3>Currency</h3>
-        <select class="input j-currency" data-currency>${M.CURRENCIES.map(c => `<option ${c === draft.currency ? 'selected' : ''}>${c}</option>`).join('')}</select>
-        <div class="dialog-actions">
-          <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
-          <button class="btn btn-primary" type="button" data-save>Save</button>
-        </div>`;
+        <select class="input j-currency" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
-
-      el.addEventListener('input', e => {
-        const row = e.target.closest('[data-map]');
-        if (row && e.target.dataset.k) draft[row.dataset.map][row.dataset.id][e.target.dataset.k] = e.target.value;
+      el.addEventListener('click', async e => {
+        const edit = e.target.closest('[data-edit]');
+        const add = e.target.closest('[data-add]');
+        if (edit || add) {
+          const map = (edit || add).dataset.edit || (add && add.dataset.add);
+          await openCategoryEditor(map, edit ? edit.dataset.id : null);
+          draw();
+        }
+        if (e.target.closest('[data-close]')) close();
       });
+      el.querySelector('[data-currency]').addEventListener('change', async e => {
+        const v = e.target.value;
+        await saveConfig(c => { c.currency = v; });
+        toast('Currency saved');
+      });
+    },
+  });
+}
+
+/** Edit (or create) one category. map: logCats | eventCats | spendCats */
+function openCategoryEditor(map, id) {
+  const cfg = M.config();
+  const isNew = !id;
+  const cid = id || M.newId();
+  const colors = Object.keys(M.SWATCHES);
+  const cat = M.clone(cfg[map][cid]) || {
+    name: '', order: Math.max(0, ...Object.values(cfg[map]).map(c => c.order ?? 0)) + 1,
+    ...(map !== 'spendCats' ? { color: colors[Object.keys(cfg[map]).length % colors.length] } : {}),
+    ...(map === 'logCats' ? { prompt: '', fields: {} } : {}),
+  };
+  delete cat.id;
+  const fields = Object.entries(cat.fields || {}).map(([fid, f]) => ({ fid, ...f }))
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const kind = { logCats: 'log', eventCats: 'event', spendCats: 'spending' }[map];
+  const builtIn = cat.spend || cat.dayoff;
+
+  return openDialog({
+    label: isNew ? `New ${kind} category` : `Edit ${cat.name}`,
+    render(el, close) {
+      const drawFields = () => {
+        const box = el.querySelector('[data-fields]');
+        if (!box) return;
+        box.innerHTML = fields.map((f, i) => `
+          <li class="j-qrow" data-i="${i}">
+            <div class="j-qrow-top">
+              <input class="input" data-q="label" value="${esc(f.label || '')}" placeholder="Question, e.g. Where to?" aria-label="Question" maxlength="60">
+              <button class="icon-btn" type="button" data-qdel aria-label="Remove question">${ICONS.x}</button>
+            </div>
+            <div class="j-qrow-bottom">
+              <select class="input" data-q="type" aria-label="Answer type">${Object.entries(FIELD_TYPES).map(([t, l]) => `<option value="${t}" ${t === f.type ? 'selected' : ''}>${l}</option>`).join('')}</select>
+              ${f.type === 'choice' ? `<input class="input" data-q="options" value="${esc((f.options || []).join(', '))}" placeholder="Options, separated by commas" aria-label="Options">` : ''}
+            </div>
+          </li>`).join('') || '<li class="j-empty">No extra questions. Entries just use the prompt.</li>';
+      };
+      el.innerHTML = `
+        <h2>${isNew ? `New ${kind} category` : esc(cat.name)}</h2>
+        <form novalidate>
+          <label class="field"><span class="field-label">Name</span>
+            <input class="input" name="name" value="${esc(cat.name)}" maxlength="30" ${isNew ? 'autofocus' : ''}></label>
+          ${map !== 'spendCats' ? `<div class="field"><span class="field-label">Colour</span>${swatchRow(cat.color, map === 'eventCats')}</div>` : ''}
+          ${map === 'logCats' ? `
+            <label class="field"><span class="field-label">Prompt</span>
+              <input class="input" name="prompt" value="${esc(cat.prompt || '')}" placeholder="e.g. What's on your mind?"></label>
+            <h3>Extra questions</h3>
+            <p>Asked every time you log in this category, alongside the prompt.</p>
+            <ul class="j-qlist" data-fields></ul>
+            <button class="btn btn-ghost btn-sm" type="button" data-qadd>${ICONS.plus}Add question</button>` : ''}
+          <div class="form-error" role="alert"></div>
+          <div class="dialog-actions">
+            ${!isNew && !builtIn ? '<button class="btn btn-text j-danger" type="button" data-remove>Remove</button>' : ''}
+            <span class="spacer"></span>
+            <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
+            <button class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </form>`;
+      drawFields();
+      const form = el.querySelector('form');
+
       el.addEventListener('click', e => {
         const sw = e.target.closest('[data-swatch]');
         if (sw) {
-          const [map, id] = sw.dataset.for.split('.');
-          draft[map][id].color = sw.dataset.swatch;
-          draw();
-          return;
+          cat.color = sw.dataset.swatch;
+          el.querySelectorAll('[data-swatch]').forEach(b => b.setAttribute('aria-checked', String(b === sw)));
         }
-        const rm = e.target.closest('[data-remove]');
-        if (rm) {
-          const row = rm.closest('[data-map]');
-          draft[row.dataset.map][row.dataset.id].archived = true;
-          draw();
-          return;
+        if (e.target.closest('[data-qadd]')) {
+          fields.push({ fid: M.newId(), label: '', type: 'text' });
+          drawFields();
+          el.querySelector('.j-qrow:last-child [data-q=label]')?.focus();
         }
-        const add = e.target.closest('[data-add]');
-        if (add) {
-          const map = add.dataset.add;
-          const id = M.newId();
-          const order = Math.max(0, ...Object.values(draft[map]).map(c => c.order ?? 0)) + 1;
-          const colors = Object.keys(M.SWATCHES);
-          draft[map][id] = { id, name: 'New category', order, ...(map === 'spendCats' ? {} : { color: colors[order % colors.length] }), ...(map === 'logCats' ? { prompt: '' } : {}) };
-          draw();
-          el.querySelector(`[data-id="${id}"] [data-k=name]`)?.select();
-        }
+        const del = e.target.closest('[data-qdel]');
+        if (del) { fields.splice(Number(del.closest('[data-i]').dataset.i), 1); drawFields(); }
       });
-      el.querySelector('[data-currency]').addEventListener('change', e => { draft.currency = e.target.value; });
+      el.addEventListener('input', e => {
+        const row = e.target.closest('[data-i]');
+        if (!row) return;
+        const f = fields[Number(row.dataset.i)];
+        const k = e.target.dataset.q;
+        if (k === 'label') f.label = e.target.value;
+        if (k === 'options') f.options = e.target.value.split(',').map(x => x.trim()).filter(Boolean);
+      });
+      el.addEventListener('change', e => {
+        const row = e.target.closest('[data-i]');
+        if (row && e.target.dataset.q === 'type') { fields[Number(row.dataset.i)].type = e.target.value; drawFields(); }
+      });
       el.querySelector('[data-cancel]').addEventListener('click', () => close());
-      el.querySelector('[data-save]').addEventListener('click', async e => {
-        const strip = map => Object.fromEntries(Object.entries(draft[map]).map(([id, v]) => {
-          const { id: _drop, ...rest } = v;
-          rest.name = (rest.name || '').trim() || 'Untitled';
-          return [id, rest];
-        }));
-        const next = { logCats: strip('logCats'), eventCats: strip('eventCats'), spendCats: strip('spendCats'), currency: draft.currency };
-        await busy(e.currentTarget, 'Saving…', () => save('config', next));
+      const rm = el.querySelector('[data-remove]');
+      if (rm) confirmButton(rm, 'Tap again to remove', async () => {
+        await saveConfig(c => { c[map] = { ...(c[map] || {}), [cid]: { ...(c[map] || {})[cid], ...cat, archived: true } }; });
+        toast(`${cat.name} removed. Past entries keep it.`);
         close();
+      });
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const err = el.querySelector('.form-error');
+        const name = form.name.value.trim();
+        if (!name) { err.textContent = 'Give the category a name.'; return; }
+        const bad = fields.find(f => f.type === 'choice' && f.label.trim() && !(f.options || []).length);
+        if (bad) { err.textContent = `Add some options for "${bad.label}".`; return; }
+        const next = { ...cat, name };
+        if (map === 'logCats') {
+          next.prompt = form.prompt.value.trim();
+          next.fields = {};
+          fields.filter(f => f.label.trim()).forEach((f, i) => {
+            next.fields[f.fid] = { label: f.label.trim(), type: f.type, order: i + 1, ...(f.type === 'choice' ? { options: f.options } : {}) };
+          });
+        }
+        delete next.archived;
+        await busy(form.querySelector('[type=submit]'), 'Saving…', () => saveConfig(c => { c[map] = { ...(c[map] || {}), [cid]: next }; }));
+        close(true);
       });
     },
   });

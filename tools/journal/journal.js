@@ -12,6 +12,7 @@ import * as M from './model.js';
 import * as V from './views.js';
 import * as D from './dialogs.js';
 import { onHolidaysUpdate } from './holidays.js';
+import { applyFieldClick, collectFields } from './fields.js';
 
 const main = document.getElementById('journal');
 const tabs = document.querySelector('.j-tabs');
@@ -25,6 +26,7 @@ const ui = {
   search: '',
   logCat: readPref('logCat'),
   spendCat: readPref('spendCat'),
+  fieldVals: {},                 // tapped answers (ratings, choices) in the composer
 };
 
 function readPref(k) { try { return localStorage.getItem('ras-journal-' + k) || ''; } catch (e) { return ''; } }
@@ -155,7 +157,12 @@ main.addEventListener('click', async e => {
       try { inp.showPicker(); } catch (err) { inp.focus(); }
       return;
     }
+    case 'set-field':
+      applyFieldClick(ui.fieldVals, b);
+      render();
+      return;
     case 'pick-cat':
+      if (ui.logCat !== id) ui.fieldVals = {};
       ui.logCat = id; writePref('logCat', id);
       render();
       main.querySelector('[data-focus=log-text]')?.focus();
@@ -244,18 +251,25 @@ main.addEventListener('submit', async e => {
     let time = form.time.value;
     if (date === M.today() && (!time || time === form.time.dataset.auto)) time = M.nowTime();
     if (spend && amount == null) { toast('Enter an amount'); form.amount.focus(); return; }
-    if (!spend && !text) { form.text.focus(); return; }
+    const fields = collectFields(M.logCat(cat), form, ui.fieldVals);
+    if (!spend && !text && !Object.keys(fields).length) { form.text.focus(); return; }
     if (!time) { toast('Pick a time'); form.time.focus(); return; }
     const entry = { date, time, cat, text, amount, spendCat: spend ? (form.spendCat.value || 'other') : null, createdAt: Date.now() };
+    if (Object.keys(fields).length) entry.fields = fields;
+    const keepVals = ui.fieldVals;
+    ui.fieldVals = {};
     form.text.value = '';
     if (form.amount) form.amount.value = '';
+    form.querySelectorAll('.j-field-input').forEach(el => { el.value = ''; });
     form.time.value = form.time.dataset.auto || '';
     try {
       await store.put('log:' + M.newId(), entry);
     } catch (err) {
       fail(err);
       form.text.value = text;
+      ui.fieldVals = keepVals;
     }
+    render();
     main.querySelector('[data-focus=log-text]')?.focus();
   }
 });
