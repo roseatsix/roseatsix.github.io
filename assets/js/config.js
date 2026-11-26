@@ -10,6 +10,16 @@
    works, the Sign in button just explains that sync isn't set up.
    ========================================================== */
 
+const firebaseConfig = {
+   apiKey: "AIzaSyBEggVhaInstbqg1c7HYqjVSdNX1tI9RjI",
+   authDomain: "roseatsix.firebaseapp.com",
+   projectId: "roseatsix",
+   storageBucket: "roseatsix.firebasestorage.app",
+   messagingSenderId: "989432746839",
+   appId: "1:989432746839:web:7eb9983d30c33dd4c7a412",
+   measurementId: "G-V6WHPGSBFK"
+};
+
 export const firebaseConfig = null;
 
 /* Pinned Firebase web SDK, loaded straight from Google's CDN. */
