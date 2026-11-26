@@ -30,6 +30,46 @@
       name: 'Moss',
       flower: '#B47A84', leaf: '#5E7B53', sun: '#B68B4A',
       bgLight: '#EEF0E6', textLight: '#2F3329', bgDark: '#191C16', textDark: '#E8ECDF'
+    },
+    camellia: {
+      name: 'Camellia',
+      flower: '#B5474F', leaf: '#6E8466', sun: '#D2A04E',
+      bgLight: '#F8EFEC', textLight: '#3B2A28', bgDark: '#1E1716', textDark: '#F3E5E2'
+    },
+    marigold: {
+      name: 'Marigold',
+      flower: '#C9792F', leaf: '#7C8A5A', sun: '#C9A24A',
+      bgLight: '#F7F0E3', textLight: '#3A2E22', bgDark: '#1E1913', textDark: '#F2E7D6'
+    },
+    sage: {
+      name: 'Sage garden',
+      flower: '#6F8F6E', leaf: '#556F57', sun: '#C4A15E',
+      bgLight: '#EFF2EA', textLight: '#2C3329', bgDark: '#171B16', textDark: '#E6ECE2'
+    },
+    hydrangea: {
+      name: 'Hydrangea',
+      flower: '#6A87B0', leaf: '#7C9484', sun: '#C8A26B',
+      bgLight: '#EEF1F4', textLight: '#2D333B', bgDark: '#161A1F', textDark: '#E5EAF0'
+    },
+    plum: {
+      name: 'Plum',
+      flower: '#8E4F68', leaf: '#6F7E5E', sun: '#C29256',
+      bgLight: '#F5EEF0', textLight: '#3A2A30', bgDark: '#1D1619', textDark: '#F0E4E8'
+    },
+    clay: {
+      name: 'Desert clay',
+      flower: '#A8705A', leaf: '#8A8A62', sun: '#C9A066',
+      bgLight: '#F3ECE3', textLight: '#3A3029', bgDark: '#1D1814', textDark: '#EFE4D8'
+    },
+    matcha: {
+      name: 'Matcha',
+      flower: '#7F8F45', leaf: '#5E7350', sun: '#C9A65A',
+      bgLight: '#F2F1E6', textLight: '#2F3125', bgDark: '#191A14', textDark: '#EAEAD9'
+    },
+    stone: {
+      name: 'Stone',
+      flower: '#8C766A', leaf: '#7F8574', sun: '#B49A72',
+      bgLight: '#F4F2EE', textLight: '#33302C', bgDark: '#1A1917', textDark: '#ECE9E4'
     }
   };
 
