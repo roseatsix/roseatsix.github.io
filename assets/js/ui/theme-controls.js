@@ -1,0 +1,31 @@
+/* Light/dark toggle and the Appearance button. No Firebase involved,
+   so these keep working even if sign-in can't load. */
+
+import { openAppearanceDialog } from './appearance.js';
+
+const T = window.RAS_THEME;
+let mounted = false;
+
+export function mountThemeControls() {
+  if (mounted) return;
+  mounted = true;
+  setupThemeToggle();
+  document.getElementById('appearance-btn')?.addEventListener('click', openAppearanceDialog);
+}
+
+function setupThemeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const current = () => {
+    const m = T.read().mode;
+    return m === 'auto' ? (media.matches ? 'dark' : 'light') : m;
+  };
+  const label = () => btn.setAttribute('aria-label', current() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  btn.addEventListener('click', () => {
+    T.save({ ...T.read(), mode: current() === 'dark' ? 'light' : 'dark' }, { source: 'mode' });
+  });
+  window.addEventListener('ras:prefs', label);
+  media.addEventListener?.('change', label);
+  label();
+}

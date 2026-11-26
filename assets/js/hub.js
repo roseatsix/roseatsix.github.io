@@ -5,7 +5,8 @@
    - href is relative to the site root, e.g. "tools/journal/".
    ========================================================== */
 
-import { mountHeader } from './ui/header.js';
+
+import { mountThemeControls } from './ui/theme-controls.js';
 
 const GROUPS = [
   { id: 'everyday',  title: 'Everyday',  tone: 'flower' },
@@ -110,4 +111,12 @@ function renderGreeting() {
 
 renderGreeting();
 renderTools();
-mountHeader();
+mountThemeControls();
+// Load sign-in separately, so a problem there can never blank the hub.
+import('./ui/header.js')
+  .then(m => m.mountHeader())
+  .catch(err => {
+    console.error('Sign-in failed to load', err);
+    const slot = document.getElementById('account-slot');
+    if (slot) slot.innerHTML = '<span class="chip" title="Sign-in failed to load. See the browser console.">Sign-in unavailable</span>';
+  });

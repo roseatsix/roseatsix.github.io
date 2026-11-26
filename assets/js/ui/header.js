@@ -12,7 +12,7 @@ import * as S from '../core/session.js';
 import { openStore, onSyncStatus } from '../core/store.js';
 import { same } from '../core/merge.js';
 import { esc, ICON, toast } from './dom.js';
-import { openAppearanceDialog } from './appearance.js';
+import { mountThemeControls } from './theme-controls.js';
 import {
   openSetupDialog, openUnlockDialog, openDeniedDialog, openUnconfiguredDialog,
 } from './vault-dialogs.js';
@@ -28,8 +28,7 @@ const SYNC_TEXT = {
 };
 
 export function mountHeader({ autoUnlock = false } = {}) {
-  setupThemeToggle();
-  document.getElementById('appearance-btn')?.addEventListener('click', openAppearanceDialog);
+  mountThemeControls();
 
   const slot = document.getElementById('account-slot');
   let justSignedIn = false;
@@ -197,25 +196,6 @@ function avatarButton(u, sync) {
   const dot = sync ? `<span class="sync-dot" data-state="${sync}"></span>` : '';
   return `<button class="icon-btn has-avatar" type="button" data-act="menu" aria-haspopup="menu" aria-expanded="false"
             aria-label="Account: ${esc(u.name || u.email)}" title="${esc(sync ? SYNC_TEXT[sync] : 'No access')}">${face}${dot}</button>`;
-}
-
-/* ----- light/dark quick toggle ----- */
-
-function setupThemeToggle() {
-  const btn = document.getElementById('theme-toggle');
-  if (!btn) return;
-  const media = window.matchMedia('(prefers-color-scheme: dark)');
-  const current = () => {
-    const m = T.read().mode;
-    return m === 'auto' ? (media.matches ? 'dark' : 'light') : m;
-  };
-  const label = () => btn.setAttribute('aria-label', current() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-  btn.addEventListener('click', () => {
-    T.save({ ...T.read(), mode: current() === 'dark' ? 'light' : 'dark' }, { source: 'mode' });
-  });
-  window.addEventListener('ras:prefs', label);
-  media.addEventListener?.('change', label);
-  label();
 }
 
 /* ----- keep palette + custom colours in sync across devices ----- */
