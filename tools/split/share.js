@@ -82,8 +82,10 @@ export async function summaryImage(t, forId = null) {
   const P = palette();
   const W = 1080, PAD = 64, IN = 56;
   // Always give a fallback: fonts.check() is true even for fonts that aren't loaded.
-  const serif = 'Fraunces, Georgia, "Times New Roman", serif';
-  const sans = '"Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  // the theme's own fonts (Rose: Fraunces + Nunito Sans)
+  const css = getComputedStyle(document.documentElement);
+  const serif = css.getPropertyValue('--font-display').trim() || 'Georgia, serif';
+  const sans = css.getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
 
   const rows = summaryRows(t, forId);
   const hOf = r => ({ title: 78, sub: 52, big: r.note ? 190 : 160, h: 82, line: r.sub ? 76 : 60, transfer: 66 })[r.k];

@@ -5,6 +5,30 @@
    Exposes window.RAS_THEME for the rest of the app.
    ========================================================== */
 (function () {
+  /* A theme ("style") sets fonts, shapes, decorations and the app icon;
+     each has its own palettes. Rose is the original. */
+  var STYLES = {
+    rose: {
+      name: 'Rose', note: 'Soft serif, rounded, flowers',
+      fonts: 'family=Fraunces:opsz,wght,SOFT@9..144,400..600,100&family=Nunito+Sans:opsz,wght@6..12,400..800',
+      sample: '"Fraunces", Georgia, serif',
+      icon: { touch: '/assets/icons/apple-touch-icon.png', manifest: '/assets/manifest.webmanifest', favicon: '/assets/favicon.svg' }
+    },
+    slate: {
+      name: 'Slate', note: 'Clean and modern, one bright accent',
+      fonts: 'family=Plus+Jakarta+Sans:wght@400..800',
+      sample: '"Plus Jakarta Sans", system-ui, sans-serif',
+      icon: { touch: '/assets/icons/slate-180.png', manifest: '/assets/manifest-slate.webmanifest', favicon: '/assets/favicon-slate.svg' }
+    },
+    // shown as "Paper"; the id stays "beacon" so saved choices keep working
+    beacon: {
+      name: 'Paper', note: 'Warm paper, calm serif titles, easy-to-read text',
+      fonts: 'family=Atkinson+Hyperlegible+Next:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600',
+      sample: '"Newsreader", Georgia, serif',
+      icon: { touch: '/assets/icons/beacon-180.png', manifest: '/assets/manifest-beacon.webmanifest', favicon: '/assets/favicon-beacon.svg' }
+    }
+  };
+
   var PALETTES = {
     rose: {
       name: 'Rose at six',
@@ -70,8 +94,51 @@
       name: 'Stone',
       flower: '#8C766A', leaf: '#7F8574', sun: '#B49A72',
       bgLight: '#F4F2EE', textLight: '#33302C', bgDark: '#1A1917', textDark: '#ECE9E4'
+    },
+
+    /* Slate */
+    'slate-blue': {
+      style: 'slate', name: 'Blue',
+      flower: '#2E6BE6', leaf: '#16A37B', sun: '#D9822B',
+      bgLight: '#F3F4F6', textLight: '#111827', bgDark: '#0F1115', textDark: '#E8EAEE'
+    },
+    'slate-green': {
+      style: 'slate', name: 'Green',
+      flower: '#12916B', leaf: '#2E6BE6', sun: '#D9822B',
+      bgLight: '#F2F5F3', textLight: '#0F1B16', bgDark: '#0E1311', textDark: '#E6ECE9'
+    },
+    'slate-violet': {
+      style: 'slate', name: 'Violet',
+      flower: '#6D5BD0', leaf: '#16A37B', sun: '#D9822B',
+      bgLight: '#F4F3F7', textLight: '#15131F', bgDark: '#100F15', textDark: '#E9E8EF'
+    },
+    'slate-graphite': {
+      style: 'slate', name: 'Graphite',
+      flower: '#3F4856', leaf: '#16A37B', sun: '#D9822B',
+      bgLight: '#F3F4F5', textLight: '#111418', bgDark: '#0F1012', textDark: '#E7E9EC'
+    },
+
+    /* Beacon: warm paper, one quiet accent */
+    'beacon-crimson': {
+      style: 'beacon', name: 'Crimson',
+      flower: '#9B2D2E', leaf: '#6F7F62', sun: '#B8955E',
+      bgLight: '#F8F7F4', textLight: '#232220', bgDark: '#1C1B19', textDark: '#ECEAE5'
+    },
+    'beacon-ink': {
+      style: 'beacon', name: 'Ink blue',
+      flower: '#2F4A7A', leaf: '#6F7F62', sun: '#B8955E',
+      bgLight: '#F7F7F5', textLight: '#21232A', bgDark: '#1A1B1E', textDark: '#EAEBEE'
+    },
+    'beacon-sage': {
+      style: 'beacon', name: 'Sage',
+      flower: '#5B6F50', leaf: '#9B2D2E', sun: '#B8955E',
+      bgLight: '#F7F7F3', textLight: '#22241F', bgDark: '#1B1C19', textDark: '#EAEBE5'
     }
   };
+  for (var id in PALETTES) if (!PALETTES[id].style) PALETTES[id].style = 'rose';
+
+  // The first palette of a style is its default.
+  function firstPalette(style) { for (var id in PALETTES) if (PALETTES[id].style === style) return id; return 'rose'; }
 
   // palette field -> CSS custom property
   var VARS = {
@@ -84,7 +151,7 @@
 
   var KEY = 'ras-prefs';
 
-  function defaults() { return { mode: 'auto', palette: 'rose', custom: {} }; }
+  function defaults() { return { mode: 'auto', style: 'rose', palette: 'rose', custom: {} }; }
 
   function read() {
     var p = defaults();
@@ -92,7 +159,9 @@
       var stored = JSON.parse(localStorage.getItem(KEY) || 'null');
       if (stored && typeof stored === 'object') {
         if (stored.mode === 'light' || stored.mode === 'dark' || stored.mode === 'auto') p.mode = stored.mode;
+        if (STYLES[stored.style]) p.style = stored.style;
         if (PALETTES[stored.palette]) p.palette = stored.palette;
+        if (PALETTES[p.palette].style !== p.style) p.palette = firstPalette(p.style);
         if (stored.custom && typeof stored.custom === 'object') {
           CUSTOMIZABLE.forEach(function (k) {
             if (/^#[0-9a-f]{6}$/i.test(stored.custom[k] || '')) p.custom[k] = stored.custom[k];
@@ -114,12 +183,58 @@
     return out;
   }
 
+  /* Small marks drawn by the theme: the "blossom" (bullets, ratings,
+     footers) and the brand mark. Rose keeps the originals from the page. */
+  var MARKS = {
+    slate: { blossom: '<rect x="-6.2" y="-6.2" width="12.4" height="12.4" rx="3.6" fill="currentColor"/>' },
+    beacon: { blossom: '<circle r="5.2" fill="currentColor"/>' }
+  };
+  var original = {};
+  function applyMarks(style) {
+    ['blossom', 'rose'].forEach(function (id) {
+      var sym = document.getElementById(id);
+      if (!sym) return;
+      if (!(id in original)) original[id] = sym.innerHTML;
+      var want = (MARKS[style] && MARKS[style][id]) || original[id];
+      if (sym.innerHTML !== want) sym.innerHTML = want;
+    });
+  }
+
+  function setLink(sel, href) {
+    var el = document.querySelector(sel);
+    if (el && el.getAttribute('href') !== href) el.setAttribute('href', href);
+  }
+
   function apply(p) {
     var root = document.documentElement;
     if (p.mode === 'light' || p.mode === 'dark') root.setAttribute('data-theme', p.mode);
     else root.removeAttribute('data-theme');
     var c = resolved(p);
     for (var k in VARS) root.style.setProperty(VARS[k], c[k]);
+
+    var st = STYLES[p.style] || STYLES.rose;
+    root.setAttribute('data-style', p.style);
+    // fonts for this theme
+    var font = document.getElementById('ras-fonts');
+    var href = 'https://fonts.googleapis.com/css2?' + st.fonts + '&display=swap';
+    if (!font) {
+      font = document.createElement('link');
+      font.id = 'ras-fonts'; font.rel = 'stylesheet';
+      document.head.appendChild(font);
+    }
+    if (font.getAttribute('href') !== href) font.setAttribute('href', href);
+    // app icon, install details and browser colour
+    setLink('link[rel="apple-touch-icon"]', st.icon.touch);
+    setLink('link[rel="manifest"]', st.icon.manifest);
+    setLink('link[rel="icon"]', st.icon.favicon);
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i++) {
+      var dark = /dark/.test(metas[i].getAttribute('media') || '');
+      metas[i].setAttribute('content', dark ? c.bgDark : c.bgLight);
+    }
+    // marks (only once the page's symbols exist)
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { applyMarks(read().style); }, { once: true });
+    else applyMarks(p.style);
   }
 
   function save(p, detail) {
@@ -131,7 +246,7 @@
   }
 
   window.RAS_THEME = {
-    PALETTES: PALETTES, CUSTOMIZABLE: CUSTOMIZABLE,
+    STYLES: STYLES, PALETTES: PALETTES, CUSTOMIZABLE: CUSTOMIZABLE, firstPalette: firstPalette,
     read: read, save: save, apply: apply, resolved: resolved
   };
 

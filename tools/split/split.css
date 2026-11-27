@@ -4,7 +4,7 @@
 .sp-trip { display: flex; align-items: center; gap: 12px; color: var(--text); text-decoration: none; transition: background-color .15s, transform .15s; }
 .sp-trip:hover { background: var(--surface-hover); transform: translateY(-1px); }
 .sp-trip-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.sp-trip-title { font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: 1.25rem; font-weight: 500; }
+.sp-trip-title { font-family: var(--font-display); font-variation-settings: var(--display-var); font-size: 1.25rem; font-weight: var(--display-weight); }
 .sp-status { font-size: .8rem; font-weight: 700; color: var(--sun-deep); }
 .sp-status.is-done { color: var(--leaf-deep); }
 
@@ -13,7 +13,7 @@
 .sp-top .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .sp-titlebtn { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 4px 6px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .sp-titlebtn:hover { background: color-mix(in oklab, var(--surface) 70%, transparent); }
-.sp-h1 { font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 500; line-height: 1.15; overflow-wrap: break-word; }
+.sp-h1 { font-family: var(--font-display); font-variation-settings: var(--display-var); font-size: clamp(1.5rem, 5vw, 2rem); font-weight: var(--display-weight); line-height: 1.15; overflow-wrap: break-word; }
 
 .sp-people { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sp-person { min-height: 38px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-weight: 700; font-size: .92rem; cursor: pointer; }

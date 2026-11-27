@@ -9,12 +9,12 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27i';
+const VERSION = 'ras-2026-11-27o';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
   '/', '/index.html',
-  '/assets/css/style.css', '/assets/css/components.css', '/assets/favicon.svg', '/assets/manifest.webmanifest',
+  '/assets/css/style.css', '/assets/css/components.css', '/assets/favicon.svg', '/assets/favicon-slate.svg', '/assets/favicon-beacon.svg', '/assets/manifest.webmanifest', '/assets/manifest-slate.webmanifest', '/assets/manifest-beacon.webmanifest',
   '/assets/icons/apple-touch-icon.png', '/assets/icons/icon-192.png',
   '/assets/js/theme-boot.js', '/assets/js/config.js', '/assets/js/hub.js', '/assets/js/hub-today.js', '/assets/js/hub-search.js',
   '/assets/js/core/backup.js', '/assets/js/core/crypto.js', '/assets/js/core/firebase.js', '/assets/js/core/idb.js',
@@ -30,7 +30,7 @@ const SHELL = [
   '/tools/inventory/', '/tools/inventory/index.html', '/tools/inventory/inventory.css', '/tools/inventory/inventory.js',
   '/tools/inventory/model.js', '/tools/inventory/views.js', '/tools/inventory/dialogs.js',
   '/tools/subscriptions/', '/tools/subscriptions/index.html', '/tools/subscriptions/app.js', '/tools/subscriptions/model.js', '/tools/subscriptions/subs.css',
-  '/tools/documents/', '/tools/documents/index.html', '/tools/documents/app.js', '/tools/documents/lib.js', '/tools/documents/documents.css',
+  '/tools/documents/', '/tools/documents/index.html', '/tools/documents/app.js', '/tools/documents/lib.js', '/tools/documents/more.js', '/tools/documents/documents.css',
   '/assets/vendor/pdf-lib.min.js', '/assets/vendor/jszip.min.js', '/assets/vendor/pdfjs/pdf.min.mjs', '/assets/vendor/pdfjs/pdf.worker.min.mjs',
   '/tools/generate/', '/tools/generate/index.html', '/tools/generate/app.js', '/tools/generate/engine.js', '/tools/generate/generate.css',
   '/tools/split/', '/tools/split/index.html', '/tools/split/app.js', '/tools/split/model.js', '/tools/split/share.js', '/tools/split/split.css',

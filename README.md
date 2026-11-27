@@ -82,3 +82,26 @@ service %, tax %, discount and total; tax printed after the total (minimarket
 correcting it, then sending it to a bill split or journal spending.
 Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),
 Journal → Budget (Scan receipt).
+
+## Document toolkit: Protect, size limits, ID photos
+
+`tools/documents/more.js`. Protect (cover private details and/or watermark)
+renders every page to a 150 dpi picture and draws on it, so covered text or a
+watermark can't be removed from the saved file (PDFs lose selectable text on
+purpose). Text is found through the PDF's own text layer, or OCR word boxes
+for photos and scans. Compress → "Under a size limit" searches JPEG quality,
+then size; PDFs are re-rendered at falling dpi until they fit. Convert → ID
+photo cuts 2×3, 3×4 or 4×6 cm at 300 dpi.
+
+## Themes
+
+Appearance has three themes: Rose (the original), Slate (Plus Jakarta Sans,
+crisp, one bright accent) and Paper (id `beacon`; warm paper, Newsreader titles,
+Atkinson Hyperlegible Next text, one quiet accent). `assets/js/theme-boot.js` holds `STYLES` (fonts, app icon,
+manifest, favicon) and the palettes (each belongs to one style); it sets
+`data-style` on `<html>`, loads the theme's fonts, swaps the icon links and the
+small `#blossom` mark (the rose brand mark stays and takes the palette's
+colours; app icons are the rose in each theme's colours). The theme rules are at the end of
+`assets/css/style.css`. Display type uses `--display-weight` / `--display-var`
+so every heading follows the theme. App icons are generated from SVG into
+`assets/icons/{slate,beacon}-*.png`; phones take the icon at install time.

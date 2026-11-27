@@ -11,7 +11,7 @@
 
 /* ---------- home ---------- */
 
-.l-intro h1 { margin: 2px 0 8px; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.15; }
+.l-intro h1 { margin: 2px 0 8px; font-family: var(--font-display); font-variation-settings: var(--display-var); font-weight: var(--display-weight); font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.15; }
 .l-intro p:not(.eyebrow) { margin: 0 0 14px; color: var(--text-muted); max-width: 60ch; }
 .l-intro .eyebrow { margin: 0; }
 .l-intro-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
@@ -59,13 +59,13 @@
 .l-lesson-head svg, .l-actions svg, .l-lesson-foot .btn svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .l-lesson-head .icon-btn svg { width: 20px; height: 20px; }
 .l-lesson-head .eyebrow { margin: 0; }
-.l-lesson-head h1 { margin: 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1.15; }
+.l-lesson-head h1 { margin: 0; font-family: var(--font-display); font-variation-settings: var(--display-var); font-weight: var(--display-weight); font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1.15; }
 
 .l-lesson > [data-parts] { display: grid; gap: 16px; }
 .l-part { padding: 20px 20px 18px; scroll-margin-top: 16px; }
 @media (max-width: 480px) { .l-part { padding: 16px 14px 14px; } }
 .l-part-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
-.l-part-head h2 { margin: 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: 1.3rem; }
+.l-part-head h2 { margin: 0; font-family: var(--font-display); font-variation-settings: var(--display-var); font-weight: var(--display-weight); font-size: 1.3rem; }
 .l-part-n { font-size: .78rem; font-weight: 800; color: var(--flower-deep); }
 
 .l-step { max-width: 68ch; }
@@ -240,7 +240,7 @@
 .l-stepcard { padding: 20px; }
 @media (max-width: 480px) { .l-stepcard { padding: 16px 14px; } }
 .l-step-head { margin-bottom: 12px; }
-.l-step-head h2 { margin: 2px 0 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.3rem, 4.5vw, 1.6rem); line-height: 1.2; }
+.l-step-head h2 { margin: 2px 0 0; font-family: var(--font-display); font-variation-settings: var(--display-var); font-weight: var(--display-weight); font-size: clamp(1.3rem, 4.5vw, 1.6rem); line-height: 1.2; }
 .l-step-n { font-size: .76rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--flower-deep); }
 .l-place-tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: .76rem; font-weight: 700; color: var(--text-muted); }
 .l-place-tag svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
