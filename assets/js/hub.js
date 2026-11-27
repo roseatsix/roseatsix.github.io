@@ -114,8 +114,14 @@ function renderGreeting() {
 
 renderGreeting();
 renderTools();
-renderQuickTools();
 mountThemeControls();
+// The top bar sticks to the top; give it a backdrop once the page scrolls.
+const topbar = document.querySelector('.topbar.is-sticky');
+if (topbar) {
+  const onScroll = () => topbar.classList.toggle('is-scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
   .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); import('./hub-search.js').then(s => s.mountSearch()); })
@@ -144,15 +150,4 @@ async function showInventoryBadge() {
       badge.textContent = `${due} need attention`;
     });
   } catch (e) { console.warn('Inventory badge unavailable', e); }
-}
-
-/* Phones: one-tap shortcuts to the ready tools, at the top of the page. */
-function renderQuickTools() {
-  const nav = document.getElementById('quick-tools');
-  if (!nav) return;
-  const SHORT = { 'Home inventory': 'Home', 'Bill splitter': 'Split', 'Subscriptions': 'Subs', 'Document toolkit': 'Docs', 'Generate from DOCX': 'DOCX', 'Learn to code': 'Learn' };
-  nav.innerHTML = TOOLS.filter(t => t.status === 'ready').map(t => {
-    const tone = (GROUPS.find(g => g.id === t.group) || {}).tone || 'flower';
-    return `<a class="quick-tool tone-${tone}" href="${t.href}" aria-label="${t.name}" title="${t.name}">${svgIcon(t.icon)}<span>${SHORT[t.name] || t.name}</span></a>`;
-  }).join('');
 }

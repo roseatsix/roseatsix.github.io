@@ -50,7 +50,7 @@
   </svg>
 
   <div class="page">
-    <header class="topbar">
+    <header class="topbar is-sticky">
       <a class="brand" href="./" aria-label="rose at six, home">
         <svg class="brand-mark" aria-hidden="true"><use href="#rose"/></svg>
         <span class="brand-name">rose at six</span>
@@ -73,7 +73,7 @@
           <p class="eyebrow" id="today">Today</p>
           <h1 id="greeting">Good day</h1>
           <p class="lede">A small garden of everyday tools, all in one place.</p>
-          <nav class="quick-tools" id="quick-tools" aria-label="Your tools"></nav>
+          <ul class="highlights" id="highlights" aria-label="Today's highlights" hidden></ul>
         </div>
 
         <!-- Decorative sprig -->
@@ -105,7 +105,6 @@
         <div class="sr-results" data-results aria-live="polite" hidden></div>
       </div>
 
-      <section id="today-panel" class="today" aria-labelledby="today-h" hidden></section>
 
       <div id="tool-groups"></div>
     </main>
