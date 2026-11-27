@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27s';
+const VERSION = 'ras-2026-11-27t';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
