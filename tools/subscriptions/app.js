@@ -4,7 +4,7 @@ import { navRows, openNameEditor, PLUS, plural } from '../../assets/js/ui/name-l
 import { mountHeader } from '../../assets/js/ui/header.js';
 import * as S from '../../assets/js/core/session.js';
 import { openStore } from '../../assets/js/core/store.js';
-import { openDialog, esc, toast, busy } from '../../assets/js/ui/dom.js';
+import { openDialog, esc, toast, busy, reveal } from '../../assets/js/ui/dom.js';
 import { openBackupDialog } from '../../assets/js/ui/backup.js';
 import * as M from './model.js';
 
@@ -379,7 +379,7 @@ document.querySelector('[data-act=settings]')?.addEventListener('click', () => (
 
 function openLinked() {
   const [, kind, id] = (location.hash || '').split('/');
-  if (kind === 'sub' && M.get('sub:' + id)) { history.replaceState(null, '', '#/'); openSubDialog(id); }
+  if (kind === 'sub' && M.get('sub:' + id)) { history.replaceState(null, '', '#/'); setTimeout(() => reveal(`.s-row[data-id="${id}"]`, main), 60); }
 }
 
 store.subscribe(list => {

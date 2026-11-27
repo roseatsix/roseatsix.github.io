@@ -387,7 +387,7 @@ button.j-pill { cursor: pointer; }
 /* ---------- Search ---------- */
 .j-search-note { margin: 0 4px; font-size: .88rem; color: var(--text-muted); }
 .j-results { display: grid; gap: 10px; }
-.j-result { display: grid; gap: 4px; width: 100%; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.j-result { display: grid; gap: 4px; width: 100%; color: var(--text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .j-result:hover { background: var(--surface-hover); }
 .j-result-top { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; color: var(--text-muted); }
 .j-result-hit { overflow-wrap: anywhere; }
