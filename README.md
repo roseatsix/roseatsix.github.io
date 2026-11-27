@@ -22,6 +22,7 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `tools/documents/`: document toolkit (merge, pages, compress, convert, text & OCR), all in the browser
 - `assets/vendor/`: pdf-lib, pdf.js, JSZip and Tesseract (OCR) with English and Indonesian data
 - `tools/generate/`: Generate from DOCX (templates with `{{placeholders}}`, form, formulas, history)
+- `tools/inbox/`: Inbox (paste, photo, Android share target; sort into task, log or wishlist)
 - `tools/learn/`: Learn (case studies of how this site works, through its real code)
 - `tools/<name>/`: each further tool gets its own folder
 
@@ -61,3 +62,12 @@ call chain, where the data is (page, device, Firebase) and what it looks like.
 Code shown there is copied from the real files, sometimes shortened. If you
 change those files a lot, update the matching steps. Live demos (`demos.js`)
 import the real functions. Progress syncs (encrypted) when unlocked.
+
+## Inbox and sharing
+
+`tools/inbox/` collects links, notes and photos (photos are shrunk to a JPEG
+under ~600 KB so they fit in one synced item). On Android, the installed app
+appears in the Share menu: `share_target` in `assets/manifest.webmanifest`
+posts to `/tools/inbox/share`, which `sw.js` catches and parks in the
+`ras-share` cache; the inbox page encrypts and saves it, then clears it.
+iPhone web apps can't be share targets, so there it's Paste and Photo.
