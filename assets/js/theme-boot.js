@@ -21,9 +21,9 @@
       icon: { touch: '/assets/icons/slate-180.png', manifest: '/assets/manifest-slate.webmanifest', favicon: '/assets/favicon-slate.svg' }
     },
     beacon: {
-      name: 'Beacon', note: 'Easy to read: clear letters, strong contrast',
-      fonts: 'family=Atkinson+Hyperlegible+Next:wght@400..800',
-      sample: '"Atkinson Hyperlegible Next", system-ui, sans-serif',
+      name: 'Beacon', note: 'Warm paper, calm serif titles, easy-to-read text',
+      fonts: 'family=Atkinson+Hyperlegible+Next:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600',
+      sample: '"Newsreader", Georgia, serif',
       icon: { touch: '/assets/icons/beacon-180.png', manifest: '/assets/manifest-beacon.webmanifest', favicon: '/assets/favicon-beacon.svg' }
     }
   };
@@ -117,21 +117,21 @@
       bgLight: '#F3F4F5', textLight: '#111418', bgDark: '#0F1012', textDark: '#E7E9EC'
     },
 
-    /* Beacon */
-    'beacon-navy': {
-      style: 'beacon', name: 'Navy & gold',
-      flower: '#1F3F78', leaf: '#2D7A5F', sun: '#C98A12',
-      bgLight: '#F6F4EE', textLight: '#11151C', bgDark: '#10141B', textDark: '#F1F3F6'
+    /* Beacon: warm paper, one quiet accent */
+    'beacon-crimson': {
+      style: 'beacon', name: 'Crimson',
+      flower: '#9B2D2E', leaf: '#6F7F62', sun: '#B8955E',
+      bgLight: '#F8F7F4', textLight: '#232220', bgDark: '#1C1B19', textDark: '#ECEAE5'
     },
-    'beacon-teal': {
-      style: 'beacon', name: 'Teal',
-      flower: '#0D6B6E', leaf: '#3A6FB0', sun: '#C98A12',
-      bgLight: '#F4F6F4', textLight: '#101716', bgDark: '#0E1514', textDark: '#EEF3F2'
+    'beacon-ink': {
+      style: 'beacon', name: 'Ink blue',
+      flower: '#2F4A7A', leaf: '#6F7F62', sun: '#B8955E',
+      bgLight: '#F7F7F5', textLight: '#21232A', bgDark: '#1A1B1E', textDark: '#EAEBEE'
     },
-    'beacon-plum': {
-      style: 'beacon', name: 'Plum',
-      flower: '#6A2E62', leaf: '#2D7A5F', sun: '#C98A12',
-      bgLight: '#F7F4F5', textLight: '#171216', bgDark: '#151014', textDark: '#F3EEF2'
+    'beacon-sage': {
+      style: 'beacon', name: 'Sage',
+      flower: '#5B6F50', leaf: '#9B2D2E', sun: '#B8955E',
+      bgLight: '#F7F7F3', textLight: '#22241F', bgDark: '#1B1C19', textDark: '#EAEBE5'
     }
   };
   for (var id in PALETTES) if (!PALETTES[id].style) PALETTES[id].style = 'rose';
@@ -185,14 +185,8 @@
   /* Small marks drawn by the theme: the "blossom" (bullets, ratings,
      footers) and the brand mark. Rose keeps the originals from the page. */
   var MARKS = {
-    slate: {
-      blossom: '<rect x="-6.2" y="-6.2" width="12.4" height="12.4" rx="3.6" fill="currentColor"/>',
-      rose: '<rect x="4" y="4" width="40" height="40" rx="12" style="fill: var(--flower)"/><path d="M15 30.5a9 9 0 0 1 18 0z" fill="#fff"/><path d="M11 34h26" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M24 13.5v4M13.5 18l2.6 2.6M34.5 18l-2.6 2.6" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>'
-    },
-    beacon: {
-      blossom: '<circle r="6.6" fill="none" stroke="currentColor" stroke-width="2.8"/><circle r="2.4" fill="currentColor"/>',
-      rose: '<rect x="4" y="4" width="40" height="40" rx="10" style="fill: var(--flower)"/><text x="22.5" y="31.5" text-anchor="middle" font-family="Atkinson Hyperlegible Next, system-ui, sans-serif" font-weight="800" font-size="21" fill="#fff">r6</text><circle cx="36" cy="29.5" r="2.6" style="fill: var(--sun)"/>'
-    }
+    slate: { blossom: '<rect x="-6.2" y="-6.2" width="12.4" height="12.4" rx="3.6" fill="currentColor"/>' },
+    beacon: { blossom: '<circle r="5.2" fill="currentColor"/>' }
   };
   var original = {};
   function applyMarks(style) {

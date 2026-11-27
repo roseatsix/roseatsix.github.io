@@ -96,11 +96,12 @@ photo cuts 2×3, 3×4 or 4×6 cm at 300 dpi.
 ## Themes
 
 Appearance has three themes: Rose (the original), Slate (Plus Jakarta Sans,
-crisp, one bright accent) and Beacon (Atkinson Hyperlegible Next, larger text,
-strong contrast). `assets/js/theme-boot.js` holds `STYLES` (fonts, app icon,
+crisp, one bright accent) and Beacon (warm paper, Newsreader titles,
+Atkinson Hyperlegible Next text, one quiet accent). `assets/js/theme-boot.js` holds `STYLES` (fonts, app icon,
 manifest, favicon) and the palettes (each belongs to one style); it sets
 `data-style` on `<html>`, loads the theme's fonts, swaps the icon links and the
-small `#blossom` / `#rose` marks. The theme rules are at the end of
+small `#blossom` mark (the rose brand mark stays and takes the palette's
+colours; app icons are the rose in each theme's colours). The theme rules are at the end of
 `assets/css/style.css`. Display type uses `--display-weight` / `--display-var`
 so every heading follows the theme. App icons are generated from SVG into
 `assets/icons/{slate,beacon}-*.png`; phones take the icon at install time.

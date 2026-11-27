@@ -1015,35 +1015,32 @@ body.has-highlights .hero .lede { display: none; }
 }
 :root[data-style="slate"] :is(h1, h2, h3, .brand-name, .hero h1) { letter-spacing: -.025em; }
 
-/* ---------- Beacon: built around Atkinson Hyperlegible Next ---------- */
+/* ---------- Beacon: warm paper, Atkinson text, calm serif titles ---------- */
 :root[data-style="beacon"] {
-  font-size: 106.25%;               /* 17px base: everything a little larger */
-  --font-display: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --display-weight: 700;
+  --display-weight: 450;
   --display-var: normal;
   --radius-lg: 14px;
   --radius: 12px;
   --radius-sm: 9px;
   --btn-radius: 10px;
   --glow-amount: 0%;
-  --surface-lift: 70%;
-  --soft-amount: 16%;
-  --shadow: none;
-  --shadow-hover: 0 0 0 1px var(--text);
+  --surface-lift: 45%;
+  --soft-amount: 14%;
+  --shadow: 0 1px 2px rgb(40 30 20 / .04);
+  --shadow-hover: 0 2px 10px -4px rgb(40 30 20 / .12);
 }
-:root[data-style="beacon"], :root[data-style="beacon"][data-theme] {
-  --border: color-mix(in oklab, var(--bg), var(--text) 24%);
-  --text-muted: color-mix(in oklab, var(--text) 82%, var(--bg));
-}
-:root[data-style="beacon"][data-theme="dark"] { --surface-lift: 7%; --soft-amount: 24%; }
+:root[data-style="beacon"][data-theme="dark"] { --surface-lift: 5%; --soft-amount: 20%; --shadow: none; }
 @media (prefers-color-scheme: dark) {
-  :root[data-style="beacon"]:not([data-theme="light"]) { --surface-lift: 7%; --soft-amount: 24%; }
+  :root[data-style="beacon"]:not([data-theme="light"]) { --surface-lift: 5%; --soft-amount: 20%; --shadow: none; }
 }
-:root[data-style="beacon"] body { font-size: 1rem; line-height: 1.6; }
-:root[data-style="beacon"] :focus-visible { outline-width: 3px; outline-offset: 3px; }
-:root[data-style="beacon"] .btn-primary { font-weight: 800; }
-:root[data-style="beacon"] a:not(.btn):not(.card):not([class*="tab"]):not(.brand) { text-underline-offset: 3px; }
+:root[data-style="beacon"] body { line-height: 1.6; }
+:root[data-style="beacon"] :is(.btn, .tabs a, .choice-chips button, .eyebrow) { font-weight: 600; }
+:root[data-style="beacon"] .hero h1 { letter-spacing: -.015em; }
+/* soft tinted tiles instead of solid ones, like highlighted text */
+:root[data-style="beacon"] .hl-icon { background: color-mix(in oklab, var(--hc) 16%, var(--surface)); color: color-mix(in oklab, var(--hc) 78%, var(--text)); }
+:root[data-style="beacon"] .hl-type { font-weight: 700; }
 
 /* ---------- shared by the non-Rose themes ---------- */
 :root:not([data-style="rose"]) .sprig { display: none; }
