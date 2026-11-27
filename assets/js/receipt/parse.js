@@ -79,7 +79,8 @@ const titleCase = s => s.toLowerCase().replace(/(^|[\s(/-])([a-z])/g, (m, a, b) 
 export function parseReceipt(text) {
   // receipts with ",00" cents: "15.000,00=" is often read as "15.000,007" or "15.000,00x"
   const cents = (String(text || '').match(/\d[.,]\d{3}[.,]\s?\d{2}/g) || []).length >= 3;
-  const lines = String(text || '').split(/\r?\n/)
+  const lines = String(text || '').replace(/\b(rp|idr)\.?[ \t]*\n[ \t]*(?=\d)/gi, '$1 ')   // "Jus sirsak x1 Rp" + "24.000" on the next line
+    .split(/\r?\n/)
     .map(l => l.replace(/([x×])\s*[|lI!](?=\s|$)/g, '$1 1'))      // "x |" is "x 1" misread
     .map(l => l.replace(/(^|\s)[1lI][0OD]R\s?(?=\d)/g, '$1IDR '))     // "10R116,000" is "IDR116,000"
     .map(l => cents ? l.replace(/(\d[.,]\d{3})[.,]\s?(\d{2})[7x%z]?(?!\d)/gi, '$1,$2') : l)   // "14.000, 007" is "14.000,00="
@@ -109,6 +110,7 @@ export function parseReceipt(text) {
   let inItems = true;
   let afterTotal = false;      // tax lines after the total are "included" info (minimarkets)
   let prevItem = false;        // the line above was an item (its name may go on below)
+  let tail = null;             // after an unlabelled subtotal: { base, extras } until a line adds up to the total
   for (let i = 0; i < lines.length; i++) {
     const fresh = lines[i].startsWith('§ ');       // starts a numbered item: never the rest of the one above
     const l = fresh ? lines[i].slice(2) : lines[i];
@@ -132,7 +134,18 @@ export function parseReceipt(text) {
       out.totalPrinted = true;
       inItems = false; afterTotal = true; continue;
     }
-    if (!inItems) continue;
+    if (!inItems) {
+      // Unlabelled amounts after the items' sum (labels lost, or printed on the line below):
+      // smaller ones are tax/service, and one equal to sum + those is the total
+      if (tail && out.total == null && last && letters(label) <= 3) {
+        const extra = tail.extras.reduce((n, v) => n + v, 0);
+        if (last.v === tail.base + extra) {
+          out.total = last.v; out.totalPrinted = true; afterTotal = true;
+          if (!out.tax && !out.service) out.tax = extra;
+        } else if (last.v < tail.base) tail.extras.push(last.v);
+      }
+      continue;
+    }
     // "+ Less sugar", "+ Harga (20.000)": add-ons to the line above, not items
     if (addOn) continue;
     if (RE.skip.test(l) || (l.match(/\//g) || []).length >= 3 || (parseDate(l) && letters(l.replace(/[a-z]{3,9}/i, '')) < 3)) { pending = null; continue; }
@@ -170,7 +183,13 @@ export function parseReceipt(text) {
     const soFar = out.items.reduce((n, it) => n + it.price * it.qty, 0);
     // (or a big unlabelled amount, printed again further down, at least as much as everything above: a misread total)
     const again = () => lines.slice(i + 1).some(x => moneyIn(x).some(n => n.v === last.v));
-    if (out.items.length >= 2 && (last.v === soFar || (out.items.length >= 3 && last.v >= soFar && !/\p{L}{4,}/u.test(label) && again()))) {
+    if (out.items.length >= 2 && last.v === soFar) {
+      // the items' sum: a subtotal; tax and the total may follow, labelled or not
+      if (out.subtotal == null) out.subtotal = last.v;
+      tail = { base: last.v, extras: [] };
+      inItems = false; continue;
+    }
+    if (out.items.length >= 3 && last.v >= soFar && !/\p{L}{4,}/u.test(label) && again()) {
       if (out.total == null) { out.total = last.v; out.totalPrinted = true; }
       inItems = false; afterTotal = true; continue;
     }
@@ -207,10 +226,28 @@ export function parseReceipt(text) {
     name = name.replace(/[^\p{L}\p{N}&'().\/\s+-]/gu, ' ').replace(/\s{2,}/g, ' ').trim()
       .replace(/^(\S\s+)+(?=\S{2,})/, '')                        // a stray letter in front (OCR noise)
       .replace(/^[a-z]{1,2}\s+(?=[A-Z])/, '');                     // "of Es batu": a speck read as a short word
+    // "x1  Rp 24.000" with no name: the name may be on the next line (printed under its price),
+    // or lost; keep the price either way, a blank name is easy to fill in
+    const bare = label.match(/^(?:[x×]\s*(\d{1,3})|(\d{1,3})\s*[x×])\s*(?:rp?\.?)?$/i);
+    if (bare && amount >= 100) {
+      qty = Number(bare[1] || bare[2]) || 1;
+      const next = lines[i + 1] || '';
+      if (!moneyIn(next).length && letters(next) >= 3 && !next.startsWith('§ ') && !RE.skip.test(next) && !RE.total.test(next) && !RE.subtotal.test(next) && !RE.tax.test(next)) { name = next; i++; }
+      else name = pending || '';
+      out.items.push({ name: titleCase(name), qty, price: Math.round(amount / qty) });
+      pending = null; prevItem = true; continue;
+    }
     if (letters(name) < 2 || amount < 100 || amount <= 0) { pending = null; prevItem = false; continue; }
     if (!name && pending) name = pending;
     out.items.push({ name: titleCase(name), qty: qty || 1, price: Math.round(amount / (qty || 1)) });
     pending = null; prevItem = true;
+  }
+
+  // No total after an unlabelled subtotal (misread or cut off): an amount that's a usual
+  // tax or service rate of it (a whole or half percent, up to 15%) is the tax
+  if (tail && out.total == null && !out.tax && !out.service) {
+    const t = tail.extras.find(v => v / tail.base <= 0.15 && Math.abs(v / tail.base * 200 - Math.round(v / tail.base * 200)) < 0.001);
+    if (t) out.tax = t;
   }
 
   // Percentages the splitter can use: service on the items, tax on items + service.

@@ -85,7 +85,9 @@ word) and keeps the reading that adds up best, preferring believable items
 items (qty × price, names that run onto a second line, numbered items with
 product codes and a "1,00 PCS x 15.000,00" line), service %, tax %, discount
 (including "(2.200)"), rounding (pembulatan) and total (an unlabelled amount
-equal to the items, e.g. IDR116,000, counts). Tax and savings printed after the
+equal to the items, e.g. IDR116,000, counts as the subtotal, and unlabelled
+amounts after it are read as tax and total). Prices printed above their names,
+or whose names were lost ("x1 Rp 24.000"), are kept. Tax and savings printed after the
 total (minimarket "PPN included", "Anda hemat") are ignored. When no total is
 printed, the review leaves it blank to fill in. `review.js` is the dialog for checking and
 correcting it, then sending it to a bill split or journal spending.

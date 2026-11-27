@@ -110,9 +110,23 @@ function wordsOf(data) {
   return out;
 }
 
+/** How much the text lines slope (a tilted photo): the median slope of the long lines' baselines. */
+function slopeOf(data) {
+  const s = [];
+  for (const b of data.blocks || []) for (const p of b.paragraphs || []) for (const l of p.lines || []) {
+    const bl = l.baseline;
+    if (bl && bl.x1 - bl.x0 > 200) s.push((bl.y1 - bl.y0) / (bl.x1 - bl.x0));
+  }
+  if (!s.length) return 0;
+  s.sort((a, b) => a - b);
+  const m = s[s.length >> 1];
+  return Math.abs(m) < 0.2 ? m : 0;
+}
+
 /** Put words back into lines by their height on the page, left to right. */
-export function rebuildLines(words) {
-  const ws = words.filter(w => w.conf > 15 || /\d/.test(w.text)).map(w => ({ ...w, yc: (w.y0 + w.y1) / 2, h: w.y1 - w.y0 }))
+export function rebuildLines(words, slope = 0) {
+  // height on the page, measured along the tilt, so a far-right price stays with its line
+  const ws = words.filter(w => w.conf > 15 || /\d/.test(w.text)).map(w => ({ ...w, yc: (w.y0 + w.y1) / 2 - slope * (w.x0 + w.x1) / 2, h: w.y1 - w.y0 }))
     .sort((a, b) => a.yc - b.yc);
   const rows = [];
   for (const w of ws) {
@@ -182,7 +196,7 @@ export async function readReceipt(src, onProgress = () => {}) {
     await w.setParameters({ tessedit_pageseg_mode: psm, preserve_interword_spaces: '1' });
     const { data } = await w.recognize(await canvasAt(width), { rotateAuto }, { text: true, blocks: true });
     const words = wordsOf(data);
-    for (const text of [data.text || '', words.length ? rebuildLines(words) : ''].filter(Boolean)) {
+    for (const text of [data.text || '', words.length ? rebuildLines(words, slopeOf(data)) : ''].filter(Boolean)) {
       const score = badness(text);
       if (!best || score < best.score) best = { text, score };
     }
