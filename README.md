@@ -22,7 +22,7 @@ sign-in and end-to-end encrypted, item-level sync across devices.
 - `tools/documents/`: document toolkit (merge, pages, compress, convert, text & OCR), all in the browser
 - `assets/vendor/`: pdf-lib, pdf.js, JSZip and Tesseract (OCR) with English and Indonesian data
 - `tools/generate/`: Generate from DOCX (templates with `{{placeholders}}`, form, formulas, history)
-- `tools/learn/`: Learn to code (lessons on how this site works, demos, practice checked in a sandboxed iframe)
+- `tools/learn/`: Learn (case studies of how this site works, through its real code)
 - `tools/<name>/`: each further tool gets its own folder
 
 ## Offline
@@ -53,10 +53,11 @@ in the tool's "How to write placeholders" guide and in `tools/generate/engine.js
 The template file, field settings and every generated entry (all values, keyed by
 timestamp) are stored encrypted in the `docgen` store.
 
-## Learn to code
+## Learn
 
-Lessons live in `tools/learn/lessons.js` as plain data: parts made of
-paragraphs, code with line notes, demos (`demos.js`), quizzes and practice.
-Practice code runs in a sandboxed iframe (`runner.js`) that can't reach the
-page or your data; loops are guarded so a never-ending loop stops after 2
-seconds. Progress syncs (encrypted) when unlocked; typed code stays on the device.
+Case studies in `tools/learn/cases.js`: each follows one feature (Log it,
+signing in, sync, search…) through the real code, step by step, with the
+call chain, where the data is (page, device, Firebase) and what it looks like.
+Code shown there is copied from the real files, sometimes shortened. If you
+change those files a lot, update the matching steps. Live demos (`demos.js`)
+import the real functions. Progress syncs (encrypted) when unlocked.

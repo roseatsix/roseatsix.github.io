@@ -126,7 +126,6 @@
 .l-frame { display: block; width: 100%; border: 0; background: #FBF8F4; }
 
 .l-slider { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.l-slider input { flex: 1; min-width: 160px; accent-color: var(--flower); }
 
 .l-filter-input { display: flex; align-items: center; gap: 4px; }
 .l-filter-input code { background: none !important; color: var(--text) !important; padding: 0 !important; }
@@ -178,33 +177,9 @@
 .l-flow .is-on .l-flow-n { background: var(--flower); color: var(--surface); }
 .l-flow-text { min-height: 3.2em; }
 
-/* ---------- quiz ---------- */
+/* ---------- editor (playground) ---------- */
 
-.l-quiz { padding: 14px; border-radius: var(--radius); background: color-mix(in oklab, var(--flower) 6%, var(--surface)); border: 1px solid color-mix(in oklab, var(--flower) 22%, var(--border)); max-width: none; }
-.l-quiz-q { margin-bottom: 10px !important; }
-.l-quiz-tag { display: inline-block; margin-right: 8px; padding: 1px 9px; border-radius: 999px; background: var(--flower-soft); color: var(--flower-deep); font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
-.l-quiz-options { display: flex; flex-wrap: wrap; gap: 8px; }
-.l-option { min-height: 40px; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
-.l-option:hover:not([disabled]) { background: var(--surface-hover); }
-.l-option.is-right { background: var(--leaf); border-color: var(--leaf); color: var(--surface); }
-.l-option.is-wrong { text-decoration: line-through; opacity: .6; }
-.l-option[disabled]:not(.is-right) { opacity: .5; cursor: default; }
-.l-quiz-why { margin-top: 10px !important; font-size: .95rem; }
-.l-quiz-why.is-good { color: var(--leaf-deep); }
-.l-quiz-why.is-bad { color: var(--danger); }
 
-/* ---------- practice ---------- */
-
-.l-practice { padding: 16px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); max-width: none; }
-@media (max-width: 480px) { .l-practice { margin-left: -6px; margin-right: -6px; padding: 14px 12px; } }
-.l-practice-head { display: flex; align-items: center; gap: 2px; margin-bottom: 6px; }
-.l-practice-head h3 { margin: 0; font-size: 1.05rem; }
-.l-practice .l-quiz-tag { background: var(--leaf-soft); color: var(--leaf-deep); }
-.l-task { margin-bottom: 12px !important; }
-
-.l-tabs { display: inline-flex; gap: 2px; margin-bottom: 6px; padding: 3px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
-.l-tabs button { min-height: 30px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--text-muted); font: 800 .78rem var(--font-body); letter-spacing: .05em; cursor: pointer; }
-.l-tabs [aria-selected="true"] { background: var(--flower-soft); color: var(--flower-deep); }
 
 .l-editor {
   display: flex; border-radius: var(--radius-sm); overflow: hidden;
@@ -226,15 +201,8 @@
 .l-actions .icon-btn svg { width: 18px; height: 18px; }
 .l-actions .icon-btn.is-armed { border-color: var(--danger); color: var(--danger); }
 
-.l-hint { margin-top: 10px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); line-height: 1.6; }
-.l-hint p { margin: 0 0 10px !important; }
-.l-hint .l-codeblock { margin-bottom: 10px; }
 
-.l-readonly { margin-top: 8px; font-size: .9rem; }
-.l-readonly summary { cursor: pointer; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; }
 
-.l-preview { margin-top: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); overflow: hidden; background: #FBF8F4; }
-.l-preview-empty { margin: 0 !important; padding: 18px; text-align: center; font-size: .9rem; color: #8a7d74; }
 
 .l-output { margin-top: 10px; display: grid; gap: 8px; }
 .l-console { padding: 10px 12px; border-radius: var(--radius-sm); background: #2E2622; color: #F3EAE2; border: 1px solid color-mix(in oklab, var(--border) 50%, transparent); font: .84rem/1.6 var(--mono); max-height: 260px; overflow: auto; }
@@ -242,21 +210,93 @@
 .l-log.is-error { color: #F4A99D; }
 .l-log.is-warn { color: #F1CF8E; }
 .l-log.is-muted { opacity: .6; }
-.l-running { margin: 0 !important; color: var(--text-muted); }
 
-.l-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.l-checks li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
-.l-check-icon { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; margin-top: 1px; }
-.l-check-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.is-ok .l-check-icon { background: var(--leaf); color: var(--surface); }
-.is-fail .l-check-icon { background: color-mix(in oklab, var(--danger) 14%, var(--surface)); color: var(--danger); }
-.l-check-name { display: block; font-weight: 700; font-size: .94rem; }
-.l-check-msg { display: block; font-size: .88rem; color: var(--text-muted); }
-.l-verdict.is-good, .l-verdict.is-bad { display: flex; align-items: center; gap: 8px; margin: 0 !important; font-weight: 700; text-transform: none; letter-spacing: 0; font-size: .98rem; }
-.l-verdict.is-good { color: var(--leaf-deep); }
-.l-verdict.is-good svg { width: 22px; height: 22px; color: var(--flower); }
-.l-verdict.is-bad { color: var(--danger); }
-
+.is-ok .is-fail 
 /* ---------- playground ---------- */
 
 .l-play .l-console { max-height: 360px; min-height: 80px; }
+
+.l-slider input { flex: 1; min-width: 160px; accent-color: var(--flower); }
+
+/* ---------- case studies ---------- */
+
+.l-lesson-head .l-allbtn { margin-left: auto; }
+.l-lesson-head .l-allbtn svg { width: 19px; height: 19px; }
+
+/* where the step happens */
+.l-places { list-style: none; margin: 0; padding: 4px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.l-places li { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 10px; border-radius: 12px; color: var(--text-muted); transition: background-color .2s, color .2s; }
+.l-places svg { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.l-places span { display: grid; min-width: 0; line-height: 1.25; }
+.l-places strong { font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-places small { font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-places .is-here { background: var(--flower-soft); color: var(--flower-deep); }
+@media (max-width: 640px) {
+  .l-places li { flex-direction: column; gap: 3px; padding: 7px 2px; text-align: center; }
+  .l-places small { display: none; }
+  .l-places strong { font-size: .74rem; }
+}
+
+.l-stepcard { padding: 20px; }
+@media (max-width: 480px) { .l-stepcard { padding: 16px 14px; } }
+.l-step-head { margin-bottom: 12px; }
+.l-step-head h2 { margin: 2px 0 0; font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-weight: 500; font-size: clamp(1.3rem, 4.5vw, 1.6rem); line-height: 1.2; }
+.l-step-n { font-size: .76rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--flower-deep); }
+.l-place-tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: .76rem; font-weight: 700; color: var(--text-muted); }
+.l-place-tag svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* who called who */
+.l-stack { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding: 10px 12px; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--leaf) 8%, var(--surface)); border: 1px solid color-mix(in oklab, var(--leaf) 22%, var(--border)); }
+.l-stack-label { flex: none; padding-top: 3px; font-size: .72rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--leaf-deep); }
+.l-stack ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; min-width: 0; }
+.l-stack li { display: flex; align-items: center; min-width: 0; }
+.l-stack li + li::before { content: "→"; margin: 0 6px; color: var(--text-muted); }
+.l-stack code { padding: 2px 7px !important; border-radius: 7px; background: var(--surface) !important; color: var(--text) !important; font-size: .8rem !important; overflow-wrap: anywhere; }
+.l-stack .is-now code { background: var(--leaf) !important; color: var(--surface) !important; font-weight: 700; }
+
+.l-step-grid { display: grid; gap: 16px; }
+@media (min-width: 860px) {
+  .l-step-grid:not(.is-text) { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+  .l-step-code { position: sticky; top: 12px; }
+}
+.l-step-code, .l-step-text { min-width: 0; }
+.l-file { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font: 600 .78rem var(--mono); color: var(--text-muted); overflow-wrap: anywhere; }
+.l-file svg { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.l-short { margin-left: auto; padding: 0 7px; border-radius: 999px; background: var(--bg); font: 700 .68rem var(--font-body); letter-spacing: .04em; text-transform: uppercase; }
+
+.l-explain { line-height: 1.65; }
+.l-explain p { margin: 0; }
+.l-explain p + p, .l-explain p + ul, .l-explain ul + p { margin-top: 10px; }
+.l-explain ul { margin: 0; padding-left: 1.2em; }
+.l-explain li + li { margin-top: 4px; }
+
+.l-idea { display: flex; gap: 10px; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--sun-soft); }
+.l-idea-icon svg { width: 20px; height: 20px; margin-top: 2px; fill: none; stroke: var(--sun-deep); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.l-idea > div > strong { display: block; margin-bottom: 2px; color: var(--sun-deep); font-size: .88rem; }
+.l-idea p { margin: 0; font-size: .94rem; line-height: 1.55; }
+
+.l-data { margin-top: 14px; }
+.l-data-label { display: block; margin-bottom: 6px; font-size: .74rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.l-data pre { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); background: #2E2622; color: #F3EAE2; font: .8rem/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.l-case .l-demo { margin-top: 16px; }
+.l-calls { font-size: .9rem; color: var(--text-muted); }
+.l-rules { display: grid; gap: 6px; }
+.l-rule { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); font-size: .88rem; }
+.l-rule span { font-weight: 700; color: var(--text-muted); }
+.l-rule.is-hit { border-color: var(--flower); background: var(--flower-soft); }
+.l-rule.is-hit span { color: var(--flower-deep); }
+.l-rule.is-skip { opacity: .5; }
+.l-nums { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.l-nums label { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; }
+.l-nums .input { width: 110px; min-height: 36px; padding: 4px 10px; }
+
+.l-stepnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.l-stepnav .btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.l-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-width: 0; }
+.l-dots a { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.l-dots .is-past { background: color-mix(in oklab, var(--flower) 45%, var(--border)); }
+.l-dots .is-on { width: 22px; border-radius: 999px; background: var(--flower); }
+.l-case [data-after] .l-finished { justify-content: center; flex-wrap: wrap; padding: 6px 0; }
+.l-case [data-after] .btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 480px) { .l-codeblock pre { font-size: .76rem; } .l-line::before { width: 2em; padding-right: .7em; } }

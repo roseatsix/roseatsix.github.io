@@ -19,7 +19,7 @@ const TOOLS = [
     href: 'tools/journal/', icon: 'journal', status: 'ready' },
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
     href: 'tools/inventory/', icon: 'home', status: 'ready' },
-  { group: 'everyday', name: 'Learn to code', desc: 'How this site works, explained simply, with things to try.',
+  { group: 'everyday', name: 'Learn to code', desc: 'Case studies of how this site works, through its own code.',
     href: 'tools/learn/', icon: 'learn', status: 'ready' },
 
   { group: 'money', name: 'Bill splitter', desc: 'Split many receipts with friends, then settle up once.',

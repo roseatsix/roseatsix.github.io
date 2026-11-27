@@ -1,20 +1,20 @@
 /* ==========================================================
-   Learn to code: lessons about how this site is built, with
-   demos and practice you can run.
+   Learn: case studies that follow real features of this site
+   through the actual code, step by step. Plus a playground.
 
-   Progress (finished lessons, solved practice) is kept on this
-   device, and also synced (encrypted) when you're signed in and
-   unlocked. Code you type is kept on this device only.
+   Progress (which case studies you've finished, and where you
+   stopped) is kept on this device, and synced (encrypted) when
+   you're signed in and unlocked.
    ========================================================== */
 
 import { mountHeader } from '../../assets/js/ui/header.js';
 import * as S from '../../assets/js/core/session.js';
 import { openStore } from '../../assets/js/core/store.js';
 import { esc, toast } from '../../assets/js/ui/dom.js';
-import { LESSONS } from './lessons.js';
+import { CASES, PLACES } from './cases.js';
 import { DEMOS } from './demos.js';
 import { codeBlock, makeEditor } from './code.js';
-import { run, friendly } from './runner.js';
+import { run } from './runner.js';
 
 const main = document.getElementById('learn');
 
@@ -22,33 +22,35 @@ const ICON = {
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
   next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
-  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
-  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>',
-  bulb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h11a5 5 0 0 1 0 10H8"/><path d="M8 5 4 9l4 4"/></svg>',
-  eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   code: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>',
+  file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M14 3.5v5h5"/></svg>',
+  list: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+  place: {
+    github: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h10l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V6A1.5 1.5 0 0 1 5.5 4.5z"/><path d="M8 12h8M8 15.5h5"/></svg>',
+    page: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 9h17"/><circle cx="6.5" cy="6.8" r=".6"/><circle cx="8.8" cy="6.8" r=".6"/></svg>',
+    device: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>',
+    cloud: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.5 9.6 4.5 4.5 0 0 0 7 18.5z"/></svg>',
+  },
 };
 
 /* ==========================================================
-   Progress
-   { done: { lessonId: ms }, part: { lessonId: n }, solved: { practiceId: ms } }
+   Progress: { done: { caseId: ms }, at: { caseId: stepIndex } }
    ========================================================== */
 
-const LOCAL = 'ras:learn';
+const LOCAL = 'ras:learn-cases';
 const DRAFTS = 'ras:learn-code';
 const readJson = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
 const writeJson = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
 
-let progress = { done: {}, part: {}, solved: {}, ...readJson(LOCAL, {}) };
-const drafts = readJson(DRAFTS, {});
+let progress = { done: {}, at: {}, ...readJson(LOCAL, {}) };
 let store = null;
 
 function mergeProgress(a, b) {
-  const out = { done: { ...a.done }, part: { ...a.part }, solved: { ...a.solved } };
+  const out = { done: { ...a.done }, at: { ...a.at } };
   for (const [k, v] of Object.entries(b.done || {})) out.done[k] = Math.max(out.done[k] || 0, v);
-  for (const [k, v] of Object.entries(b.part || {})) out.part[k] = Math.max(out.part[k] || 0, v);
-  for (const [k, v] of Object.entries(b.solved || {})) out.solved[k] = Math.max(out.solved[k] || 0, v);
+  for (const [k, v] of Object.entries(b.at || {})) out.at[k] = Math.max(out.at[k] || 0, v);
   return out;
 }
 
@@ -56,14 +58,14 @@ let saveTimer;
 function saveProgress() {
   writeJson(LOCAL, progress);
   clearTimeout(saveTimer);
-  if (store && S.getState().status === 'unlocked') saveTimer = setTimeout(() => store.put('progress', progress).catch(() => {}), 800);
+  if (store && S.getState().status === 'unlocked') saveTimer = setTimeout(() => store.put('cases', progress).catch(() => {}), 1500);
 }
 
 S.onChange(async st => {
   if (st.status !== 'unlocked' || store) return;
   store = openStore('learn');
   store.subscribe(list => {
-    const remote = (list.find(i => i.key === 'progress') || {}).data;
+    const remote = (list.find(i => i.key === 'cases') || {}).data;
     if (!remote) return;
     const merged = mergeProgress(progress, remote);
     const changed = JSON.stringify(merged) !== JSON.stringify(progress);
@@ -72,289 +74,195 @@ S.onChange(async st => {
     if (changed && route().view === 'home') render();
   });
   await store.ready();
-  // Send anything done on this device before signing in.
-  const remote = (store.get('progress') || {}).data || {};
+  const remote = (store.get('cases') || {}).data || {};
   if (JSON.stringify(mergeProgress(remote, progress)) !== JSON.stringify(mergeProgress(remote, {}))) saveProgress();
 });
 
 /* ==========================================================
-   Routing: #/  ·  #/l/<lesson>  ·  #/play
+   Routing: #/  ·  #/c/<case>/<step>  ·  #/c/<case>/all  ·  #/play
    ========================================================== */
 
 function route() {
-  const [, a, b] = (location.hash || '#/').split('/');
-  if (a === 'l' && LESSONS.some(l => l.id === b)) return { view: 'lesson', id: b };
+  const [, a, b, c] = (location.hash || '#/').split('/');
+  const cs = CASES.find(x => x.id === b);
+  if (a === 'c' && cs) {
+    if (c === 'all') return { view: 'all', cs };
+    const n = Math.min(Math.max(1, parseInt(c, 10) || 1), cs.steps.length);
+    return { view: 'case', cs, step: n - 1 };
+  }
   if (a === 'play') return { view: 'play' };
   return { view: 'home' };
 }
 
+let lastView = '';
 function render() {
   const r = route();
-  if (r.view === 'lesson') renderLesson(r.id);
+  if (r.view === 'case') renderCase(r.cs, r.step);
+  else if (r.view === 'all') renderAll(r.cs);
   else if (r.view === 'play') renderPlayground();
   else renderHome();
+  const key = r.view + (r.cs ? r.cs.id : '');
+  if (key !== lastView) scrollTo(0, 0);
+  lastView = key;
 }
-
-addEventListener('hashchange', () => { render(); scrollTo(0, 0); });
+addEventListener('hashchange', render);
 
 /* ==========================================================
-   Home: the path of lessons
+   Home
    ========================================================== */
 
 function renderHome() {
-  const doneCount = LESSONS.filter(l => progress.done[l.id]).length;
-  const nextUp = LESSONS.find(l => !progress.done[l.id]);
+  const doneCount = CASES.filter(c => progress.done[c.id]).length;
+  const nextUp = CASES.find(c => !progress.done[c.id]);
   main.innerHTML = `
     <section class="view">
       <div class="l-intro panel">
-        <p class="eyebrow">Learn to code</p>
+        <p class="eyebrow">Learn from your own site</p>
         <h1>How rose at six works</h1>
-        <p>Short lessons that open up the tools you use every day, one idea at a time. Each one has things to try and small bits of code to write yourself. Nothing you type can break anything.</p>
+        <p>Case studies that follow one thing you do (tapping Log it, signing in, searching) through the real code, step by step: which function runs, which one it calls next, and where your data is at that moment. No exercises; just follow along, and poke the live demos when you feel like it.</p>
         <div class="l-intro-foot">
-          <span class="l-meter" aria-label="${doneCount} of ${LESSONS.length} lessons done"><i style="width:${Math.round(doneCount / LESSONS.length * 100)}%"></i></span>
-          <span class="meta"><span>${doneCount} of ${LESSONS.length} done</span></span>
-          ${nextUp ? `<a class="btn btn-primary btn-sm" href="#/l/${nextUp.id}">${doneCount || progress.part[nextUp.id] ? 'Continue' : 'Start'}: ${esc(nextUp.title)}</a>` : '<span class="l-alldone">All done. Lovely work!</span>'}
+          <span class="l-meter" aria-label="${doneCount} of ${CASES.length} read"><i style="width:${Math.round(doneCount / CASES.length * 100)}%"></i></span>
+          <span class="meta"><span>${doneCount} of ${CASES.length} read</span></span>
+          ${nextUp ? `<a class="btn btn-primary btn-sm" href="#/c/${nextUp.id}/${(progress.at[nextUp.id] || 0) + 1}">${progress.at[nextUp.id] ? 'Continue' : 'Start'}: ${esc(nextUp.title)}</a>` : '<span class="l-alldone">All read. Lovely!</span>'}
         </div>
       </div>
-      <ol class="l-path">${LESSONS.map((l, i) => {
-        const done = !!progress.done[l.id];
-        const part = progress.part[l.id] || 0;
-        return `<li class="${done ? 'is-done' : ''}${nextUp && nextUp.id === l.id ? ' is-next' : ''}">
-          <a href="#/l/${l.id}">
+      <ol class="l-path">${CASES.map((c, i) => {
+        const done = !!progress.done[c.id];
+        const at = progress.at[c.id] || 0;
+        return `<li class="${done ? 'is-done' : ''}${nextUp && nextUp.id === c.id ? ' is-next' : ''}">
+          <a href="#/c/${c.id}/${done ? 1 : at + 1}">
             <span class="l-stop">${done ? '<svg aria-hidden="true"><use href="#blossom"/></svg>' : i + 1}</span>
             <span class="l-stop-body">
-              <span class="l-stop-title">${esc(l.title)}</span>
-              <span class="l-stop-sum">${esc(l.summary)}</span>
-              <span class="meta"><span>${l.minutes} min</span>${done ? '<span>done</span>' : part ? `<span>part ${part + 1} of ${l.parts.length}</span>` : ''}</span>
+              <span class="l-stop-title">${esc(c.title)}</span>
+              <span class="l-stop-sum">${esc(c.summary)}</span>
+              <span class="meta"><span>${c.steps.length} steps · ${c.minutes} min</span>${done ? '<span>read</span>' : at ? `<span>at step ${at + 1}</span>` : ''}</span>
             </span>
           </a></li>`;
       }).join('')}</ol>
       <a class="panel l-playcard" href="#/play">
         <span class="l-playcard-icon">${ICON.code}</span>
-        <span><strong>Playground</strong><small>Write any JavaScript and run it. A scratchpad for trying things.</small></span>
+        <span><strong>Playground</strong><small>A scratchpad for running bits of JavaScript, if you ever want to try something.</small></span>
         ${ICON.next}
       </a>
     </section>`;
 }
 
 /* ==========================================================
-   A lesson
+   A case study, one step at a time
    ========================================================== */
 
-function renderLesson(id) {
-  const idx = LESSONS.findIndex(l => l.id === id);
-  const lesson = LESSONS[idx];
-  const done = !!progress.done[id];
-  const shown = done ? lesson.parts.length - 1 : Math.min(progress.part[id] || 0, lesson.parts.length - 1);
-  const next = LESSONS[idx + 1];
+function placesBar(active) {
+  return `<ol class="l-places" aria-label="Where this step happens">${['github', 'page', 'device', 'cloud'].map(p => `
+    <li class="${p === active ? 'is-here' : ''}" ${p === active ? 'aria-current="step"' : ''}>
+      ${ICON.place[p]}<span><strong>${PLACES[p].name}</strong><small>${PLACES[p].sub}</small></span></li>`).join('')}</ol>`;
+}
+
+function stepHtml(step) {
+  const shortened = step.simplified || (step.code || '').includes('…');
+  return `
+    ${step.stack ? `<div class="l-stack" aria-label="Which function called which">
+      <span class="l-stack-label">Call chain</span>
+      <ol>${step.stack.map((f, i) => `<li class="${i === step.stack.length - 1 ? 'is-now' : ''}"><code>${esc(f)}</code></li>`).join('')}</ol>
+    </div>` : ''}
+    <div class="l-step-grid${step.code ? '' : ' is-text'}">
+      ${step.code ? `<div class="l-step-code">
+        <div class="l-file">${ICON.file}<span>${esc(step.file || '')}</span>${shortened ? '<span class="l-short">shortened</span>' : ''}</div>
+        ${codeBlock(step.code, { lang: step.lang || 'js', mark: step.mark || [] })}
+      </div>` : ''}
+      <div class="l-step-text">
+        ${!step.code && step.file ? `<div class="l-file">${ICON.file}<span>${esc(step.file)}</span></div>` : ''}
+        <div class="l-explain">${step.explain}</div>
+        ${step.idea ? `<div class="l-idea"><span class="l-idea-icon">${ICON.bulb}</span><div><strong>Function idea: ${esc(step.idea.name)}</strong><p>${step.idea.html}</p></div></div>` : ''}
+        ${step.data ? `<div class="l-data"><span class="l-data-label">${esc(step.data.label)}</span><pre>${esc(step.data.value)}</pre></div>` : ''}
+      </div>
+    </div>
+    ${step.demo ? '<div class="l-demo"><p class="l-demo-label">Live: running the real code</p><div class="l-demo-body" data-demo></div></div>' : ''}`;
+}
+
+function mountDemo(root, step) {
+  const el = root.querySelector('[data-demo]');
+  if (el && DEMOS[step.demo]) DEMOS[step.demo](el);
+}
+
+function renderCase(cs, i) {
+  const step = cs.steps[i];
+  const idx = CASES.indexOf(cs);
+  const last = i === cs.steps.length - 1;
+  const nextCase = CASES[idx + 1];
+  if (i > (progress.at[cs.id] || 0)) { progress.at[cs.id] = i; saveProgress(); }
 
   main.innerHTML = `
-    <article class="view l-lesson">
+    <article class="view l-case">
       <div class="l-lesson-head">
-        <a class="icon-btn" href="#/" aria-label="All lessons">${ICON.back}</a>
-        <div><p class="eyebrow">Lesson ${idx + 1} · ${lesson.minutes} min</p><h1>${esc(lesson.title)}</h1></div>
+        <a class="icon-btn" href="#/" aria-label="All case studies">${ICON.back}</a>
+        <div><p class="eyebrow">Case study ${idx + 1}</p><h1>${esc(cs.title)}</h1></div>
+        <a class="icon-btn l-allbtn" href="#/c/${cs.id}/all" aria-label="All steps on one page" title="All steps on one page">${ICON.list}</a>
       </div>
-      <div data-parts></div>
-      <div class="l-lesson-foot" data-foot></div>
+      ${placesBar(step.place)}
+      <section class="panel l-stepcard">
+        <div class="l-step-head">
+          <span class="l-step-n">Step ${i + 1} of ${cs.steps.length}</span>
+          <h2>${esc(step.title)}</h2>
+        </div>
+        ${stepHtml(step)}
+      </section>
+      <nav class="l-stepnav" aria-label="Steps">
+        ${i > 0 ? `<a class="btn btn-ghost" href="#/c/${cs.id}/${i}">${ICON.back}Back</a>` : '<span></span>'}
+        <span class="l-dots">${cs.steps.map((s, k) => `<a href="#/c/${cs.id}/${k + 1}" class="${k === i ? 'is-on' : k < i ? 'is-past' : ''}" aria-label="Step ${k + 1}: ${esc(s.title)}"></a>`).join('')}</span>
+        ${last
+          ? `<button class="btn btn-primary" type="button" data-finish>${progress.done[cs.id] ? 'Read' : 'Finish'}</button>`
+          : `<a class="btn btn-primary" href="#/c/${cs.id}/${i + 2}">Next${ICON.next}</a>`}
+      </nav>
+      <div data-after></div>
     </article>`;
-  const partsEl = main.querySelector('[data-parts]');
-  const foot = main.querySelector('[data-foot]');
+  mountDemo(main, step);
 
-  const addPart = i => {
-    const part = lesson.parts[i];
-    const sec = document.createElement('section');
-    sec.className = 'panel l-part';
-    sec.innerHTML = `<div class="l-part-head"><span class="l-part-n">${i + 1}/${lesson.parts.length}</span><h2>${esc(part.title)}</h2></div>`;
-    for (const step of part.steps) sec.appendChild(renderStep(step));
-    partsEl.appendChild(sec);
-    return sec;
+  const after = main.querySelector('[data-after]');
+  const showAfter = () => {
+    after.innerHTML = `<div class="l-finished"><svg aria-hidden="true"><use href="#blossom"/></svg><span>That's the whole story.</span>
+      ${nextCase ? `<a class="btn btn-primary btn-sm" href="#/c/${nextCase.id}/1">Next: ${esc(nextCase.title)}${ICON.next}</a>` : '<a class="btn btn-ghost btn-sm" href="#/">All case studies</a>'}</div>`;
   };
-  const drawFoot = at => {
-    const last = at >= lesson.parts.length - 1;
-    if (!last) {
-      foot.innerHTML = `<button class="btn btn-primary" type="button" data-more>Next: ${esc(lesson.parts[at + 1].title)}${ICON.next}</button>`;
-    } else if (!progress.done[id]) {
-      foot.innerHTML = `<button class="btn btn-primary" type="button" data-finish>Finish lesson</button>`;
-    } else {
-      foot.innerHTML = `<div class="l-finished"><svg aria-hidden="true"><use href="#blossom"/></svg><span>Lesson done.</span></div>
-        ${next ? `<a class="btn btn-primary" href="#/l/${next.id}">Next lesson: ${esc(next.title)}${ICON.next}</a>` : '<a class="btn btn-primary" href="#/">Back to all lessons</a>'}`;
-    }
-  };
-
-  let at = shown;
-  for (let i = 0; i <= shown; i++) addPart(i);
-  drawFoot(at);
-
-  foot.addEventListener('click', e => {
-    if (e.target.closest('[data-more]')) {
-      at += 1;
-      progress.part[id] = Math.max(progress.part[id] || 0, at);
-      saveProgress();
-      const sec = addPart(at);
-      drawFoot(at);
-      sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-    }
-    if (e.target.closest('[data-finish]')) {
-      progress.done[id] = Date.now();
-      saveProgress();
-      drawFoot(at);
-      toast('Lesson done 🌸');
-    }
+  if (last && progress.done[cs.id]) showAfter();
+  main.querySelector('[data-finish]')?.addEventListener('click', () => {
+    if (!progress.done[cs.id]) { progress.done[cs.id] = Date.now(); saveProgress(); toast('Case study read 🌸'); }
+    showAfter();
   });
 }
 
-function renderStep(step) {
-  const el = document.createElement('div');
-  el.className = 'l-step l-' + step.t;
-  if (step.t === 'p') el.innerHTML = step.html.startsWith('<') ? step.html : `<p>${step.html}</p>`;
-  if (step.t === 'tip') el.innerHTML = `<span class="l-tip-icon">${ICON.bulb}</span><p>${step.html}</p>`;
-  if (step.t === 'code') {
-    el.innerHTML = codeBlock(step.code, { lang: step.lang || 'js', label: step.label, mark: step.mark || [] })
-      + (step.notes ? `<ul class="l-notes">${step.notes.map(([n, t]) => `<li><span class="l-note-n">Line ${n}</span><span>${t}</span></li>`).join('')}</ul>` : '');
-    // Tap a note to highlight its line.
-    el.addEventListener('pointerover', e => {
-      const li = e.target.closest('.l-notes li');
-      el.querySelectorAll('.l-line').forEach(x => x.classList.toggle('is-hover', li && x.dataset.n === li.querySelector('.l-note-n').textContent.replace('Line ', '')));
-    });
-    el.addEventListener('pointerleave', () => el.querySelectorAll('.is-hover').forEach(x => x.classList.remove('is-hover')));
-  }
-  if (step.t === 'demo') {
-    el.innerHTML = '<p class="l-demo-label">Try it</p><div class="l-demo-body"></div>';
-    DEMOS[step.id](el.querySelector('.l-demo-body'));
-  }
-  if (step.t === 'quiz') renderQuiz(el, step);
-  if (step.t === 'practice') renderPractice(el, step);
-  return el;
+/* All steps of one case study on one page, for re-reading. */
+function renderAll(cs) {
+  const idx = CASES.indexOf(cs);
+  main.innerHTML = `
+    <article class="view l-case">
+      <div class="l-lesson-head">
+        <a class="icon-btn" href="#/c/${cs.id}/1" aria-label="Back to step by step">${ICON.back}</a>
+        <div><p class="eyebrow">Case study ${idx + 1} · all steps</p><h1>${esc(cs.title)}</h1></div>
+      </div>
+      ${cs.steps.map((s, i) => `
+        <section class="panel l-stepcard" data-i="${i}">
+          <div class="l-step-head">
+            <span class="l-step-n">Step ${i + 1}</span><span class="l-place-tag">${ICON.place[s.place]}${PLACES[s.place].name}</span>
+            <h2>${esc(s.title)}</h2>
+          </div>
+          ${stepHtml(s)}
+        </section>`).join('')}
+    </article>`;
+  cs.steps.forEach((s, i) => mountDemo(main.querySelector(`[data-i="${i}"]`), s));
 }
 
-function renderQuiz(el, q) {
-  el.innerHTML = `
-    <p class="l-quiz-q"><span class="l-quiz-tag">Quick check</span>${q.q}</p>
-    <div class="l-quiz-options">${q.options.map((o, i) => `<button type="button" class="l-option" data-i="${i}">${o}</button>`).join('')}</div>
-    <p class="l-quiz-why" hidden></p>`;
-  el.addEventListener('click', e => {
-    const b = e.target.closest('[data-i]');
-    if (!b) return;
-    const right = +b.dataset.i === q.answer;
-    b.classList.add(right ? 'is-right' : 'is-wrong');
-    const why = el.querySelector('.l-quiz-why');
-    why.hidden = false;
-    why.className = 'l-quiz-why ' + (right ? 'is-good' : 'is-bad');
-    why.innerHTML = right ? `<strong>Yes!</strong> ${q.why}` : 'Not quite. Have another go.';
-    if (right) el.querySelectorAll('[data-i]').forEach(x => { x.disabled = true; });
-  });
-}
-
-/* ==========================================================
-   Practice: an editor, Run & check, hint, solution
-   ========================================================== */
-
-function renderPractice(el, p) {
-  const mode = p.mode || 'js';
-  const edit = p.edit || ['js'];
-  const saved = drafts[p.id] || {};
-  const code = { html: p.start.html || '', css: p.start.css || '', js: p.start.js || '', ...saved };
-  let tab = edit[0];
-  const solved = !!progress.solved[p.id];
-
-  el.innerHTML = `
-    <div class="l-practice-head">
-      <span class="l-quiz-tag">${solved ? 'Solved' : 'Your turn'}</span>
-      <h3>${esc(p.title)}</h3>
-    </div>
-    <p class="l-task">${p.task}</p>
-    ${edit.length > 1 ? `<div class="l-tabs" role="tablist">${edit.map(k => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${k.toUpperCase()}</button>`).join('')}</div>` : ''}
-    <textarea class="l-textarea" aria-label="Code editor"></textarea>
-    ${mode === 'web' && !edit.includes('html') ? `<details class="l-readonly"><summary>The HTML this code works with</summary>${codeBlock(p.start.html, { lang: 'html' })}</details>` : ''}
-    <div class="l-actions">
-      <button class="btn btn-primary" type="button" data-run>${ICON.play}Run &amp; check</button>
-      <span class="spacer"></span>
-      <button class="btn btn-ghost btn-sm" type="button" data-hint>${ICON.bulb}Hint</button>
-      <button class="btn btn-ghost btn-sm" type="button" data-solution>${ICON.eye}Answer</button>
-      <button class="icon-btn" type="button" data-reset aria-label="Start over" title="Start over">${ICON.undo}</button>
-    </div>
-    <div class="l-hint" data-hint-box hidden>${p.hint}</div>
-    ${mode === 'web' ? '<div class="l-preview" data-preview><p class="l-preview-empty">Run your code to see it here.</p></div>' : ''}
-    <div class="l-output" data-output hidden></div>`;
-
-  const editor = makeEditor(el.querySelector('textarea'), v => {
-    code[tab] = v;
-    drafts[p.id] = { ...(drafts[p.id] || {}), [tab]: v };
-    writeJson(DRAFTS, drafts);
-  });
-  editor.set(code[tab]);
-  const out = el.querySelector('[data-output]');
-
-  el.addEventListener('click', async e => {
-    const t = e.target;
-    const tb = t.closest('[data-tab]');
-    if (tb) {
-      tab = tb.dataset.tab;
-      el.querySelectorAll('[data-tab]').forEach(x => x.setAttribute('aria-selected', String(x === tb)));
-      editor.set(code[tab]);
-    }
-    if (t.closest('[data-hint]')) { const h = el.querySelector('[data-hint-box]'); h.hidden = !h.hidden; }
-    if (t.closest('[data-reset]')) {
-      if (!t.closest('[data-reset]').dataset.armed) { const b = t.closest('[data-reset]'); b.dataset.armed = '1'; b.classList.add('is-armed'); b.title = 'Tap again to start over'; toast('Tap again to put the starting code back'); setTimeout(() => { delete b.dataset.armed; b.classList.remove('is-armed'); }, 3000); return; }
-      Object.assign(code, { html: p.start.html || '', css: p.start.css || '', js: p.start.js || '' });
-      delete drafts[p.id]; writeJson(DRAFTS, drafts);
-      editor.set(code[tab]);
-      out.hidden = true;
-    }
-    if (t.closest('[data-solution]')) {
-      const box = el.querySelector('[data-hint-box]');
-      box.hidden = false;
-      box.innerHTML = `<p><strong>One way to do it.</strong> Read it line by line and compare it with yours. Then try typing it yourself rather than copying.</p>${edit.map(k => p.solution[k] ? codeBlock(p.solution[k], { lang: k, label: edit.length > 1 ? k.toUpperCase() : '' }) : '').join('')}
-        <button class="btn btn-ghost btn-sm" type="button" data-use>Put it in the editor</button>`;
-    }
-    if (t.closest('[data-use]')) {
-      for (const k of edit) if (p.solution[k]) code[k] = p.solution[k];
-      drafts[p.id] = { ...code }; writeJson(DRAFTS, drafts);
-      editor.set(code[tab]);
-    }
-    if (t.closest('[data-run]')) await check(t.closest('[data-run]'));
-  });
-
-  async function check(btn) {
-    btn.disabled = true;
-    out.hidden = false;
-    out.innerHTML = '<div class="l-console" data-console></div><div data-results><p class="l-running">Running…</p></div>';
-    const con = out.querySelector('[data-console]');
-    const log = ({ kind, text }) => {
-      if (con.childElementCount > 200) return;
-      const line = document.createElement('div');
-      line.className = 'l-log is-' + kind;
-      line.textContent = text;
-      con.appendChild(line);
-    };
-    const res = await run({
-      js: code.js, html: code.html, css: code.css, tests: p.tests, setup: p.setup || '',
-      mount: mode === 'web' ? el.querySelector('[data-preview]') : null, onLog: log,
-    });
-    btn.disabled = false;
-    const box = out.querySelector('[data-results]');
-    if (!con.childElementCount) con.remove();
-    if (res.timedOut) { box.innerHTML = '<p class="l-verdict is-bad">Your code took too long. Is there a loop that never ends?</p>'; return; }
-    if (!res.results) { box.innerHTML = '<p class="l-verdict is-bad">The code couldn\'t run. Fix the line above, then try again.</p>'; return; }
-    const allOk = res.results.length && res.results.every(r => r.ok);
-    box.innerHTML = `<ul class="l-checks">${res.results.map(r => `
-      <li class="${r.ok ? 'is-ok' : 'is-fail'}"><span class="l-check-icon">${r.ok ? ICON.check : ICON.x}</span>
-        <span><span class="l-check-name">${esc(r.name)}</span>${r.ok ? '' : `<span class="l-check-msg">${esc(r.msg || friendlyText(r.error))}</span>`}</span></li>`).join('')}</ul>
-      ${allOk ? '<p class="l-verdict is-good"><svg aria-hidden="true"><use href="#blossom"/></svg>Nicely done! Every check passes.</p>' : ''}`;
-    if (allOk && !progress.solved[p.id]) {
-      progress.solved[p.id] = Date.now();
-      saveProgress();
-      el.querySelector('.l-quiz-tag').textContent = 'Solved';
-    }
-  }
-}
-
-const friendlyText = err => (err ? friendly(err) : 'Not quite yet.');
+// Arrow keys move between steps.
+addEventListener('keydown', e => {
+  const r = route();
+  if (r.view !== 'case' || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, textarea, select, [contenteditable]')) return;
+  if (e.key === 'ArrowRight' && r.step < r.cs.steps.length - 1) location.hash = `#/c/${r.cs.id}/${r.step + 2}`;
+  if (e.key === 'ArrowLeft' && r.step > 0) location.hash = `#/c/${r.cs.id}/${r.step}`;
+});
 
 /* ==========================================================
    Playground
    ========================================================== */
 
+const drafts = readJson(DRAFTS, {});
 const PLAY_START = `// Write anything here and press Run.
 // console.log shows things below.
 
@@ -367,11 +275,10 @@ console.log([1, 2, 3].map(n => n * 10));
 `;
 
 function renderPlayground() {
-  const savedCode = (drafts.__play || {}).js;
   main.innerHTML = `
     <section class="view">
       <div class="l-lesson-head">
-        <a class="icon-btn" href="#/" aria-label="All lessons">${ICON.back}</a>
+        <a class="icon-btn" href="#/" aria-label="Back">${ICON.back}</a>
         <div><p class="eyebrow">Scratchpad</p><h1>Playground</h1></div>
       </div>
       <section class="panel l-play">
@@ -382,12 +289,12 @@ function renderPlayground() {
           <button class="btn btn-ghost btn-sm" type="button" data-clear>Clear output</button>
           <button class="icon-btn" type="button" data-reset aria-label="Start over" title="Start over">${ICON.undo}</button>
         </div>
-        <div class="l-output" data-output><div class="l-console" data-console><div class="l-log is-muted">Output appears here.</div></div></div>
+        <div class="l-output"><div class="l-console" data-console><div class="l-log is-muted">Output appears here.</div></div></div>
       </section>
     </section>`;
   const con = main.querySelector('[data-console]');
   const editor = makeEditor(main.querySelector('textarea'), v => { drafts.__play = { js: v }; writeJson(DRAFTS, drafts); });
-  editor.set(savedCode ?? PLAY_START);
+  editor.set((drafts.__play || {}).js ?? PLAY_START);
   const log = ({ kind, text }) => {
     const line = document.createElement('div');
     line.className = 'l-log is-' + kind;
@@ -400,7 +307,7 @@ function renderPlayground() {
     con.innerHTML = '';
     const res = await run({ js: editor.get(), onLog: log, timeout: 5000 });
     b.disabled = false;
-    if (res.timedOut) log({ kind: 'error', text: 'Stopped: it took longer than 5 seconds. Is there a loop that never ends?' });
+    if (res.timedOut) log({ kind: 'error', text: 'Stopped: it took longer than 5 seconds.' });
     else if (!con.childElementCount) log({ kind: 'muted', text: 'Done. (Nothing was logged. Use console.log(...) to show something.)' });
   });
   main.querySelector('[data-clear]').addEventListener('click', () => { con.innerHTML = ''; });
