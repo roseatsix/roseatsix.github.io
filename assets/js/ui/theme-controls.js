@@ -10,6 +10,7 @@ export function mountThemeControls() {
   if (mounted) return;
   mounted = true;
   setupThemeToggle();
+  setupStickyTopbar();
   document.getElementById('appearance-btn')?.addEventListener('click', openAppearanceDialog);
 }
 
@@ -28,4 +29,14 @@ function setupThemeToggle() {
   window.addEventListener('ras:prefs', label);
   media.addEventListener?.('change', label);
   label();
+}
+
+/* The top bar sticks to the top of every page; give it a backdrop
+   once the page has scrolled under it. */
+function setupStickyTopbar() {
+  const bar = document.querySelector('.topbar');
+  if (!bar) return;
+  const onScroll = () => bar.classList.toggle('is-scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
