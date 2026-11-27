@@ -143,6 +143,32 @@
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('/sw.js').catch(function () {});
       });
+      // The page was built from a saved copy of a file that has since
+      // changed: reload once so every file is from the same version.
+      // Never while typing or with a dialog open; then wait until the
+      // tab is shown again.
+      var waiting = false;
+      var reloadSoon = function () {
+        try {
+          var last = Number(sessionStorage.getItem('ras-stale-reload') || 0);
+          if (Date.now() - last < 30000) return;           // no reload loops
+          var el = document.activeElement;
+          var busy = (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) || document.querySelector('dialog[open]');
+          if (busy || document.visibilityState !== 'visible') {
+            if (waiting) return;
+            waiting = true;
+            document.addEventListener('visibilitychange', function again() {
+              if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', again); waiting = false; reloadSoon(); }
+            });
+            return;
+          }
+          sessionStorage.setItem('ras-stale-reload', String(Date.now()));
+          location.reload();
+        } catch (e) {}
+      };
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'ras:stale') reloadSoon();
+      });
     }
   } catch (e) {}
 })();
