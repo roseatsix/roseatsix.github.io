@@ -2,6 +2,7 @@
 
 import { openDialog, esc, toast, busy } from '../../assets/js/ui/dom.js';
 import { openBackupDialog } from '../../assets/js/ui/backup.js';
+import { navRows, openNameEditor, PLUS, plural } from '../../assets/js/ui/name-list.js';
 import { eraseStore } from '../../assets/js/core/backup.js';
 import * as M from './model.js';
 import { ICONS } from './views.js';
@@ -391,43 +392,48 @@ async function addSpot(roomId, name) {
 
 const xIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
 
+const nextOrder = map => Math.max(0, ...Object.values(map || {}).map(c => c.order ?? 0)) + 1;
+const setRoom = (rid, mutateRoom) => saveConfig(c => {
+  const cur = { ...M.config().rooms[rid] };
+  delete cur.id;
+  mutateRoom(cur);
+  c.rooms = { ...(c.rooms || {}), [rid]: cur };
+});
+const setCat = (cid, mutateCat) => saveConfig(c => {
+  const cur = { ...M.config().categories[cid] };
+  delete cur.id;
+  mutateCat(cur);
+  c.categories = { ...(c.categories || {}), [cid]: cur };
+});
+
 export function openSettingsDialog() {
   return openDialog({
     label: 'Inventory settings',
     render(el, close) {
-      el.closest('dialog').classList.add('is-wide');
-      const roomsHtml = () => M.activeList(M.config().rooms).map(r => `
-        <li class="i-roomset" data-room="${r.id}">
-          <div class="setting-row">
-            <input class="input i-roomname" value="${esc(r.name)}" data-rename-room aria-label="Room name" maxlength="40">
-            <button class="icon-btn" type="button" data-remove-room aria-label="Remove ${esc(r.name)}">${xIcon}</button>
-          </div>
-          <ul class="i-spotset">${M.roomSpots(r.id).map(sp => `
-            <li class="setting-row" data-spot="${sp.id}">
-              <input class="input" value="${esc(sp.name)}" data-rename-spot aria-label="Spot name" maxlength="60">
-              <button class="icon-btn" type="button" data-remove-spot aria-label="Remove ${esc(sp.name)}">${xIcon}</button>
-            </li>`).join('')}</ul>
-          <form class="add-row i-addspot" data-add-spot><input class="input" name="name" placeholder="Add a spot, e.g. Wardrobe" maxlength="60"><button class="btn btn-ghost" type="submit">Add</button></form>
-        </li>`).join('');
-      const catsHtml = () => M.activeList(M.config().categories).map(c => `
-        <li class="setting-row" data-cat="${c.id}">
-          <input class="input" value="${esc(c.name)}" data-rename-cat aria-label="Category name" maxlength="40">
-          <button class="icon-btn" type="button" data-remove-cat aria-label="Remove ${esc(c.name)}">${xIcon}</button>
-        </li>`).join('');
       const draw = () => {
-        el.querySelector('[data-list=rooms]').innerHTML = roomsHtml();
-        el.querySelector('[data-list=categories]').innerHTML = catsHtml();
+        const items = M.owned();
+        const rooms = M.activeList(M.config().rooms).map(r => {
+          const spots = M.roomSpots(r.id).map(sp => sp.name);
+          const n = items.filter(i => i.room === r.id).length;
+          return { id: r.id, name: r.name, sub: [spots.length ? spots.join(', ') : 'No spots yet', n ? plural(n, 'item') : ''].filter(Boolean).join(' · ') };
+        });
+        const cats = M.activeList(M.config().categories).map(c => {
+          const n = items.filter(i => i.category === c.id).length;
+          return { id: c.id, name: c.name, sub: n ? plural(n, 'item') : '' };
+        });
+        el.querySelector('[data-list=rooms]').innerHTML = navRows(rooms, 'data-room');
+        el.querySelector('[data-list=categories]').innerHTML = navRows(cats, 'data-cat');
         el.querySelector('[data-currency]').value = M.config().currency;
       };
       el.innerHTML = `
         <h2>Inventory settings</h2>
-        <p>Names save when you leave the field. Removing a room, spot or category hides it from pickers; items keep it.</p>
+        <p>Tap a room or category to rename it, change its spots or remove it.</p>
         <h3>Rooms &amp; spots</h3>
-        <ul class="i-roomsets" data-list="rooms"></ul>
-        <form class="add-row" data-add-room><input class="input" name="name" placeholder="Add a room, e.g. Balcony" maxlength="40"><button class="btn btn-ghost" type="submit">Add room</button></form>
+        <ul class="nav-list" data-list="rooms"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add-room>${PLUS}Add room</button>
         <h3>Categories</h3>
-        <ul class="setting-list" data-list="categories"></ul>
-        <form class="add-row" data-add-cat><input class="input" name="name" placeholder="Add a category, e.g. Plants" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
+        <ul class="nav-list" data-list="categories"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add-cat>${PLUS}Add category</button>
         <h3>Currency</h3>
         <select class="input currency-select" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
         <h3>Backup &amp; reset</h3>
@@ -439,69 +445,117 @@ export function openSettingsDialog() {
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
 
-      const roomOf = elx => elx.closest('[data-room]')?.dataset.room;
-      const setRoom = (rid, mutateRoom) => saveConfig(c => {
-        const cur = { ...M.config().rooms[rid] };
-        delete cur.id;
-        mutateRoom(cur);
-        c.rooms = { ...(c.rooms || {}), [rid]: cur };
-      });
-      const setCat = (cid, mutateCat) => saveConfig(c => {
-        const cur = { ...M.config().categories[cid] };
-        delete cur.id;
-        mutateCat(cur);
-        c.categories = { ...(c.categories || {}), [cid]: cur };
-      });
-
       el.addEventListener('change', async e => {
-        const t = e.target;
-        const name = (t.value || '').trim();
-        if (t.matches('[data-rename-room]')) { if (name) await setRoom(roomOf(t), r => { r.name = name; }); else draw(); }
-        if (t.matches('[data-rename-spot]')) {
-          const sid = t.closest('[data-spot]').dataset.spot;
-          if (name) await setRoom(roomOf(t), r => { r.spots = { ...(r.spots || {}), [sid]: { ...(r.spots || {})[sid], name } }; }); else draw();
-        }
-        if (t.matches('[data-rename-cat]')) { if (name) await setCat(t.closest('[data-cat]').dataset.cat, c => { c.name = name; }); else draw(); }
-        if (t.matches('[data-currency]')) { await saveConfig(c => { c.currency = t.value; }); toast('Currency saved'); }
+        if (e.target.matches('[data-currency]')) { const v = e.target.value; await saveConfig(c => { c.currency = v; }); toast('Currency saved'); }
       });
 
       el.addEventListener('click', async e => {
         const t = e.target;
-        if (t.closest('[data-remove-room]')) { await setRoom(roomOf(t), r => { r.archived = true; }); draw(); }
-        if (t.closest('[data-remove-spot]')) {
-          const sid = t.closest('[data-spot]').dataset.spot;
-          await setRoom(roomOf(t), r => { r.spots = { ...(r.spots || {}), [sid]: { ...(r.spots || {})[sid], archived: true } }; });
+        const roomBtn = t.closest('[data-room]');
+        const catBtn = t.closest('[data-cat]');
+        if (roomBtn) { await openRoomEditor(roomBtn.dataset.room); draw(); }
+        if (t.closest('[data-add-room]')) { await openRoomEditor(null); draw(); }
+        if (catBtn) {
+          const c = M.config().categories[catBtn.dataset.cat];
+          const res = await openNameEditor({ title: 'Edit category', value: c.name, removable: true, note: 'Removing a category hides it from pickers. Items keep it.' });
+          if (res?.remove) await setCat(c.id, x => { x.archived = true; });
+          else if (res?.name) await setCat(c.id, x => { x.name = res.name; });
           draw();
         }
-        if (t.closest('[data-remove-cat]')) { await setCat(t.closest('[data-cat]').dataset.cat, c => { c.archived = true; }); draw(); }
+        if (t.closest('[data-add-cat]')) {
+          const res = await openNameEditor({ title: 'Add a category', placeholder: 'e.g. Plants' });
+          if (res?.name) await saveConfig(c => { c.categories = { ...(c.categories || {}), [M.newId()]: { name: res.name, order: nextOrder(M.config().categories) } }; });
+          draw();
+        }
         if (t.closest('[data-close]')) close();
         if (t.closest('[data-backup]')) openBackupDialog();
         if (t.closest('[data-erase]')) openEraseDialog();
-      });
-
-      el.addEventListener('submit', async e => {
-        e.preventDefault();
-        const f = e.target;
-        const name = (f.name.value || '').trim();
-        if (!name) return;
-        if (f.matches('[data-add-spot]')) await addSpot(roomOf(f), name);
-        if (f.matches('[data-add-room]')) {
-          const order = Math.max(0, ...Object.values(M.config().rooms).map(c => c.order ?? 0)) + 1;
-          await saveConfig(c => { c.rooms = { ...(c.rooms || {}), [M.newId()]: { name, order } }; });
-        }
-        if (f.matches('[data-add-cat]')) {
-          const order = Math.max(0, ...Object.values(M.config().categories).map(c => c.order ?? 0)) + 1;
-          await saveConfig(c => { c.categories = { ...(c.categories || {}), [M.newId()]: { name, order } }; });
-        }
-        const focusKey = f.matches('[data-add-spot]') ? roomOf(f) : null;
-        draw();
-        if (focusKey) el.querySelector(`[data-room="${focusKey}"] [data-add-spot] input`)?.focus();
       });
 
       confirmButton(el.querySelector('[data-reset]'), 'Tap again to reset', async () => {
         if (M.get('config')) await remove('config');
         draw();
         toast('Rooms, spots, categories and currency are back to the defaults. Your items are untouched.');
+      });
+    },
+  });
+}
+
+/** Edit (or add) one room and its spots. Nothing is saved until Save. */
+function openRoomEditor(roomId) {
+  const isNew = !roomId;
+  const r = isNew ? { name: '', spots: {} } : M.config().rooms[roomId];
+  const spots = isNew ? [] : M.roomSpots(roomId).map(sp => ({ id: sp.id, name: sp.name, order: sp.order }));
+  const removed = new Set();
+  return openDialog({
+    label: isNew ? 'Add a room' : `Edit ${r.name}`,
+    render(el, close) {
+      const spotRows = () => spots.filter(sp => !removed.has(sp.id)).map(sp => `
+        <li class="setting-row" data-spot="${sp.id}">
+          <input class="input" value="${esc(sp.name)}" data-spot-name aria-label="Spot name" maxlength="60">
+          <button class="icon-btn" type="button" data-remove-spot aria-label="Remove ${esc(sp.name)}">${xIcon}</button>
+        </li>`).join('') || '<li class="hint">No spots yet.</li>';
+      el.innerHTML = `
+        <h2>${isNew ? 'Add a room' : 'Edit room'}</h2>
+        <form data-form>
+          <label class="field"><span class="field-label">Room name</span>
+            <input class="input" name="name" value="${esc(r.name)}" placeholder="e.g. Balcony" maxlength="40" autocomplete="off" required ${isNew ? 'autofocus' : ''}></label>
+          <h3>Spots</h3>
+          <p class="hint" style="margin:-4px 0 10px">Places inside this room where things live, like a wardrobe or a drawer.</p>
+          <ul class="setting-list" data-spots>${spotRows()}</ul>
+          <div class="add-row"><input class="input" data-new-spot placeholder="Add a spot, e.g. Wardrobe" maxlength="60" enterkeyhint="done"><button class="btn btn-ghost" type="button" data-add-spot>Add</button></div>
+          <div class="dialog-actions">
+            ${isNew ? '' : '<button class="btn btn-text danger-text" type="button" data-remove-room>Remove room</button><span class="spacer"></span>'}
+            <button class="btn btn-ghost" type="button" data-cancel>Cancel</button>
+            <button class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </form>`;
+      const list = el.querySelector('[data-spots]');
+      const newSpot = el.querySelector('[data-new-spot]');
+      const addSpotRow = () => {
+        const name = newSpot.value.trim();
+        if (!name) return;
+        spots.push({ id: M.newId(), name, order: Math.max(0, ...spots.map(x => x.order ?? 0)) + 1, isNew: true });
+        newSpot.value = '';
+        list.innerHTML = spotRows();
+        newSpot.focus();
+      };
+      el.querySelector('[data-add-spot]').addEventListener('click', addSpotRow);
+      newSpot.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addSpotRow(); } });
+      list.addEventListener('input', e => {
+        const row = e.target.closest('[data-spot]');
+        if (row) spots.find(x => x.id === row.dataset.spot).name = e.target.value;
+      });
+      list.addEventListener('click', e => {
+        const row = e.target.closest('[data-remove-spot]')?.closest('[data-spot]');
+        if (row) { removed.add(row.dataset.spot); list.innerHTML = spotRows(); }
+      });
+      el.querySelector('[data-cancel]').addEventListener('click', () => close());
+      el.querySelector('[data-remove-room]')?.addEventListener('click', async () => {
+        await setRoom(roomId, x => { x.archived = true; });
+        toast(`${r.name} removed. Items in it keep their place.`);
+        close(true);
+      });
+      el.querySelector('[data-form]').addEventListener('submit', async e => {
+        e.preventDefault();
+        const name = e.target.name.value.trim();
+        if (!name) return;
+        if (newSpot.value.trim()) addSpotRow();
+        const rid = roomId || M.newId();
+        await saveConfig(c => {
+          const cur = { ...(M.config().rooms[rid] || { order: nextOrder(M.config().rooms) }) };
+          delete cur.id;
+          cur.name = name;
+          const next = { ...(cur.spots || {}) };
+          for (const sp of spots) {
+            const nm = sp.name.trim();
+            if (removed.has(sp.id)) { if (next[sp.id]) next[sp.id] = { ...next[sp.id], archived: true }; continue; }
+            next[sp.id] = { ...(next[sp.id] || {}), name: nm || (next[sp.id] && next[sp.id].name) || 'Spot', order: sp.order };
+          }
+          cur.spots = next;
+          c.rooms = { ...(c.rooms || {}), [rid]: cur };
+        });
+        close(true);
       });
     },
   });

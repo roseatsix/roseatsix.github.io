@@ -177,6 +177,20 @@ dialog.dialog.is-wide { width: min(620px, calc(100vw - 32px)); }
 .setting-row { flex-wrap: wrap; }
 .setting-row .input[data-k="name"] { flex: 1; }
 }
+/* Tap-to-edit rows (settings lists) */
+.nav-list { list-style: none; margin: 0 0 8px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.nav-list li + li { border-top: 1px solid var(--border); }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 12px;
+  border: 0; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.nav-item:hover { background: var(--surface-hover); }
+.nav-item-main { flex: 1; min-width: 0; display: grid; }
+.nav-item-name { font-weight: 700; }
+.nav-item-sub { font-size: .82rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chevron svg { width: 18px; height: 18px; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-list .chevron { flex: none; }
+.nav-list + .btn { margin-bottom: 4px; }
 .currency-select { max-width: 160px; }
 .add-row { display: flex; gap: 8px; margin-top: 12px; }
 .add-row .input { flex: 1; }

@@ -67,7 +67,7 @@ function renderTools() {
       <div class="group-head">
         <svg aria-hidden="true"><use href="#blossom"/></svg>
         <h2 class="group-title" id="g-${group.id}">${group.title}</h2>
-        <span class="group-count">${ready ? `${ready} of ${tools.length} ready` : `${tools.length} planned`}</span>
+        ${ready < tools.length ? `<span class="group-count">${ready ? `${ready} of ${tools.length} ready` : `${tools.length} planned`}</span>` : ''}
       </div>
       <div class="grid"></div>`;
 

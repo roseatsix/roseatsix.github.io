@@ -35,7 +35,11 @@
 .i-chip.is-heart svg { fill: currentColor; width: 12px; height: 12px; }
 
 /* rooms */
-.i-rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+/* Cards flow into columns (like a masonry wall) so short ones don't leave gaps */
+.i-rooms, .i-groups { columns: 300px; column-gap: 14px; }
+.i-rooms > *, .i-groups > * { break-inside: avoid; margin-bottom: 14px; }
+.i-groups > :last-child, .i-rooms > :last-child { margin-bottom: 0; }
+@media (max-width: 899px) { .i-groups { columns: auto; } }
 .i-spot + .i-spot { margin-top: 8px; }
 .i-spot-name {
   display: flex; align-items: center; gap: 6px; margin: 6px 0 0;

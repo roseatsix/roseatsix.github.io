@@ -2,7 +2,7 @@
    Bill splitter data model and calculations.
 
      trip:<id> {
-       title, date, payTo, note, createdAt,
+       title, date, note, createdAt,
        people:   { <pid>: { name, me?, order } },
        receipts: { <rid>: {
          shop, date, paidBy, order,
@@ -15,7 +15,7 @@
        paid: { "<from>><to>": true },                // settle-up transfers done
        loggedShare: "YYYY-MM-DD"                     // my share sent to journal
      }
-     config { currency, payTo }
+     config { currency }
    ========================================================== */
 
 import { pad, ymd, parseDate, addDays, today, isDate, fmt } from '../journal/model.js';
@@ -29,7 +29,6 @@ export const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
 export const CURRENCIES = ['IDR', 'USD', 'EUR', 'SGD', 'MYR', 'AUD', 'JPY', 'GBP'];
 
 export const currency = () => (get('config') || {}).currency || 'IDR';
-export const savedPayTo = () => ((get('config') || {}).payTo || '').trim();
 const decimals = () => (['IDR', 'JPY'].includes(currency()) ? 0 : 2);
 export const round = n => { const f = 10 ** decimals(); return Math.round((n + Number.EPSILON) * f) / f; };
 

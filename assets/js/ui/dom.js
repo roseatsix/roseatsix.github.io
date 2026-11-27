@@ -38,13 +38,18 @@ export function openDialog({ label, render, dismissible = true }) {
     render(inner, close);
 
     if (dismissible) {
+      // The close button sits in a zero-height bar that sticks to the top
+      // of the dialog, so it stays in reach while the content scrolls.
+      const bar = document.createElement('div');
+      bar.className = 'dialog-closebar';
       const x = document.createElement('button');
       x.type = 'button';
       x.className = 'icon-btn dialog-close';
       x.setAttribute('aria-label', 'Close');
       x.innerHTML = ICON.close;
       x.addEventListener('click', () => close());
-      inner.appendChild(x);
+      bar.appendChild(x);
+      dlg.insertBefore(bar, inner);
     }
 
     // On touch screens, don't focus a text field (it would pop up the

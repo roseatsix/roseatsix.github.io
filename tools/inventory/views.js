@@ -156,11 +156,11 @@ export function renderItems(ui) {
           <button class="btn btn-primary" type="button" data-act="new-item">${ICONS.plus}Add your first item</button>
         </div>`
       : !list.length ? '<p class="empty">Nothing matches. Try another search or filter.</p>'
-      : ordered.map(g => `
+      : `<div class="i-groups">${ordered.map(g => `
         <section class="panel i-group">
           <div class="panel-head"><h2>${esc(g.c.name)}</h2><span class="count">${g.items.length}</span></div>
           <ul class="i-list">${g.items.map(i => itemRow(i)).join('')}</ul>
-        </section>`).join('')}
+        </section>`).join('')}</div>`}
     </section>`;
 }
 

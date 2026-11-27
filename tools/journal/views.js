@@ -328,12 +328,13 @@ export function renderWeek(date) {
           <div class="panel-head"><h2>Overdue</h2><span class="count">${overdue.length}</span></div>
           <ul class="j-list">${overdue.map(x => taskRow(x, { showDue: true })).join('')}</ul>
         </section>` : ''}
-      <div class="j-weekgrid">${days.join('')}</div>
-      <section class="panel j-someday tone-leaf">
-        <div class="panel-head"><h2>Someday</h2><span class="count">Tasks without a date</span></div>
-        ${someday.length ? `<ul class="j-list">${someday.map(x => taskRow(x)).join('')}</ul>` : ''}
-        ${addTaskForm('', 'Add a task without a date')}
-      </section>
+      <div class="j-weekgrid">${days.join('')}
+        <section class="panel j-someday tone-leaf">
+          <div class="panel-head"><h2>Someday</h2><span class="count">No date</span></div>
+          ${someday.length ? `<ul class="j-list">${someday.map(x => taskRow(x, { compact: true })).join('')}</ul>` : ''}
+          ${addTaskForm('', 'Add task')}
+        </section>
+      </div>
     </section>`;
 }
 
@@ -599,7 +600,7 @@ export function renderActivity(year) {
       const n = counts.get(d) || 0;
       const lvl = n === 0 ? 0 : Math.min(4, Math.ceil(n / max * 4));
       cells += `<a href="#/day/${d}" class="l${lvl}${d === t ? ' is-today' : ''}" title="${esc(M.fmt.long(d))}: ${n} ${n === 1 ? 'entry' : 'entries'}"></a>`;
-      if (M.parseDate(d).getDate() === 1) monthLabels += `<span style="grid-column:${col + 1}">${esc(M.parseDate(d).toLocaleDateString(undefined, { month: 'short' }))}</span>`;
+      if (M.parseDate(d).getDate() === 1) monthLabels += `<span style="grid-column:${col + 2}">${esc(M.parseDate(d).toLocaleDateString(undefined, { month: 'short' }))}</span>`;
     }
     cols += `<div class="j-heat-col">${cells}</div>`;
     col++;
@@ -628,8 +629,8 @@ export function renderActivity(year) {
       </div>
       <section class="panel j-heat-card">
         <div class="j-heat-scroll">
-          <div class="j-heat-months" style="grid-template-columns:repeat(${col}, 14px)">${monthLabels}</div>
-          <div class="j-heat">
+          <div class="j-heat-months" style="--weeks:${col}">${monthLabels}</div>
+          <div class="j-heat" style="--weeks:${col}">
             <div class="j-heat-days"><b></b><b>Tue</b><b></b><b>Thu</b><b></b><b>Sat</b><b></b></div>
             ${cols}
           </div>

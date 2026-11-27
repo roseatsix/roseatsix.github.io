@@ -62,8 +62,9 @@ function gate(st) {
 }
 
 function render() {
+  // Inside a split, its own header (back, title) takes the toolbar's place.
+  document.querySelector('.toolbar').hidden = ui.loaded && !!ui.trip;
   if (!ui.loaded) { main.innerHTML = gate(S.getState()); return; }
-  document.querySelector('.toolbar-title').textContent = ui.trip ? '' : 'Splits';
   main.innerHTML = ui.trip ? tripView(getTrip(ui.trip)) : listView();
 }
 
@@ -146,13 +147,8 @@ function tripView(t) {
             <span class="sp-who"><strong>${esc(M.nameOf(t, x.from))}</strong> pays <strong>${esc(M.nameOf(t, x.to))}</strong></span>
             <span class="amount">${esc(M.money(x.amount))}</span>
           </li>`).join('')}</ul>` : '<p class="empty">Everyone is square.</p>'}
-        <label class="field"><span class="field-label">Pay to (shown on the shared picture)</span>
-          <input class="input" data-field="payTo" value="${esc(t.payTo || '')}" placeholder="e.g. BCA 1234567890 a.n. Rose" maxlength="100"></label>
-        ${!(t.payTo || '').trim() && M.savedPayTo() ? `<button class="btn btn-text sp-usesaved" type="button" data-act="use-saved">Use saved: ${esc(M.savedPayTo())}</button>` : ''}
-        ${(t.payTo || '').trim() && !M.savedPayTo() ? `<button class="btn btn-text sp-usesaved" type="button" data-act="save-payto">Save as my payment details for new splits</button>` : ''}
         <div class="sp-share">
-          <button class="btn btn-primary" type="button" data-act="share">${ICON.share}Share picture</button>
-          <button class="btn btn-ghost" type="button" data-act="copy">${ICON.copy}Copy as text</button>
+          <button class="btn btn-primary" type="button" data-act="share">${ICON.share}Share…</button>
           ${me && c.owed[me.id] > 0 ? `<button class="btn btn-ghost" type="button" data-act="log-share">${t.loggedShare ? `Logged ${esc(M.fmt.short(t.loggedShare))}` : 'Log my share to journal'}</button>` : ''}
         </div>
       </section>` : ''}
@@ -188,7 +184,7 @@ function openTripDialog(id) {
         const people = { [M.newId()]: { name: form.me.value.trim() || 'Me', me: true, order: 0 } };
         form.others.value.split(',').map(s => s.trim()).filter(Boolean).forEach((n, i) => { people[M.newId()] = { name: n, order: i + 1 }; });
         const nid = M.newId();
-        await busy(form.querySelector('[type=submit]'), 'Creating…', () => save(tripKey(nid), { title, date: M.today(), people, receipts: {}, paid: {}, payTo: M.savedPayTo(), createdAt: Date.now() }));
+        await busy(form.querySelector('[type=submit]'), 'Creating…', () => save(tripKey(nid), { title, date: M.today(), people, receipts: {}, paid: {}, createdAt: Date.now() }));
         close();
         location.hash = '#/t/' + nid;
       });
@@ -406,23 +402,45 @@ function openReceiptDialog(tid, rid) {
 
 async function openShareDialog(tid) {
   const t = getTrip(tid);
-  const blob = await summaryImage(t);
-  const url = URL.createObjectURL(blob);
-  return openDialog({
+  const people = M.peopleOf(t);
+  let forId = null, blob = null, url = '';
+  const draw = async () => {
+    blob = await summaryImage(t, forId);
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(blob);
+  };
+  await draw();
+  // Not awaited: the "Drawing…" state on the button ends once the picture is ready.
+  openDialog({
     label: 'Share',
     render(el) {
       el.closest('dialog').classList.add('is-wide');
       el.innerHTML = `
         <h2>Share with friends</h2>
+        <p>Send everyone the whole split, or each person just their part.</p>
+        <div class="choice-chips sp-for" role="radiogroup" aria-label="Who is it for" style="--cc:var(--flower);--cc-deep:var(--flower-deep)">
+          <button type="button" role="radio" aria-checked="true" data-for="">Everyone</button>
+          ${people.map(p => `<button type="button" role="radio" aria-checked="false" data-for="${p.id}">${esc(p.name)}</button>`).join('')}
+        </div>
         <img class="sp-shot" src="${url}" alt="Summary of ${esc(t.title || 'the split')}">
         <div class="dialog-actions">
           <button class="btn btn-ghost" type="button" data-copy>${ICON.copy}Copy as text</button>
           <span class="spacer"></span>
           <button class="btn btn-primary" type="button" data-send>${ICON.share}Share picture</button>
         </div>`;
-      el.querySelector('[data-copy]').addEventListener('click', () => copyText(summaryText(t)));
+      const img = el.querySelector('.sp-shot');
+      el.querySelector('.sp-for').addEventListener('click', async e => {
+        const b = e.target.closest('[data-for]');
+        if (!b || b.getAttribute('aria-checked') === 'true') return;
+        el.querySelectorAll('[data-for]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+        forId = b.dataset.for || null;
+        await draw();
+        img.src = url;
+        img.alt = forId ? `${M.nameOf(t, forId)}'s share of ${t.title || 'the split'}` : `Summary of ${t.title || 'the split'}`;
+      });
+      el.querySelector('[data-copy]').addEventListener('click', () => copyText(summaryText(t, forId)));
       el.querySelector('[data-send]').addEventListener('click', async () => {
-        const how = await shareImage(t, blob);
+        const how = await shareImage(t, blob, forId ? M.nameOf(t, forId) : '');
         if (how === 'downloaded') toast('Picture saved. Send it from your photos or downloads.');
       });
       el.closest('dialog').addEventListener('close', () => setTimeout(() => URL.revokeObjectURL(url), 1000));
@@ -475,9 +493,6 @@ function openSettings() {
     render(el, close) {
       el.innerHTML = `
         <h2>Splitter settings</h2>
-        <h3>My payment details</h3>
-        <p>Filled in as "Pay to" on new splits. Stored encrypted like everything else.</p>
-        <textarea class="input" data-payto rows="2" maxlength="100" placeholder="e.g. BCA 1234567890 a.n. Rose · GoPay 0812…">${esc(M.savedPayTo())}</textarea>
         <h3>Currency</h3>
         <select class="input currency-select" data-currency>${M.CURRENCIES.map(c => `<option ${c === M.currency() ? 'selected' : ''}>${c}</option>`).join('')}</select>
         <h3>Backup</h3><button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
@@ -487,10 +502,6 @@ function openSettings() {
         toast('Currency saved');
       });
       el.querySelector('[data-backup]').addEventListener('click', () => openBackupDialog());
-      el.querySelector('[data-payto]').addEventListener('change', async e => {
-        await save('config', { ...(M.clone(M.get('config')) || {}), payTo: e.target.value.trim() });
-        toast('Payment details saved');
-      });
       el.querySelector('[data-close]').addEventListener('click', () => close());
     },
   });
@@ -510,13 +521,7 @@ main.addEventListener('click', async e => {
     case 'new-receipt': return openReceiptDialog(tid, null);
     case 'edit-receipt': return openReceiptDialog(tid, b.dataset.id);
     case 'share': return busy(b, 'Drawing…', () => openShareDialog(tid));
-    case 'copy': return copyText(summaryText(getTrip(tid)));
     case 'log-share': return openLogShareDialog(tid);
-    case 'use-saved': await updateTrip(tid, x => { x.payTo = M.savedPayTo(); }); return render();
-    case 'save-payto':
-      await save('config', { ...(M.clone(M.get('config')) || {}), payTo: (getTrip(tid).payTo || '').trim() });
-      toast('Saved. New splits will use it.');
-      return render();
     case 'delete-trip':
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Tap again to delete this split'; return; }
       await store.remove(tripKey(tid)); location.hash = '#/'; toast('Split deleted');
@@ -528,7 +533,6 @@ main.addEventListener('change', async e => {
   if (el.dataset.act === 'toggle-paid') {
     await updateTrip(ui.trip, x => { x.paid = { ...(x.paid || {}) }; if (el.checked) x.paid[el.dataset.key] = Number(el.dataset.amount); else delete x.paid[el.dataset.key]; });
   }
-  if (el.dataset.field === 'payTo') await updateTrip(ui.trip, x => { x.payTo = el.value.trim(); });
 });
 
 main.addEventListener('submit', async e => {
@@ -549,11 +553,18 @@ document.querySelector('[data-act=add]')?.addEventListener('click', () => {
 });
 document.querySelector('[data-act=settings]')?.addEventListener('click', () => (ui.loaded ? openSettings() : toast('Unlock first')));
 
+/* "Pay to" was removed: clear any payment details saved before. */
+async function dropPayTo() {
+  const cfg = M.get('config');
+  if (cfg && 'payTo' in cfg) { const { payTo, ...rest } = M.clone(cfg); await save('config', rest).catch(() => {}); }
+  for (const t of M.trips()) if ('payTo' in t) await updateTrip(t.id, x => { delete x.payTo; }).catch(() => {});
+}
+
 store.subscribe(list => {
   M.setItems(list);
   const first = !ui.loaded;
   ui.loaded = true;
-  if (first) onRoute();
+  if (first) { onRoute(); dropPayTo(); }
   else {
     const el = document.activeElement;
     const typing = el && main.contains(el) && el.matches('input:not([type=checkbox]), textarea');
