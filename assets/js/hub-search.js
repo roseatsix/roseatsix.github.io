@@ -18,8 +18,8 @@ let refresh = () => {};
 
 /* ---------- matching ---------- */
 
-const norm = s => String(s ?? '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '');
-function matcher(q) {
+export const norm = s => String(s ?? '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '');
+export function matcher(q) {
   const words = norm(q).split(/\s+/).filter(Boolean);
   return hay => { const h = norm(hay); return words.every(w => h.includes(w)); };
 }

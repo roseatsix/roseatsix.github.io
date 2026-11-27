@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27b';
+const VERSION = 'ras-2026-11-27c';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -21,7 +21,7 @@ const SHELL = [
   '/assets/js/core/merge.js', '/assets/js/core/session.js', '/assets/js/core/store.js',
   '/assets/js/ui/appearance.js', '/assets/js/ui/backup.js', '/assets/js/ui/dom.js', '/assets/js/ui/header.js', '/assets/js/ui/name-list.js',
   '/assets/js/ui/theme-controls.js', '/assets/js/ui/vault-dialogs.js',
-  '/tools/learn/', '/tools/learn/index.html', '/tools/learn/learn.css', '/tools/learn/app.js', '/tools/learn/lessons.js',
+  '/tools/learn/', '/tools/learn/index.html', '/tools/learn/learn.css', '/tools/learn/app.js', '/tools/learn/cases.js',
   '/tools/learn/demos.js', '/tools/learn/code.js', '/tools/learn/runner.js',
   '/tools/journal/', '/tools/journal/index.html', '/tools/journal/journal.css', '/tools/journal/journal.js',
   '/tools/journal/model.js', '/tools/journal/views.js', '/tools/journal/dialogs.js', '/tools/journal/fields.js',
