@@ -15,6 +15,7 @@ import { holidaysOn, onHolidaysUpdate } from '../../tools/journal/holidays.js';
 
 const ICON = {
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  task: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="4.5" width="15" height="15" rx="3.5"/><path d="m8.5 12.2 2.5 2.5 4.5-5"/></svg>',
   event: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>',
   holiday: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v1.5M12 18.5V20M4 12h1.5M18.5 12H20M6.3 6.3l1 1M16.7 16.7l1 1M6.3 17.7l1-1M16.7 7.3l1-1"/><circle cx="12" cy="12" r="4"/></svg>',
   home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><rect x="9.5" y="13" width="5" height="6.5" rx="1"/></svg>',
@@ -122,16 +123,17 @@ function collect() {
 }
 
 function rowHtml(r) {
-  const lead = r.type === 'task'
+  const tick = r.type === 'task'
     ? `<label class="hl-check"><input type="checkbox" data-task="${esc(r.id)}" aria-label="Done: ${esc(r.title)}"><span class="hl-box">${ICON.check}</span></label>`
-    : `<span class="hl-icon">${ICON[r.type]}</span>`;
+    : '';
   return `
     <li class="hl hl-${r.type}${r.late ? ' is-overdue' : ''}">
-      ${lead}
+      <span class="hl-icon">${ICON[r.type]}</span>
       <a class="hl-main" href="${r.href}">
         <span class="hl-type">${TYPES[r.type]}</span>
         <span class="hl-title">${esc(r.title)}</span>
       </a>
       <span class="hl-meta">${esc(r.meta)}</span>
+      ${tick}
     </li>`;
 }
