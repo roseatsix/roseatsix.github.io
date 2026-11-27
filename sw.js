@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-26g';
+const VERSION = 'ras-2026-11-27a';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -19,7 +19,7 @@ const SHELL = [
   '/assets/js/theme-boot.js', '/assets/js/config.js', '/assets/js/hub.js', '/assets/js/hub-today.js', '/assets/js/hub-search.js',
   '/assets/js/core/backup.js', '/assets/js/core/crypto.js', '/assets/js/core/firebase.js', '/assets/js/core/idb.js',
   '/assets/js/core/merge.js', '/assets/js/core/session.js', '/assets/js/core/store.js',
-  '/assets/js/ui/appearance.js', '/assets/js/ui/backup.js', '/assets/js/ui/dom.js', '/assets/js/ui/header.js',
+  '/assets/js/ui/appearance.js', '/assets/js/ui/backup.js', '/assets/js/ui/dom.js', '/assets/js/ui/header.js', '/assets/js/ui/name-list.js',
   '/assets/js/ui/theme-controls.js', '/assets/js/ui/vault-dialogs.js',
   '/tools/journal/', '/tools/journal/index.html', '/tools/journal/journal.css', '/tools/journal/journal.js',
   '/tools/journal/model.js', '/tools/journal/views.js', '/tools/journal/dialogs.js', '/tools/journal/fields.js',

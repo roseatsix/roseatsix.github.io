@@ -778,7 +778,6 @@ document.querySelector('[data-act=add]')?.addEventListener('click', () => {
   if (ui.tpl) location.hash = `#/t/${ui.tpl}/fields`;
   else main.querySelector('[data-upload]')?.click();
 });
-document.querySelector('[data-act=settings]')?.addEventListener('click', () => (ui.loaded ? openBackupDialog() : toast('Unlock first')));
 
 store.subscribe(list => {
   items = new Map(list.map(i => [i.key, i.data]));

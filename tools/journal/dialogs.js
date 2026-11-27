@@ -319,11 +319,11 @@ export function openSettingsDialog() {
       const draw = () => {
         const cfg = M.config();
         const row = (map, c) => `
-          <li><button type="button" class="j-setitem" data-edit="${map}" data-id="${c.id}" ${c.color ? `style="--c:${M.swatch(c.color)}"` : ''}>
+          <li><button type="button" class="nav-item" data-edit="${map}" data-id="${c.id}" ${c.color ? `style="--c:${M.swatch(c.color)}"` : ''}>
             ${c.color ? '<span class="j-ev-dot"></span>' : ''}
-            <span class="j-setitem-main"><span class="j-setitem-name">${esc(c.name)}</span>
-              ${map === 'logCats' ? `<span class="j-setitem-sub">${esc([c.prompt, ...fieldList(c).map(f => f.label)].filter(Boolean).join(' · ') || 'No prompt')}</span>` : ''}</span>
-            <span class="j-chevron">${ICONS.next}</span>
+            <span class="nav-item-main"><span class="nav-item-name">${esc(c.name)}</span>
+              ${map === 'logCats' ? `<span class="nav-item-sub">${esc([c.prompt, ...fieldList(c).map(f => f.label)].filter(Boolean).join(' · ') || 'No prompt')}</span>` : ''}</span>
+            <span class="chevron">${ICONS.next}</span>
           </button></li>`;
         el.querySelector('[data-list=logCats]').innerHTML = M.activeList(cfg.logCats).map(c => row('logCats', c)).join('');
         el.querySelector('[data-list=eventCats]').innerHTML = M.activeList(cfg.eventCats).map(c => row('eventCats', c)).join('');
@@ -334,13 +334,13 @@ export function openSettingsDialog() {
         <h2>Journal settings</h2>
         <p>Tap a category to edit it. Changes save straight away.</p>
         <h3>Log categories</h3>
-        <ul class="j-setitems" data-list="logCats"></ul>
+        <ul class="nav-list" data-list="logCats"></ul>
         <button class="btn btn-ghost btn-sm" type="button" data-add="logCats">${ICONS.plus}Add log category</button>
         <h3>Event categories</h3>
-        <ul class="j-setitems" data-list="eventCats"></ul>
+        <ul class="nav-list" data-list="eventCats"></ul>
         <button class="btn btn-ghost btn-sm" type="button" data-add="eventCats">${ICONS.plus}Add event category</button>
         <h3>Spending categories</h3>
-        <ul class="j-setitems" data-list="spendCats"></ul>
+        <ul class="nav-list" data-list="spendCats"></ul>
         <button class="btn btn-ghost btn-sm" type="button" data-add="spendCats">${ICONS.plus}Add spending category</button>
         <h3>Currency</h3>
         <select class="input currency-select" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>

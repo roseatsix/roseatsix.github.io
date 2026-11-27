@@ -1,5 +1,6 @@
 /* Subscriptions: list, totals, upcoming renewals, add/edit, price changes. */
 
+import { navRows, openNameEditor, PLUS, plural } from '../../assets/js/ui/name-list.js';
 import { mountHeader } from '../../assets/js/ui/header.js';
 import * as S from '../../assets/js/core/session.js';
 import { openStore } from '../../assets/js/core/store.js';
@@ -309,50 +310,56 @@ function openPriceDialog(key) {
 const saveConfig = async mutate => { const c = M.clone(M.get('config')) || {}; mutate(c); await save('config', c); };
 
 function openSettings() {
+  const LABELS = { categories: ['category', 'Add a category', 'e.g. Education'], platforms: ['payment method', 'Add a way to pay', 'e.g. GoPay, BCA card, Steam'] };
   return openDialog({
     label: 'Subscription settings',
     render(el, close) {
-      const list = map => M.activeList(M.config()[map]).map(c => `
-        <li class="setting-row" data-map="${map}" data-id="${c.id}">
-          <input class="input" value="${esc(c.name)}" data-rename aria-label="Name" maxlength="40">
-          <button class="icon-btn" type="button" data-remove aria-label="Remove ${esc(c.name)}">${ICON.x}</button>
-        </li>`).join('');
+      const rows = map => M.activeList(M.config()[map]).map(c => {
+        const n = M.subs().filter(x => (map === 'categories' ? x.category : x.platform) === c.id).length;
+        return { id: `${map}:${c.id}`, name: c.name, sub: n ? plural(n, 'subscription') : '' };
+      });
       const draw = () => {
-        el.querySelector('[data-list=categories]').innerHTML = list('categories');
-        el.querySelector('[data-list=platforms]').innerHTML = list('platforms');
+        el.querySelector('[data-list=categories]').innerHTML = navRows(rows('categories'));
+        el.querySelector('[data-list=platforms]').innerHTML = navRows(rows('platforms'));
         el.querySelector('[data-currency]').value = M.config().currency;
       };
       el.innerHTML = `
         <h2>Subscription settings</h2>
-        <p>Names save when you leave the field. Removing one hides it from pickers.</p>
-        <h3>Categories</h3><ul class="setting-list" data-list="categories"></ul>
-        <form class="add-row" data-add="categories"><input class="input" name="name" placeholder="Add a category" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
-        <h3>Paid through</h3><ul class="setting-list" data-list="platforms"></ul>
-        <form class="add-row" data-add="platforms"><input class="input" name="name" placeholder="e.g. GoPay, BCA card, Steam" maxlength="40"><button class="btn btn-ghost" type="submit">Add</button></form>
-        <h3>Currency</h3><select class="input currency-select" data-currency>${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
+        <p>Tap one to rename or remove it.</p>
+        <h3>Categories</h3><ul class="nav-list" data-list="categories"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add="categories">${PLUS}Add category</button>
+        <h3>Paid through</h3><ul class="nav-list" data-list="platforms"></ul>
+        <button class="btn btn-ghost btn-sm" type="button" data-add="platforms">${PLUS}Add a way to pay</button>
+        <h3>Currency</h3><select class="input currency-select" data-currency aria-label="Currency">${M.CURRENCIES.map(c => `<option>${c}</option>`).join('')}</select>
         <h3>Backup</h3><button class="btn btn-ghost btn-sm" type="button" data-backup>Backup &amp; restore…</button>
         <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Done</button></div>`;
       draw();
       const upd = (map, id, patch) => saveConfig(c => { const cur = { ...M.config()[map][id] }; delete cur.id; c[map] = { ...(c[map] || {}), [id]: { ...cur, ...patch } }; });
       el.addEventListener('change', async e => {
-        const r = e.target.closest('[data-map]');
-        if (r && e.target.matches('[data-rename]')) { const n = e.target.value.trim(); if (n) await upd(r.dataset.map, r.dataset.id, { name: n }); else draw(); }
         if (e.target.matches('[data-currency]')) { const v = e.target.value; await saveConfig(c => { c.currency = v; }); toast('Currency saved'); }
       });
       el.addEventListener('click', async e => {
-        const rm = e.target.closest('[data-remove]');
-        if (rm) { const r = rm.closest('[data-map]'); await upd(r.dataset.map, r.dataset.id, { archived: true }); draw(); }
+        const edit = e.target.closest('[data-edit]');
+        const add = e.target.closest('[data-add]');
+        if (edit) {
+          const [map, id] = edit.dataset.edit.split(':');
+          const res = await openNameEditor({ title: `Edit ${LABELS[map][0]}`, value: M.config()[map][id].name, removable: true, note: 'Removing it hides it from pickers. Subscriptions keep it.' });
+          if (res?.remove) await upd(map, id, { archived: true });
+          else if (res?.name) await upd(map, id, { name: res.name });
+          draw();
+        }
+        if (add) {
+          const map = add.dataset.add;
+          const res = await openNameEditor({ title: LABELS[map][1], placeholder: LABELS[map][2] });
+          if (res?.name) {
+            const order = Math.max(0, ...Object.values(M.config()[map]).map(c => c.order ?? 0)) + 1;
+            await saveConfig(c => { c[map] = { ...(c[map] || {}), [M.newId()]: { name: res.name, order } }; });
+          }
+          draw();
+        }
         if (e.target.closest('[data-close]')) close();
         if (e.target.closest('[data-backup]')) openBackupDialog();
       });
-      el.querySelectorAll('[data-add]').forEach(f => f.addEventListener('submit', async e => {
-        e.preventDefault();
-        const n = f.name.value.trim(); if (!n) return;
-        const map = f.dataset.add;
-        const order = Math.max(0, ...Object.values(M.config()[map]).map(c => c.order ?? 0)) + 1;
-        await saveConfig(c => { c[map] = { ...(c[map] || {}), [M.newId()]: { name: n, order } }; });
-        f.reset(); draw();
-      }));
     },
   });
 }

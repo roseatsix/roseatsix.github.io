@@ -72,7 +72,7 @@ function splitHits(q, ok) {
   for (const t of SP.trips()) {
     const people = SP.peopleOf(t).map(p => p.name);
     const receipts = SP.receiptsOf(t);
-    const hay = [t.title, t.payTo, ...people, ...receipts.map(r => [r.shop, ...SP.itemsOf(r).map(i => i.name)].join(' '))].join(' ');
+    const hay = [t.title, ...people, ...receipts.map(r => [r.shop, ...SP.itemsOf(r).map(i => i.name)].join(' '))].join(' ');
     if (!ok(hay)) continue;
     const hitR = receipts.find(r => ok([r.shop, ...SP.itemsOf(r).map(i => i.name)].join(' ')));
     out.push({ title: t.title || 'Split', sub: [hitR ? `receipt: ${hitR.shop}` : people.join(', '), SP.dateRange(t)].filter(Boolean).join(' · '), href: `tools/split/#/t/${t.id}` });

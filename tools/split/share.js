@@ -15,52 +15,79 @@ function palette() {
   };
 }
 
-/** Plain-text summary for chat apps. */
-export function summaryText(t) {
-  const c = M.tripCalc(t);
-  const L = [];
-  L.push(`${t.title || 'Split'}${M.dateRange(t) ? ' · ' + M.dateRange(t) : ''}`);
-  L.push(`Total ${M.money(c.total)}`, '');
-  for (const { r, c: rc } of c.receipts) L.push(`• ${r.shop || 'Receipt'}: ${M.money(rc.total)} (paid by ${M.nameOf(t, r.paidBy)})`);
-  L.push('', 'Each person’s share:');
-  for (const p of M.peopleOf(t)) L.push(`• ${p.name}: ${M.money(c.owed[p.id])}`);
-  if (c.transfers.length) {
-    L.push('', 'Settle up:');
-    for (const x of c.transfers) L.push(`• ${M.nameOf(t, x.from)} → ${M.nameOf(t, x.to)}: ${M.money(x.amount)}${x.done ? ' ✓' : ''}`);
+/* ---------- what goes on the summary ----------
+   One list of rows feeds both the picture and the text.
+   forId: null = the whole split for everyone; a person id = just theirs. */
+
+function itemsLine(t, r, pid) {
+  if ((r.mode || 'even') !== 'items') {
+    const ids = Object.keys(t.people || {});
+    const n = (r.sharedBy || []).filter(id => ids.includes(id)).length || ids.length;
+    return n > 1 ? `split ${n} ways` : '';
   }
-  if ((t.payTo || '').trim()) L.push('', `Pay to: ${t.payTo.trim()}`);
+  const ids = Object.keys(t.people || {});
+  return M.itemsOf(r).filter(i => { const w = (i.sharedBy || []).filter(id => ids.includes(id)); return !w.length || w.includes(pid); })
+    .map(i => { const w = (i.sharedBy || []).filter(id => ids.includes(id)); const n = w.length || ids.length; return (i.name || 'Item') + (n > 1 ? ` (shared by ${n})` : ''); })
+    .join(', ');
+}
+
+export function summaryRows(t, forId = null) {
+  const c = M.tripCalc(t);
+  const people = M.peopleOf(t);
+  const rows = [{ k: 'title', text: t.title || 'Split' }];
+  if (!forId) {
+    rows.push({ k: 'sub', text: [M.dateRange(t), `${people.length} people`, `total ${M.money(c.total)}`].filter(Boolean).join('  ·  ') });
+    rows.push({ k: 'h', text: 'Receipts' });
+    for (const { r, c: rc } of c.receipts) rows.push({ k: 'line', name: r.shop || 'Receipt', sub: `paid by ${M.nameOf(t, r.paidBy)}${M.isDate(r.date) ? ' · ' + M.fmt.short(r.date) : ''}`, amount: M.money(rc.total) });
+    rows.push({ k: 'h', text: 'Each person' });
+    for (const p of people) rows.push({ k: 'line', name: p.name, sub: c.paid[p.id] ? `paid ${M.money(c.paid[p.id])}` : '', amount: M.money(c.owed[p.id]) });
+    if (c.transfers.length) {
+      rows.push({ k: 'h', text: 'Settle up' });
+      for (const x of c.transfers) rows.push({ k: 'transfer', text: `${M.nameOf(t, x.from)}  →  ${M.nameOf(t, x.to)}`, amount: M.money(x.amount), done: x.done });
+    }
+    return rows;
+  }
+  const name = M.nameOf(t, forId);
+  rows.push({ k: 'sub', text: [`For ${name}`, M.dateRange(t)].filter(Boolean).join('  ·  ') });
+  rows.push({ k: 'big', label: `${name}’s share`, amount: M.money(c.owed[forId]), note: c.paid[forId] ? `paid ${M.money(c.paid[forId])} already` : '' });
+  const mine = c.receipts.filter(({ c: rc }) => rc.shares[forId]);
+  if (mine.length) {
+    rows.push({ k: 'h', text: 'What it’s for' });
+    for (const { r, c: rc } of mine) rows.push({ k: 'line', name: r.shop || 'Receipt', sub: [M.isDate(r.date) ? M.fmt.short(r.date) : '', itemsLine(t, r, forId)].filter(Boolean).join(' · '), amount: M.money(rc.shares[forId]) });
+  }
+  const mineX = c.transfers.filter(x => x.from === forId || x.to === forId);
+  rows.push({ k: 'h', text: 'Settle up' });
+  if (!mineX.length) rows.push({ k: 'line', name: 'All square', sub: '', amount: '' });
+  for (const x of mineX) rows.push({ k: 'transfer', text: x.from === forId ? `Pay ${M.nameOf(t, x.to)}` : `${M.nameOf(t, x.from)} pays you`, amount: M.money(x.amount), done: x.done });
+  return rows;
+}
+
+/** Plain-text summary for chat apps. */
+export function summaryText(t, forId = null) {
+  const L = [];
+  for (const r of summaryRows(t, forId)) {
+    if (r.k === 'title') L.push(r.text);
+    if (r.k === 'sub') L.push(r.text.replace(/  ·  /g, ' · '));
+    if (r.k === 'big') L.push('', `${r.label}: ${r.amount}${r.note ? ` (${r.note})` : ''}`);
+    if (r.k === 'h') L.push('', r.text + ':');
+    if (r.k === 'line') L.push(`• ${r.name}${r.amount ? ': ' + r.amount : ''}${r.sub ? ` (${r.sub})` : ''}`);
+    if (r.k === 'transfer') L.push(`• ${r.text.replace(/  →  /, ' → ')}: ${r.amount}${r.done ? ' ✓' : ''}`);
+  }
   return L.join('\n');
 }
 
 /** Draws the summary picture; resolves to a PNG Blob. */
-export async function summaryImage(t) {
+export async function summaryImage(t, forId = null) {
   try { await document.fonts.ready; } catch (e) { /* ignore */ }
   const P = palette();
-  const c = M.tripCalc(t);
-  const people = M.peopleOf(t);
   const W = 1080, PAD = 64, IN = 56;
   // Always give a fallback: fonts.check() is true even for fonts that aren't loaded.
   const serif = 'Fraunces, Georgia, "Times New Roman", serif';
   const sans = '"Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
-  // Rows to draw: [kind, ...]
-  const rows = [];
-  rows.push(['title']);
-  rows.push(['sub']);
-  rows.push(['gap', 18]);
-  rows.push(['h', 'Receipts']);
-  for (const { r, c: rc } of c.receipts) rows.push(['receipt', r, rc]);
-  rows.push(['gap', 14]);
-  rows.push(['h', 'Each person']);
-  for (const p of people) rows.push(['person', p]);
-  if (c.transfers.length) {
-    rows.push(['gap', 14]);
-    rows.push(['h', 'Settle up']);
-    for (const x of c.transfers) rows.push(['transfer', x]);
-  }
-  if ((t.payTo || '').trim()) { rows.push(['gap', 14]); rows.push(['payto']); }
-  const H = { title: 78, sub: 52, h: 64, receipt: 74, person: 62, transfer: 66, payto: 120 };
-  const contentH = rows.reduce((n, r) => n + (r[0] === 'gap' ? r[1] : H[r[0]]), 0);
+  const rows = summaryRows(t, forId);
+  const hOf = r => ({ title: 78, sub: 52, big: r.note ? 190 : 160, h: 82, line: r.sub ? 76 : 60, transfer: 66 })[r.k];
+  const contentH = rows.reduce((n, r) => n + hOf(r), 0);
   const height = PAD * 2 + IN * 2 + contentH + 70;
 
   const cv = document.createElement('canvas');
@@ -81,45 +108,37 @@ export async function summaryImage(t) {
   let y = PAD + IN;
   const text = (s, x, yy, font, color, align = 'left') => { g.font = font; g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic'; g.fillText(s, x, yy); };
   const fit = (s, max, font) => { g.font = font; if (g.measureText(s).width <= max) return s; while (s.length > 1 && g.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; };
+  const width = (s, font) => { g.font = font; return g.measureText(s).width; };
 
   for (const row of rows) {
-    const k = row[0];
-    if (k === 'gap') { y += row[1]; continue; }
-    if (k === 'title') { text(fit(t.title || 'Split', R - L, `500 60px ${serif}`), L, y + 58, `500 60px ${serif}`, P.text); }
-    if (k === 'sub') {
-      const bits = [M.dateRange(t), `${people.length} people`, `total ${M.money(c.total)}`].filter(Boolean).join('  ·  ');
-      text(fit(bits, R - L, `600 30px ${sans}`), L, y + 36, `600 30px ${sans}`, P.muted);
+    const k = row.k, h = hOf(row);
+    if (k === 'title') text(fit(row.text, R - L, `500 60px ${serif}`), L, y + 58, `500 60px ${serif}`, P.text);
+    if (k === 'sub') text(fit(row.text, R - L, `600 30px ${sans}`), L, y + 36, `600 30px ${sans}`, P.muted);
+    if (k === 'big') {
+      g.fillStyle = P.soft; g.beginPath(); g.roundRect(L - 12, y + 16, R - L + 24, h - 24, 24); g.fill();
+      text(row.label.toUpperCase(), L + 12, y + 62, `800 24px ${sans}`, P.flowerDeep);
+      text(fit(row.amount, R - L - 24, `600 64px ${serif}`), L + 12, y + 128, `600 64px ${serif}`, P.text);
+      if (row.note) text(row.note, L + 12, y + 168, `600 26px ${sans}`, P.muted);
     }
     if (k === 'h') {
-      g.fillStyle = P.flower; g.beginPath(); g.arc(L + 8, y + 40, 8, 0, Math.PI * 2); g.fill();
-      text(row[1].toUpperCase(), L + 28, y + 50, `800 26px ${sans}`, P.flowerDeep);
-      g.strokeStyle = P.line; g.lineWidth = 2; g.beginPath(); g.moveTo(L, y + H.h - 4); g.lineTo(R, y + H.h - 4); g.stroke();
+      g.fillStyle = P.flower; g.beginPath(); g.arc(L + 8, y + 50, 8, 0, Math.PI * 2); g.fill();
+      text(row.text.toUpperCase(), L + 28, y + 60, `800 26px ${sans}`, P.flowerDeep);
+      g.strokeStyle = P.line; g.lineWidth = 2; g.beginPath(); g.moveTo(L, y + h - 4); g.lineTo(R, y + h - 4); g.stroke();
     }
-    if (k === 'receipt') {
-      const [, r, rc] = row;
-      text(fit(r.shop || 'Receipt', R - L - 260, `700 32px ${sans}`), L, y + 40, `700 32px ${sans}`, P.text);
-      text(fit(`paid by ${M.nameOf(t, r.paidBy)}${M.isDate(r.date) ? ' · ' + M.fmt.short(r.date) : ''}`, R - L - 260, `500 24px ${sans}`), L, y + 68, `500 24px ${sans}`, P.muted);
-      text(M.money(rc.total), R, y + 44, `700 32px ${sans}`, P.text, 'right');
-    }
-    if (k === 'person') {
-      const p = row[1];
-      text(fit(p.name + (p.me ? ' (me)' : ''), R - L - 300, `600 32px ${sans}`), L, y + 42, `600 32px ${sans}`, P.text);
-      text(M.money(c.owed[p.id]), R, y + 42, `700 32px ${sans}`, P.text, 'right');
+    if (k === 'line') {
+      const amtW = row.amount ? width(row.amount, `700 32px ${sans}`) + 32 : 0;
+      text(fit(row.name, R - L - amtW, `700 32px ${sans}`), L, y + 42, `700 32px ${sans}`, P.text);
+      if (row.sub) text(fit(row.sub, R - L - amtW, `500 24px ${sans}`), L, y + 70, `500 24px ${sans}`, P.muted);
+      if (row.amount) text(row.amount, R, y + 44, `700 32px ${sans}`, P.text, 'right');
     }
     if (k === 'transfer') {
-      const x = row[1];
-      g.fillStyle = x.done ? P.leafSoft : P.soft;
-      g.beginPath(); g.roundRect(L - 12, y + 6, R - L + 24, H.transfer - 12, 18); g.fill();
-      const who = `${M.nameOf(t, x.from)}  →  ${M.nameOf(t, x.to)}`;
-      text(fit(who, R - L - 320, `700 31px ${sans}`), L + 8, y + 45, `700 31px ${sans}`, P.text);
-      text((x.done ? '✓ ' : '') + M.money(x.amount), R - 8, y + 45, `800 32px ${sans}`, x.done ? P.leaf : P.flowerDeep, 'right');
+      g.fillStyle = row.done ? P.leafSoft : P.soft;
+      g.beginPath(); g.roundRect(L - 12, y + 6, R - L + 24, h - 12, 18); g.fill();
+      const amt = (row.done ? '✓ ' : '') + row.amount;
+      text(fit(row.text, R - L - width(amt, `800 32px ${sans}`) - 40, `700 31px ${sans}`), L + 8, y + 45, `700 31px ${sans}`, P.text);
+      text(amt, R - 8, y + 45, `800 32px ${sans}`, row.done ? P.leaf : P.flowerDeep, 'right');
     }
-    if (k === 'payto') {
-      g.fillStyle = P.leafSoft; g.beginPath(); g.roundRect(L - 12, y, R - L + 24, H.payto - 12, 20); g.fill();
-      text('PAY TO', L + 8, y + 40, `800 22px ${sans}`, P.muted);
-      text(fit(t.payTo.trim(), R - L - 16, `700 32px ${sans}`), L + 8, y + 84, `700 32px ${sans}`, P.text);
-    }
-    y += H[k];
+    y += h;
   }
 
   // footer
@@ -129,8 +148,8 @@ export async function summaryImage(t) {
 }
 
 /** Share the picture through the phone's share sheet, or download it. */
-export async function shareImage(t, blob) {
-  const name = `${(t.title || 'split').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'split'}.png`;
+export async function shareImage(t, blob, forName = '') {
+  const name = `${[t.title || 'split', forName].filter(Boolean).join(' ').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'split'}.png`;
   const file = new File([blob], name, { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: t.title || 'Split' }); return 'shared'; }

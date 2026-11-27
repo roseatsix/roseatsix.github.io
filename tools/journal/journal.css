@@ -210,7 +210,9 @@ button.j-pill { cursor: pointer; }
 .j-weekday-name { font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
 .j-weekday-num { font-family: var(--font-display); font-variation-settings: "SOFT" 100; font-size: 1.5rem; font-weight: 500; }
 .j-today-tag { margin-left: auto; padding: 1px 8px; border-radius: 999px; background: var(--flower-soft); color: var(--flower-deep); font-size: .72rem; font-weight: 800; }
-.j-weekday .j-add .inline-input { font-size: .9rem; min-height: 32px; }
+.j-someday { padding: 14px 14px 10px; }
+.j-someday .panel-head { margin-bottom: 6px; }
+.j-weekday .j-add .inline-input, .j-someday .j-add .inline-input { font-size: .9rem; min-height: 32px; }
 .j-weekday-foot { margin: 6px 0 0; font-size: .8rem; color: var(--text-muted); }
 
 /* ---------- Month ---------- */
@@ -353,13 +355,14 @@ button.j-pill { cursor: pointer; }
 
 .j-heat-card { padding: 16px; }
 .j-heat-scroll { overflow-x: auto; padding-bottom: 4px; }
-.j-heat-months { display: grid; gap: 3px; margin: 0 0 4px 32px; font-size: .72rem; color: var(--text-muted); }
+.j-heat-months, .j-heat { display: grid; grid-template-columns: 29px repeat(var(--weeks), minmax(11px, 1fr)); gap: 3px; }
+.j-heat-months { margin: 0 0 4px; font-size: .72rem; color: var(--text-muted); }
 .j-heat-months span { white-space: nowrap; }
-.j-heat { display: flex; gap: 3px; }
-.j-heat-days { display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; width: 29px; flex: none; font-size: .64rem; color: var(--text-muted); }
-.j-heat-days b { font-weight: 600; line-height: 11px; }
-.j-heat-col { display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; }
-.j-heat-col > *, .j-heat-legend i { display: block; width: 11px; height: 11px; border-radius: 3px; }
+.j-heat-days { display: grid; grid-template-rows: repeat(7, 1fr); gap: 3px; font-size: .64rem; color: var(--text-muted); }
+.j-heat-days b { font-weight: 600; display: flex; align-items: center; }
+.j-heat-col { display: grid; grid-template-rows: repeat(7, auto); gap: 3px; }
+.j-heat-col > * { display: block; width: 100%; aspect-ratio: 1; border-radius: 3px; }
+.j-heat-legend i { display: block; width: 11px; height: 11px; border-radius: 3px; }
 .l0 { background: color-mix(in oklab, var(--border) 70%, var(--bg)); }
 .l1 { background: color-mix(in oklab, var(--flower) 30%, var(--surface)); }
 .l2 { background: color-mix(in oklab, var(--flower) 55%, var(--surface)); }
@@ -479,18 +482,6 @@ button.j-pill { cursor: pointer; }
 .j-mini-rating .j-blossom.is-on { color: var(--cc); --blossom-center: var(--sun); }
 
 /* ---------- Settings list + category editor ---------- */
-
-.j-setitems { list-style: none; margin: 0 0 8px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.j-setitems li + li { border-top: 1px solid var(--border); }
-.j-setitem {
-  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 12px;
-  border: 0; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
-}
-.j-setitem:hover { background: var(--surface-hover); }
-.j-setitem-main { flex: 1; min-width: 0; display: grid; }
-.j-setitem-name { font-weight: 700; }
-.j-setitem-sub { font-size: .82rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.j-chevron svg { width: 18px; height: 18px; fill: none; stroke: var(--text-muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 .j-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
 .j-swatches button { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--cc); cursor: pointer; }

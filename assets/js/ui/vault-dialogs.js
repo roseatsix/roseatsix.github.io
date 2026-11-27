@@ -71,7 +71,7 @@ export function openSetupDialog() {
 function showRecovery(el, code, close) {
   el.querySelector('form')?.remove();
   el.querySelectorAll('h2, p').forEach(n => n.remove());
-  const closeBtn = el.querySelector('.dialog-close');
+  const closeBtn = el.closest('dialog')?.querySelector('.dialog-close');
   const box = document.createElement('div');
   box.innerHTML = `
     <h2>Save your recovery key</h2>
@@ -88,7 +88,7 @@ function showRecovery(el, code, close) {
     <div class="dialog-actions">
       <button class="btn btn-primary" type="button" data-done disabled>Done</button>
     </div>`;
-  el.insertBefore(box, closeBtn);
+  el.appendChild(box);
   if (closeBtn) closeBtn.hidden = true;
 
   box.querySelector('[data-copy]').addEventListener('click', () => copyText(code));

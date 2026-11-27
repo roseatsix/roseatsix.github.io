@@ -8,7 +8,7 @@
 .sp-status { font-size: .8rem; font-weight: 700; color: var(--sun-deep); }
 .sp-status.is-done { color: var(--leaf-deep); }
 
-.sp-top { display: flex; align-items: center; gap: 12px; }
+.sp-top { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
 .sp-top .icon-btn { flex: none; text-decoration: none; }
 .sp-top .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .sp-titlebtn { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 4px 6px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
