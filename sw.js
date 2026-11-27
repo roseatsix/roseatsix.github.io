@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27f';
+const VERSION = 'ras-2026-11-27g';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -67,8 +67,23 @@ async function networkFirst(request) {
   try {
     // Wait for the network, but not forever if a cached copy exists.
     const timeout = new Promise(resolve => setTimeout(resolve, NETWORK_TIMEOUT));
-    const first = await Promise.race([network, timeout.then(cached)]);
-    if (first) return first;
+    let usedCache = false;
+    const first = await Promise.race([network, timeout.then(async () => {
+      const hit = await cached();
+      if (hit) usedCache = true;
+      return hit;
+    })]);
+    if (first) {
+      // A slow network got the saved copy. If the real one turns out to be
+      // newer, tell the page, so it can reload with matching files instead
+      // of mixing old and new (e.g. new code with an old stylesheet).
+      if (usedCache) {
+        network.then(res => {
+          if (res && res.ok && changed(first, res)) notifyStale();
+        }).catch(() => {});
+      }
+      return first;
+    }
     return await network;
   } catch (e) {
     const hit = await cached();
@@ -79,6 +94,17 @@ async function networkFirst(request) {
     }
     throw e;
   }
+}
+
+const tagOf = res => res.headers.get('etag') || res.headers.get('last-modified') || '';
+const changed = (a, b) => { const x = tagOf(a), y = tagOf(b); return !x || !y || x !== y; };
+
+let staleTimer = null;
+function notifyStale() {
+  clearTimeout(staleTimer);    // one message for a burst of files
+  staleTimer = setTimeout(async () => {
+    for (const client of await self.clients.matchAll({ type: 'window' })) client.postMessage({ type: 'ras:stale' });
+  }, 300);
 }
 
 async function cacheFirst(request) {
