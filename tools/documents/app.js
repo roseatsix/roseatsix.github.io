@@ -3,10 +3,11 @@
 import { mountHeader } from '../../assets/js/ui/header.js';
 import { esc, toast } from '../../assets/js/ui/dom.js';
 import * as L from './lib.js';
+import { renderHide, renderWatermark, renderFit } from './more.js';
 
 const main = document.getElementById('docs');
 const tabs = document.querySelector('.tabs');
-const VIEWS = ['merge', 'pages', 'compress', 'convert', 'text'];
+const VIEWS = ['merge', 'pages', 'compress', 'convert', 'text', 'hide', 'watermark', 'fit'];
 
 const ICON = {
   up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',
@@ -468,7 +469,11 @@ function renderText(root) {
 
 /* ---------- routing ---------- */
 
-const RENDER = { merge: renderMerge, pages: renderPages, compress: renderCompress, convert: renderConvert, text: renderText };
+const H = { picker, progress, fail, bindPicker };
+const RENDER = {
+  merge: renderMerge, pages: renderPages, compress: renderCompress, convert: renderConvert, text: renderText,
+  hide: root => renderHide(root, H), watermark: root => renderWatermark(root, H), fit: root => renderFit(root, H),
+};
 const roots = {};
 
 function onRoute() {

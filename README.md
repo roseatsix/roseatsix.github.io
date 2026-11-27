@@ -82,3 +82,12 @@ service %, tax %, discount and total; tax printed after the total (minimarket
 correcting it, then sending it to a bill split or journal spending.
 Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),
 Journal → Budget (Scan receipt).
+
+## Document toolkit: Hide, Watermark, Fit size
+
+`tools/documents/more.js`. Hide and Watermark render every page to a 150 dpi
+picture and draw on it, so covered text or a watermark can't be removed from
+the saved file (and PDFs lose their selectable text on purpose). Hide finds
+text through the PDF's own text layer, or by OCR word boxes for photos and
+scans. Fit size searches JPEG quality, then size, to get under a limit; PDFs
+are re-rendered at falling dpi until they fit. ID photos are cut at 300 dpi.
