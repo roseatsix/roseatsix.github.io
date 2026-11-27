@@ -12,7 +12,7 @@ import * as SM from '../../tools/subscriptions/model.js';
 import * as SP from '../../tools/split/model.js';
 
 const PER_GROUP = 4;
-const data = { docgen: new Map() };
+const data = { docgen: new Map(), inbox: new Map() };
 let opened = false;
 let refresh = () => {};
 
@@ -95,12 +95,23 @@ function docgenHits(q, ok) {
   return out.sort((a, b) => b.sort.localeCompare(a.sort));
 }
 
+function inboxHits(q, ok) {
+  const out = [];
+  for (const [k, v] of data.inbox) {
+    if (!k.startsWith('in:') || !ok([v.text, v.url].join(' '))) continue;
+    const title = (v.text || '').split('\n')[0] || (v.url ? v.url.replace(/^https?:\/\/(www\.)?/, '') : 'Photo');
+    out.push({ sort: String(v.createdAt || 0), title: snippet(title, q), sub: [v.kind === 'link' ? 'Link' : v.kind === 'photo' ? 'Photo' : 'Note', v.sorted ? 'sorted' : 'to sort'].join(' · '), href: 'tools/inbox/' });
+  }
+  return out.sort((a, b) => b.sort.localeCompare(a.sort));
+}
+
 const GROUPS = [
   ['Journal', 'flower', journalHits],
   ['Home inventory', 'flower', inventoryHits],
   ['Subscriptions', 'sun', subscriptionHits],
   ['Bill splits', 'sun', splitHits],
   ['Generated documents', 'leaf', docgenHits],
+  ['Inbox', 'flower', inboxHits],
 ];
 
 /* ---------- UI ---------- */
@@ -113,6 +124,7 @@ function openStores() {
   openStore('subscriptions').subscribe(l => { SM.setItems(l); refresh(); });
   openStore('splits').subscribe(l => { SP.setItems(l); refresh(); });
   openStore('docgen').subscribe(l => { data.docgen = new Map(l.map(i => [i.key, i.data])); refresh(); });
+  openStore('inbox').subscribe(l => { data.inbox = new Map(l.map(i => [i.key, i.data])); refresh(); });
 }
 
 export function mountSearch() {

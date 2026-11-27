@@ -19,6 +19,8 @@ const TOOLS = [
     href: 'tools/journal/', icon: 'journal', status: 'ready' },
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
     href: 'tools/inventory/', icon: 'home', status: 'ready' },
+  { group: 'everyday', name: 'Inbox', desc: 'Drop links, notes and photos in quickly; sort them later.',
+    href: 'tools/inbox/', icon: 'inbox', status: 'ready' },
   { group: 'everyday', name: 'Learn to code', desc: 'Case studies of how this site works, through its own code.',
     href: 'tools/learn/', icon: 'learn', status: 'ready' },
 
@@ -45,6 +47,7 @@ const ICONS = {
   merge:    '<rect x="3.5" y="4" width="7" height="9" rx="1.5"/><rect x="13.5" y="4" width="7" height="9" rx="1.5"/><path d="M7 13v2.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V13"/><path d="M12 17.5V21"/>',
   extract:  '<path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M14 3.5v5h5"/><path d="M12 11v6"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/>',
   scan:     '<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 9h8M8 12h8M8 15h5"/>',
+  inbox:    '<path d="M4 13.5 6.5 5.5h11l2.5 8"/><path d="M4 13.5v4.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4.5h-5a3 3 0 0 1-6 0z"/>',
   learn:    '<path d="M8.5 8 4 12l4.5 4"/><path d="m15.5 8 4.5 4-4.5 4"/><path d="M13.5 5.5 10.5 18.5"/>',
   sparkdoc: '<path d="M13 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9.5"/><path d="M8.5 13h6M8.5 16.5h4"/><path d="M18 2.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>',
 };
@@ -117,12 +120,32 @@ renderTools();
 mountThemeControls();
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
-  .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); import('./hub-search.js').then(s => s.mountSearch()); })
+  .then(m => { m.mountHeader(); showInventoryBadge(); showInboxBadge(); import('./hub-today.js').then(t => t.mountToday()); import('./hub-search.js').then(s => s.mountSearch()); })
   .catch(err => {
     console.error('Sign-in failed to load', err);
     const slot = document.getElementById('account-slot');
     if (slot) slot.innerHTML = '<span class="chip" title="Sign-in failed to load. See the browser console.">Sign-in unavailable</span>';
   });
+
+/* Show how many things wait in the inbox, on its card. */
+async function showInboxBadge() {
+  try {
+    const { openStore } = await import('./core/store.js');
+    const card = document.querySelector('a.card[href="tools/inbox/"]');
+    if (!card) return;
+    openStore('inbox').subscribe(list => {
+      const n = list.filter(i => i.key.startsWith('in:') && !i.data.sorted).length;
+      let badge = card.querySelector('.card-badge');
+      if (!n) { badge?.remove(); return; }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'tag card-badge';
+        card.querySelector('.card-top').appendChild(badge);
+      }
+      badge.textContent = `${n} to sort`;
+    });
+  } catch (e) { console.warn('Inbox badge unavailable', e); }
+}
 
 /* Show replacements that are due on the inventory card (once unlocked). */
 async function showInventoryBadge() {

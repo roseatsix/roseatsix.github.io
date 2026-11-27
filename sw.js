@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27g';
+const VERSION = 'ras-2026-11-27h';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -21,6 +21,7 @@ const SHELL = [
   '/assets/js/core/merge.js', '/assets/js/core/session.js', '/assets/js/core/store.js',
   '/assets/js/ui/appearance.js', '/assets/js/ui/backup.js', '/assets/js/ui/dom.js', '/assets/js/ui/header.js', '/assets/js/ui/name-list.js',
   '/assets/js/ui/theme-controls.js', '/assets/js/ui/vault-dialogs.js',
+  '/tools/inbox/', '/tools/inbox/index.html', '/tools/inbox/inbox.css', '/tools/inbox/app.js',
   '/tools/learn/', '/tools/learn/index.html', '/tools/learn/learn.css', '/tools/learn/app.js', '/tools/learn/cases.js',
   '/tools/learn/demos.js', '/tools/learn/code.js', '/tools/learn/runner.js',
   '/tools/journal/', '/tools/journal/index.html', '/tools/journal/journal.css', '/tools/journal/journal.js',
@@ -107,6 +108,28 @@ function notifyStale() {
   }, 300);
 }
 
+/* Something was shared to the app. The service worker has no keys, so it
+   parks the share in a cache on this device; the inbox page picks it up,
+   encrypts and saves it, then deletes it from here. */
+async function receiveShare(request) {
+  try {
+    const form = await request.formData();
+    const cache = await caches.open('ras-share');
+    const base = `/__share/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const files = [];
+    let i = 0;
+    for (const f of form.getAll('photos')) {
+      if (!f || typeof f === 'string' || !f.size) continue;
+      const key = `${base}/file${i++}`;
+      await cache.put(key, new Response(f, { headers: { 'content-type': f.type || 'application/octet-stream' } }));
+      files.push({ key, name: f.name, type: f.type });
+    }
+    const meta = { title: form.get('title') || '', text: form.get('text') || '', url: form.get('url') || '', files };
+    await cache.put(`${base}/meta`, new Response(JSON.stringify(meta), { headers: { 'content-type': 'application/json' } }));
+  } catch (e) { /* fall through to the inbox anyway */ }
+  return Response.redirect('/tools/inbox/?shared=1', 303);
+}
+
 async function cacheFirst(request) {
   const cache = await caches.open(VERSION);
   const hit = await cache.match(request);
@@ -118,8 +141,13 @@ async function cacheFirst(request) {
 
 self.addEventListener('fetch', event => {
   const request = event.request;
-  if (request.method !== 'GET') return;
   const url = new URL(request.url);
+  // Android "Share → rose at six" (see share_target in the manifest)
+  if (request.method === 'POST' && url.origin === self.location.origin && url.pathname === '/tools/inbox/share') {
+    event.respondWith(receiveShare(request));
+    return;
+  }
+  if (request.method !== 'GET') return;
 
   if (url.origin === self.location.origin) {
     if (url.pathname === '/sw.js') return;

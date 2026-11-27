@@ -1,0 +1,58 @@
+/* Inbox: layouts unique to this tool. */
+
+.tool-main { margin-top: 22px; }
+
+.ib-capture { display: grid; gap: 10px; padding: 14px; }
+.ib-draft { min-height: 64px; resize: vertical; font-size: 1rem; }
+.ib-capture-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ib-capture-row .btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ib-photo-btn { cursor: pointer; }
+
+.ib-views { --cc: var(--flower); --cc-deep: var(--flower-deep); }
+.ib-views span { margin-left: 4px; opacity: .75; }
+
+.ib-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ib-item {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px 14px;
+  border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+.ib-photo { grid-template-columns: 84px minmax(0, 1fr); }
+.ib-photo .ib-actions { grid-column: 1 / -1; }
+.ib-thumb { padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 12px; overflow: hidden; width: 84px; height: 84px; }
+.ib-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ib-item.is-sorted { box-shadow: none; background: color-mix(in oklab, var(--surface), var(--bg) 45%); }
+
+.ib-body { min-width: 0; display: grid; gap: 4px; align-content: start; }
+.ib-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: .78rem; color: var(--text-muted); }
+.ib-kind { font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--flower-deep); }
+.ib-item.ib-link .ib-kind { color: color-mix(in oklab, var(--leaf) 70%, var(--text)); }
+.ib-item.ib-photo .ib-kind { color: var(--sun-deep); }
+a.ib-link { display: grid; color: inherit; text-decoration: none; min-width: 0; }
+a.ib-link strong { font-size: 1rem; overflow-wrap: anywhere; }
+a.ib-link span { font-size: .84rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+a.ib-link:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.ib-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.ib-moved { display: inline-flex; align-items: center; gap: 4px; width: fit-content; font-size: .84rem; font-weight: 700; color: var(--leaf-deep); text-decoration: none; }
+.ib-moved svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ib-moved:hover { text-decoration: underline; }
+
+.ib-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent); }
+.ib-chip {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 3px 11px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer;
+}
+.ib-chip:hover { background: var(--surface-hover); }
+.ib-chip svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ib-actions .icon-btn { width: 34px; height: 34px; }
+.ib-actions .icon-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ib-actions .icon-btn.is-armed { border-color: var(--danger); color: var(--danger); }
+@media (max-width: 420px) { .ib-chip { padding: 3px 9px; } .ib-actions .icon-btn { width: 32px; height: 32px; } }
+
+.ib-empty { text-align: center; padding: 24px 0; }
+.ib-waiting { margin-top: 6px !important; font-weight: 700; color: var(--flower-deep); }
+.ib-full { display: block; width: 100%; max-height: 70vh; object-fit: contain; border-radius: var(--radius-sm); background: var(--bg); }
+.ib-caption { margin: 10px 0 0 !important; white-space: pre-wrap; color: var(--text) !important; }
+.ib-menu { display: grid; gap: 4px; margin-top: 4px; }
+.ib-menu-item { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 0; border-radius: 12px; background: none; color: var(--text); font: inherit; font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; }
+.ib-menu-item:hover { background: var(--surface-hover); }
+.ib-menu-item svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
