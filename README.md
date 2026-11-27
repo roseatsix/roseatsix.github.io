@@ -74,10 +74,13 @@ iPhone web apps can't be share targets, so there it's Paste and Photo.
 
 ## Receipt scanning
 
-`assets/js/receipt/`: `scan.js` cleans up the photo (size, grey, contrast)
-and reads it with the vendored Tesseract (Indonesian + English), on the
-device. `parse.js` turns the text into shop, date, items (qty × price),
-service %, tax %, discount and total; tax printed after the total (minimarket
+`assets/js/receipt/`: `scan.js` crops the photo to the paper (bright,
+colourless area), cleans it up (size, grey, contrast) and reads it with the
+vendored Tesseract (Indonesian + English), on the device. Lines are rebuilt
+from word positions (so far-right prices join their items); if the result
+doesn't add up to the printed total it re-reads in other layout modes and
+keeps the best. `parse.js` turns the text into shop, date, items (qty × price),
+service %, tax %, discount, rounding (pembulatan) and total; tax printed after the total (minimarket
 "PPN included" lines) is ignored. `review.js` is the dialog for checking and
 correcting it, then sending it to a bill split or journal spending.
 Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),

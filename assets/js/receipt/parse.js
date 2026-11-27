@@ -76,13 +76,24 @@ const titleCase = s => s.toLowerCase().replace(/(^|[\s(/-])([a-z])/g, (m, a, b) 
  *   (price is per unit; money in whole Rupiah).
  */
 export function parseReceipt(text) {
-  const lines = String(text || '').split(/\r?\n/).map(clean).filter(Boolean);
-  const out = { shop: '', date: parseDate(text) || null, items: [], service: 0, tax: 0, discount: 0, subtotal: null, total: null, servicePct: null, taxPct: null };
+  const lines = String(text || '').split(/\r?\n/)
+    .map(l => l.replace(/([x×])\s*[|lI!](?=\s|$)/g, '$1 1'))      // "x |" is "x 1" misread
+    .map(clean).filter(Boolean);
+  const out = { shop: '', date: parseDate(text) || null, items: [], service: 0, tax: 0, discount: 0, rounding: 0, subtotal: null, total: null, servicePct: null, taxPct: null };
 
-  // Shop: the first line with real words, before anything with a price.
-  for (const l of lines.slice(0, 6)) {
-    if (moneyIn(l).length || parseDate(l) || RE.skip.test(l)) continue;
-    if (letters(l) >= 3) { out.shop = titleCase(l.replace(/[^\p{L}\p{N}&'.\s-]/gu, '').trim()); break; }
+  // Shop: the first line made mostly of real words, before anything with a price.
+  const wordy = l => {
+    const t = l.split(/\s+/).filter(Boolean);
+    const real = t.filter(x => /^[\p{L}&'.-]{3,}$/u.test(x)).length;
+    return real >= 1 && real / t.length >= 0.6 && letters(l) >= 4;
+  };
+  for (const l of lines.slice(0, 8)) {
+    if (moneyIn(l).length || parseDate(l) || RE.skip.test(l) || !wordy(l)) continue;
+    let shop = l.replace(/[^\p{L}\p{N}&'.\s-]/gu, '').trim().replace(/^(\S\s+)+(?=\S{3,})/, '');
+    // "Er OMA COFFEE": a short word in different case before an all-caps name is a speck
+    const m = shop.match(/^(\S{1,2})\s+(.+)$/);
+    if (m && m[2] === m[2].toUpperCase() && /[A-Z]/.test(m[2]) && m[1] !== m[1].toUpperCase()) shop = m[2];
+    out.shop = titleCase(shop); break;
   }
 
   let pending = null;          // a name line waiting for its "2 x 12.500  25.000" line
@@ -100,13 +111,15 @@ export function parseReceipt(text) {
     if (RE.service.test(label) && last && !RE.skip.test(label)) { out.service += Math.abs(last.v); const p = l.match(RE.percent); if (p) out.servicePct = Number(p[1].replace(',', '.')); inItems = false; continue; }
     if (RE.tax.test(label) && last) { out.tax += Math.abs(last.v); const p = l.match(RE.percent); if (p) out.taxPct = Number(p[1].replace(',', '.')); inItems = false; continue; }
     if (RE.discount.test(label) && last) { out.discount += Math.abs(last.v); continue; }
-    if (RE.rounding.test(l)) continue;
+    if (RE.rounding.test(l)) { const m = l.match(/(-?\s?\d[\d.,]*)\s*$/); if (m) out.rounding += parseMoney(m[1].replace(/\s/g, '')) || 0; continue; }
     if (RE.total.test(label) && last && !RE.skip.test(label.replace(RE.total, ''))) {
       // the biggest "total" line wins (grand total after tax)
       if (out.total == null || Math.abs(last.v) >= out.total) out.total = Math.abs(last.v);
       inItems = false; afterTotal = true; continue;
     }
     if (!inItems) continue;
+    // "+ Less sugar", "+ Harga (20.000)": add-ons to the line above, not items
+    if (/^[^\p{L}\p{N}]{0,3}(\S{1,2}\s+)?\+\s/u.test(l)) continue;
     if (RE.skip.test(l) || (parseDate(l) && letters(l.replace(/[a-z]{3,9}/i, '')) < 3)) { pending = null; continue; }
 
     // "2 x 12.500   25.000" on its own line: belongs to the name above
@@ -128,10 +141,14 @@ export function parseReceipt(text) {
 
     // "Nasi goreng 2 x 25.000 50.000" · "2 Es teh 16.000" · "Es teh 8.000"
     let name = label, qty = 1, amount = last.v;
+    const post = name.match(/\s[x×]\s*(\d{1,3})?\s*$/i);       // "Capcay cah x 1   25.000"
     if (at && letters(l.slice(0, at.index)) >= 2) {
       name = l.slice(0, at.index).trim();
       qty = Number(at[1]);
       if (nums.length < 2) amount = parseMoney(at[2]) * qty;
+    } else if (post) {
+      name = name.slice(0, post.index);
+      qty = Number(post[1]) || 1;
     } else {
       const lead = name.match(RE.qtyLead);
       if (lead) { qty = Number(lead[1]); name = name.slice(lead[0].length); }
@@ -139,7 +156,9 @@ export function parseReceipt(text) {
       const tail = name.match(/\s(\d{1,2})$/);
       if (tail && qty === 1) { qty = Number(tail[1]) || 1; name = name.slice(0, -tail[0].length); }
     }
-    name = name.replace(/[^\p{L}\p{N}&'().\/\s+-]/gu, ' ').replace(/\s{2,}/g, ' ').trim();
+    name = name.replace(/[^\p{L}\p{N}&'().\/\s+-]/gu, ' ').replace(/\s{2,}/g, ' ').trim()
+      .replace(/^(\S\s+)+(?=\S{2,})/, '')                        // a stray letter in front (OCR noise)
+      .replace(/^[a-z]{1,2}\s+(?=[A-Z])/, '');                     // "of Es batu": a speck read as a short word
     if (letters(name) < 2 || amount < 100 || amount <= 0) { pending = null; continue; }
     if (!name && pending) name = pending;
     out.items.push({ name: titleCase(name), qty: qty || 1, price: Math.round(amount / (qty || 1)) });
@@ -151,7 +170,7 @@ export function parseReceipt(text) {
   const base = out.subtotal || sum;
   if (out.service && out.servicePct == null && base) out.servicePct = round1(out.service / base * 100);
   if (out.tax && out.taxPct == null && base) out.taxPct = round1(out.tax / (base + out.service) * 100);
-  if (out.total == null && sum) out.total = base + out.service + out.tax - out.discount;
+  if (out.total == null && sum) out.total = base + out.service + out.tax - out.discount + out.rounding;
   return out;
 }
 
@@ -162,6 +181,6 @@ export function check(r) {
   const sum = r.items.reduce((n, it) => n + (Number(it.price) || 0) * (Number(it.qty) || 1), 0);
   const service = sum * (Number(r.servicePct) || 0) / 100;
   const tax = (sum + service) * (Number(r.taxPct) || 0) / 100;
-  const computed = Math.round(sum + service + tax - (Number(r.discount) || 0));
+  const computed = Math.round(sum + service + tax - (Number(r.discount) || 0) + (Number(r.rounding) || 0));
   return { sum, computed, diff: r.total != null ? Math.round(r.total - computed) : null };
 }

@@ -330,7 +330,7 @@ function openReceiptDialog(tid, rid, prefill = null) {
         const parts = people.filter(p => c.shares[p.id]).map(p => `<span><b>${esc(p.name)}</b> ${esc(M.money(c.shares[p.id]))}</span>`);
         el.querySelector('[data-preview]').innerHTML = `
           <p class="sp-preview-total">Total <strong>${esc(M.money(c.total))}</strong>
-            ${r.mode === 'items' && (c.service || c.tax || c.delivery || c.discount) ? `<small>(${esc(M.money(c.subtotal))}${c.service ? ' + service ' + esc(M.money(c.service)) : ''}${c.tax ? ' + tax ' + esc(M.money(c.tax)) : ''}${c.delivery ? ' + delivery ' + esc(M.money(c.delivery)) : ''}${c.discount ? ' − ' + esc(M.money(c.discount)) : ''})</small>` : ''}</p>
+            ${r.mode === 'items' && (c.service || c.tax || c.delivery || c.discount || c.rounding) ? `<small>(${esc(M.money(c.subtotal))}${c.service ? ' + service ' + esc(M.money(c.service)) : ''}${c.tax ? ' + tax ' + esc(M.money(c.tax)) : ''}${c.delivery ? ' + delivery ' + esc(M.money(c.delivery)) : ''}${c.discount ? ' − ' + esc(M.money(c.discount)) : ''}${c.rounding ? ' ' + (c.rounding > 0 ? '+' : '−') + ' rounding ' + esc(M.money(Math.abs(c.rounding))) : ''})</small>` : ''}</p>
           <p class="sp-preview-shares">${parts.join('') || '<span>Nothing to split yet</span>'}</p>`;
       };
       const showMode = () => {
@@ -388,7 +388,7 @@ function openReceiptDialog(tid, rid, prefill = null) {
         const items = {};
         res.items.forEach((it, i) => { if (it.price > 0) items[M.newId()] = { name: it.name || 'Item', price: it.price, qty: it.qty || 1, sharedBy: [], order: i + 1 }; });
         const filled = Object.keys(items).length
-          ? { shop: res.shop, date: res.date || M.today(), paidBy, mode: 'items', items, total: null, sharedBy: [], service: res.servicePct || 0, tax: res.taxPct || 0, discount: res.discount || 0, delivery: 0, order: Date.now() }
+          ? { shop: res.shop, date: res.date || M.today(), paidBy, mode: 'items', items, total: null, sharedBy: [], service: res.servicePct || 0, tax: res.taxPct || 0, discount: res.discount || 0, rounding: res.rounding || 0, delivery: 0, order: Date.now() }
           : { shop: res.shop, date: res.date || M.today(), paidBy, mode: 'even', total: res.total, sharedBy: [], items: {}, service: 0, tax: 0, discount: 0, order: Date.now() };
         openReceiptDialog(tid, null, filled);
       });
