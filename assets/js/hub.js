@@ -115,13 +115,6 @@ function renderGreeting() {
 renderGreeting();
 renderTools();
 mountThemeControls();
-// The top bar sticks to the top; give it a backdrop once the page scrolls.
-const topbar = document.querySelector('.topbar.is-sticky');
-if (topbar) {
-  const onScroll = () => topbar.classList.toggle('is-scrolled', scrollY > 8);
-  addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
-}
 // Load sign-in separately, so a problem there can never blank the hub.
 import('./ui/header.js')
   .then(m => { m.mountHeader(); showInventoryBadge(); import('./hub-today.js').then(t => t.mountToday()); import('./hub-search.js').then(s => s.mountSearch()); })

@@ -74,8 +74,8 @@ export function mountToday() {
   setInterval(() => { if (J.today() !== day) { day = J.today(); render(); } }, 60000);
 }
 
-// Phones show fewer rows so the tools stay close to the top.
-const maxRows = () => (window.matchMedia('(max-width: 640px)').matches ? 4 : 6);
+// At most 4 rows; the rest wait behind "more".
+const maxRows = () => 4;
 
 /** Everything worth a row today, most urgent first. */
 function collect() {

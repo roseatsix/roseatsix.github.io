@@ -257,7 +257,7 @@
 .l-step-grid { display: grid; gap: 16px; }
 @media (min-width: 860px) {
   .l-step-grid:not(.is-text) { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
-  .l-step-code { position: sticky; top: 12px; }
+  .l-step-code { position: sticky; top: 84px; }
 }
 .l-step-code, .l-step-text { min-width: 0; }
 .l-file { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font: 600 .78rem var(--mono); color: var(--text-muted); overflow-wrap: anywhere; }
