@@ -122,7 +122,8 @@ button.j-pill { cursor: pointer; }
 
 .j-timeline { list-style: none; margin: 0; padding: 0; position: relative; }
 .j-timeline::before {
-  content: ""; position: absolute; left: 63px; top: 10px; bottom: 10px; width: 2px;
+  /* centred on the dots: padding 6 + time 48 + gap 8 + dot margin 2 + half the dot 6 − half the line 1 */
+  content: ""; position: absolute; left: 69px; top: 10px; bottom: 10px; width: 2px;
   background: color-mix(in oklab, var(--border) 80%, transparent); border-radius: 2px;
 }
 .j-entry-btn {

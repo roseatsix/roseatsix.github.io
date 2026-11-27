@@ -96,7 +96,7 @@ photo cuts 2×3, 3×4 or 4×6 cm at 300 dpi.
 ## Themes
 
 Appearance has three themes: Rose (the original), Slate (Plus Jakarta Sans,
-crisp, one bright accent) and Beacon (warm paper, Newsreader titles,
+crisp, one bright accent) and Paper (id `beacon`; warm paper, Newsreader titles,
 Atkinson Hyperlegible Next text, one quiet accent). `assets/js/theme-boot.js` holds `STYLES` (fonts, app icon,
 manifest, favicon) and the palettes (each belongs to one style); it sets
 `data-style` on `<html>`, loads the theme's fonts, swaps the icon links and the

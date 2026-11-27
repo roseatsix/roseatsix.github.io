@@ -20,8 +20,9 @@
       sample: '"Plus Jakarta Sans", system-ui, sans-serif',
       icon: { touch: '/assets/icons/slate-180.png', manifest: '/assets/manifest-slate.webmanifest', favicon: '/assets/favicon-slate.svg' }
     },
+    // shown as "Paper"; the id stays "beacon" so saved choices keep working
     beacon: {
-      name: 'Beacon', note: 'Warm paper, calm serif titles, easy-to-read text',
+      name: 'Paper', note: 'Warm paper, calm serif titles, easy-to-read text',
       fonts: 'family=Atkinson+Hyperlegible+Next:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600',
       sample: '"Newsreader", Georgia, serif',
       icon: { touch: '/assets/icons/beacon-180.png', manifest: '/assets/manifest-beacon.webmanifest', favicon: '/assets/favicon-beacon.svg' }
