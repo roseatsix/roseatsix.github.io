@@ -944,19 +944,19 @@ dialog.dialog { overflow-x: hidden; }
   .hero { margin: 24px 0 20px; padding: 22px 20px 18px; }
   .hero .lede { font-size: .95rem; margin-top: 6px; }
   body.has-today .quick-tools {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: 4px;
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;
     margin-top: 14px; position: relative; z-index: 1;
   }
   .quick-tool {
-    display: grid; justify-items: center; gap: 4px; min-width: 0; padding: 6px 2px;
+    display: grid; justify-items: center; gap: 4px; min-width: 0; padding: 6px 0;
     border-radius: var(--radius-sm); color: var(--accent-deep);
     font-size: .68rem; font-weight: 700; text-decoration: none; text-align: center;
   }
   .quick-tool svg {
-    width: 40px; height: 40px; padding: 9px; border-radius: 12px; background: var(--accent-soft);
+    width: min(40px, 100%); height: auto; aspect-ratio: 1; padding: 9px; border-radius: 12px; background: var(--accent-soft);
     fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
-  .quick-tool span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .quick-tool span { max-width: calc(100% + 4px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.01em; }
   .quick-tool:active { transform: scale(.97); }
 }
 
