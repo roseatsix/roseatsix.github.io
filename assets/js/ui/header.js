@@ -205,7 +205,7 @@ function avatarButton(u, sync) {
 
 function syncAppearance() {
   const settings = openStore('settings');
-  const pick = p => ({ palette: p.palette, custom: p.custom || {} });
+  const pick = p => ({ style: p.style || 'rose', palette: p.palette, custom: p.custom || {} });
   let timer;
 
   settings.subscribe(items => {
@@ -213,12 +213,13 @@ function syncAppearance() {
     const local = T.read();
     if (!remote) {
       // Nothing synced yet: upload this device's choice if it isn't the default.
-      if (!same(pick(local), { palette: 'rose', custom: {} })) {
+      if (!same(pick(local), { style: 'rose', palette: 'rose', custom: {} })) {
         settings.put('appearance', pick(local)).catch(err => console.warn('Could not save appearance', err));
       }
       return;
     }
     if (!T.PALETTES[remote.data.palette]) return;
+    if (!remote.data.style) remote.data = { ...remote.data, style: T.PALETTES[remote.data.palette].style };
     if (!same(pick(local), pick(remote.data))) {
       T.save({ ...local, ...pick(remote.data) }, { source: 'sync' });
     }
