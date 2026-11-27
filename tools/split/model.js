@@ -106,10 +106,11 @@ export function receiptCalc(t, r) {
       for (const id of Object.keys(shares)) shares[id] += sum ? delivery * (base[id] || 0) / sum : 0;
     }
 
-    // Discount comes off everyone in proportion to what they owe.
+    // Discount comes off everyone in proportion to what they owe; the
+    // receipt's rounding (pembulatan) is shared the same way.
     const gross = subtotal + service + tax + delivery;
     discount = Math.min(Number(r.discount) || 0, gross);
-    total = gross - discount;
+    total = gross - discount + (Number(r.rounding) || 0);
     const keep = gross ? total / gross : 0;
     for (const id of Object.keys(shares)) shares[id] *= keep;
   }
@@ -123,7 +124,7 @@ export function receiptCalc(t, r) {
     const target = shares[r.paidBy] != null ? r.paidBy : Object.keys(shares)[0];
     if (target) shares[target] = round(shares[target] + diff);
   }
-  return { subtotal: round(subtotal), service: round(service), tax: round(tax), delivery: round(delivery), discount: round(discount), total, shares };
+  return { subtotal: round(subtotal), service: round(service), tax: round(tax), delivery: round(delivery), discount: round(discount), rounding: r.mode === 'items' ? Number(r.rounding) || 0 : 0, total, shares };
 }
 
 /** Whole split: per-person totals, balances and the fewest transfers to settle. */

@@ -59,7 +59,7 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
         raw = text;
         const p = parseReceipt(text);
         r = { shop: p.shop, date: p.date || J.today(), items: p.items.length ? p.items : [{ name: '', qty: 1, price: null }],
-          servicePct: p.servicePct || 0, taxPct: p.taxPct || 0, discount: p.discount || 0, total: p.total };
+          servicePct: p.servicePct || 0, taxPct: p.taxPct || 0, discount: p.discount || 0, rounding: p.rounding || 0, total: p.totalPrinted || p.subtotal != null ? p.total : null };   // a total worked out from the items would always "match"
         review();
       }).catch(err => {
         console.error(err);
@@ -152,7 +152,7 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
           const ok = c.diff == null || Math.abs(c.diff) <= 2;
           box.className = 'rc-sum ' + (c.diff == null ? '' : ok ? 'is-ok' : 'is-off');
           box.innerHTML = `
-            <span>Items ${esc(rp(c.sum))}${r.servicePct ? ` + service ${r.servicePct}%` : ''}${r.taxPct ? ` + tax ${r.taxPct}%` : ''}${r.discount ? ` − ${esc(rp(r.discount))}` : ''} = <strong>${esc(rp(c.computed))}</strong></span>
+            <span>Items ${esc(rp(c.sum))}${r.servicePct ? ` + service ${r.servicePct}%` : ''}${r.taxPct ? ` + tax ${r.taxPct}%` : ''}${r.discount ? ` − ${esc(rp(r.discount))}` : ''}${r.rounding ? ` ${r.rounding > 0 ? '+' : '−'} rounding ${esc(rp(Math.abs(r.rounding)))}` : ''} = <strong>${esc(rp(c.computed))}</strong></span>
             ${c.diff == null ? '' : ok ? `<span class="rc-verdict">${ICON.ok}Matches the receipt</span>`
               : `<span class="rc-verdict">${ICON.warn}${c.diff > 0 ? `${esc(rp(c.diff))} less than` : `${esc(rp(-c.diff))} more than`} the receipt's ${esc(rp(r.total))}. Check for a missed or misread line.</span>`}`;
         };
@@ -216,7 +216,7 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
           const items = {};
           r.items.forEach((it, i) => { if (it.price > 0) items[SP.newId()] = { name: it.name || 'Item', price: it.price, qty: it.qty || 1, sharedBy: [], order: i + 1 }; });
           const receipt = Object.keys(items).length
-            ? { shop: r.shop || 'Receipt', date: r.date || J.today(), paidBy, mode: 'items', items, sharedBy: [], service: r.servicePct || 0, tax: r.taxPct || 0, discount: r.discount || 0, delivery: 0, order: Date.now() }
+            ? { shop: r.shop || 'Receipt', date: r.date || J.today(), paidBy, mode: 'items', items, sharedBy: [], service: r.servicePct || 0, tax: r.taxPct || 0, discount: r.discount || 0, rounding: r.rounding || 0, delivery: 0, order: Date.now() }
             : { shop: r.shop || 'Receipt', date: r.date || J.today(), paidBy, mode: 'even', total: r.total, sharedBy: [], items: {}, service: 0, tax: 0, discount: 0, order: Date.now() };
           trip.receipts = { ...(trip.receipts || {}), [SP.newId()]: receipt };
           if (J.isDate(receipt.date) && (!J.isDate(trip.date) || receipt.date < trip.date)) trip.date = receipt.date;
