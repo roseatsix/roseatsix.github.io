@@ -3,11 +3,11 @@
 import { mountHeader } from '../../assets/js/ui/header.js';
 import { esc, toast } from '../../assets/js/ui/dom.js';
 import * as L from './lib.js';
-import { renderHide, renderWatermark, renderFit } from './more.js';
+import { renderProtect, renderLimit, renderIdPhoto } from './more.js';
 
 const main = document.getElementById('docs');
 const tabs = document.querySelector('.tabs');
-const VIEWS = ['merge', 'pages', 'compress', 'convert', 'text', 'hide', 'watermark', 'fit'];
+const VIEWS = ['merge', 'pages', 'compress', 'convert', 'text', 'protect'];
 
 const ICON = {
   up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',
@@ -470,9 +470,35 @@ function renderText(root) {
 /* ---------- routing ---------- */
 
 const H = { picker, progress, fail, bindPicker };
+
+/* Compress has two ways: "Smaller" (the levels) or "Under a size limit". */
+function addLimitMode(root) {
+  const panel = root.querySelector('.panel');
+  const head = panel.querySelector('.panel-head');
+  const levelUi = [...panel.children].filter(el => el !== head);
+  const limitBox = document.createElement('div');
+  limitBox.hidden = true;
+  head.insertAdjacentHTML('afterend', `
+    <div class="segmented seg-2 d-fit-mode" role="radiogroup" aria-label="How to compress">
+      <button type="button" role="radio" data-cmode="level" aria-checked="true">Smaller</button>
+      <button type="button" role="radio" data-cmode="limit" aria-checked="false">Under a size limit</button>
+    </div>`);
+  panel.appendChild(limitBox);
+  renderLimit(limitBox, H);
+  panel.querySelector('.d-fit-mode').addEventListener('click', e => {
+    const b = e.target.closest('[data-cmode]');
+    if (!b) return;
+    panel.querySelectorAll('[data-cmode]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+    const lim = b.dataset.cmode === 'limit';
+    levelUi.forEach(el => { el.hidden = lim; });
+    limitBox.hidden = !lim;
+  });
+}
 const RENDER = {
-  merge: renderMerge, pages: renderPages, compress: renderCompress, convert: renderConvert, text: renderText,
-  hide: root => renderHide(root, H), watermark: root => renderWatermark(root, H), fit: root => renderFit(root, H),
+  merge: renderMerge, pages: renderPages, text: renderText,
+  compress: root => { renderCompress(root); addLimitMode(root); },
+  convert: root => { renderConvert(root); const id = document.createElement('div'); root.appendChild(id); renderIdPhoto(id, H); },
+  protect: root => renderProtect(root, H),
 };
 const roots = {};
 

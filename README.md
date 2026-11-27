@@ -83,11 +83,12 @@ correcting it, then sending it to a bill split or journal spending.
 Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),
 Journal → Budget (Scan receipt).
 
-## Document toolkit: Hide, Watermark, Fit size
+## Document toolkit: Protect, size limits, ID photos
 
-`tools/documents/more.js`. Hide and Watermark render every page to a 150 dpi
-picture and draw on it, so covered text or a watermark can't be removed from
-the saved file (and PDFs lose their selectable text on purpose). Hide finds
-text through the PDF's own text layer, or by OCR word boxes for photos and
-scans. Fit size searches JPEG quality, then size, to get under a limit; PDFs
-are re-rendered at falling dpi until they fit. ID photos are cut at 300 dpi.
+`tools/documents/more.js`. Protect (cover private details and/or watermark)
+renders every page to a 150 dpi picture and draws on it, so covered text or a
+watermark can't be removed from the saved file (PDFs lose selectable text on
+purpose). Text is found through the PDF's own text layer, or OCR word boxes
+for photos and scans. Compress → "Under a size limit" searches JPEG quality,
+then size; PDFs are re-rendered at falling dpi until they fit. Convert → ID
+photo cuts 2×3, 3×4 or 4×6 cm at 300 dpi.

@@ -1,10 +1,9 @@
 /* ==========================================================
    Document toolkit, part 2:
-   - Hide:      cover private details (draw boxes, or find text)
-   - Watermark: stamp text across a copy
-   - Fit size:  get a file under an upload limit; ID photos
-   Hide and Watermark flatten every page into a picture, so what
-   was covered (or the watermark) can't be taken off again.
+   - Protect:  cover private details (draw boxes, or find text) and/or
+               stamp a watermark; saved flat, so neither can be undone
+   - Compress → Under a size limit (renderLimit)
+   - Convert  → ID photo (renderIdPhoto)
    ========================================================== */
 
 import { esc, toast } from '../../assets/js/ui/dom.js';
@@ -106,13 +105,47 @@ async function pageWords(pg, onProgress) {
   return out;
 }
 
-export function renderHide(root, H) {
+const COLORS = { grey: [90, 90, 90], red: [190, 40, 40], blue: [40, 70, 170] };
+
+function stamp(canvas, { text, opacity, size, color, tiled }) {
+  const g = canvas.getContext('2d');
+  const W = canvas.width, Hh = canvas.height;
+  const base = Math.min(W, Hh);
+  const px = Math.round(base * { s: 0.035, m: 0.05, l: 0.075 }[size]);
+  g.save();
+  g.font = `700 ${px}px "Nunito Sans", system-ui, sans-serif`;
+  g.fillStyle = `rgba(${COLORS[color].join(',')},${opacity})`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.translate(W / 2, Hh / 2);
+  g.rotate(-Math.atan2(Hh, W) * 0.9);
+  const lines = text.split('\n');
+  if (tiled) {
+    const tw = Math.max(...lines.map(l => g.measureText(l).width)) + px * 3;
+    const th = px * (lines.length + 2.2);
+    const reach = Math.hypot(W, Hh);
+    let row = 0;
+    for (let y = -reach; y < reach; y += th, row++) {
+      for (let x = -reach + (row % 2 ? tw / 2 : 0); x < reach; x += tw) {
+        lines.forEach((l, i) => g.fillText(l, x, y + (i - (lines.length - 1) / 2) * px * 1.15));
+      }
+    }
+  } else {
+    const big = Math.min(px * 2.2, (Math.hypot(W, Hh) * 0.8) / Math.max(...lines.map(l => (g.measureText(l).width / px) || 1)));
+    g.font = `800 ${big}px "Nunito Sans", system-ui, sans-serif`;
+    lines.forEach((l, i) => g.fillText(l, 0, (i - (lines.length - 1) / 2) * big * 1.15));
+  }
+  g.restore();
+}
+
+export function renderProtect(root, H) {
   root.innerHTML = `
     <section class="panel">
-      <div class="panel-head"><h2>Hide private details</h2></div>
-      <p class="d-intro">Cover an NIK, account number or address before you send something. Drag on a page to draw a box, or find text to cover it everywhere.</p>
-      ${H.picker('hide', { multiple: false, label: 'Choose a PDF or photo' })}
+      <div class="panel-head"><h2>Protect a copy</h2></div>
+      <p class="d-intro">Before you send a document: cover private details (an NIK, account number, address), stamp it with what it's for, or both.</p>
+      ${H.picker('protect', { multiple: false, label: 'Choose a PDF or photo' })}
       <div data-work hidden>
+        <h3 class="d-step">Cover private details</h3>
+        <p class="hint" style="margin-top:-4px">Drag on a page to draw a box, or find text to cover it everywhere. Tap a box to remove it.</p>
         <form class="d-find" data-find>
           <label class="searchbox">${ICON.search}<input class="inline-input" name="q" placeholder="Find text to cover, e.g. a name" autocomplete="off" aria-label="Find text to cover"></label>
           <button class="btn btn-ghost btn-sm" type="submit">Cover</button>
@@ -121,10 +154,33 @@ export function renderHide(root, H) {
           ${Object.entries(PRESETS).map(([k, v]) => `<button type="button" class="btn btn-ghost btn-sm" data-preset="${k}">${esc(v.btn)}</button>`).join('')}
           <button type="button" class="btn btn-ghost btn-sm" data-clear>${ICON.undo}Remove all boxes</button>
         </div>
-        <p class="hint" data-status>Tip: tap a box to remove it.</p>
+        <p class="hint" data-status></p>
+
+        <h3 class="d-step">Watermark</h3>
+        <label class="check"><input type="checkbox" data-wm-on><span>Stamp text across every page</span></label>
+        <div class="d-wm-form" data-wm hidden>
+          <label class="field"><span class="field-label">Text</span>
+            <textarea class="input" name="wmtext" rows="2" placeholder="e.g. Hanya untuk keperluan pendaftaran BPJS">Hanya untuk keperluan </textarea></label>
+          <div class="d-presets">
+            <button type="button" class="btn btn-ghost btn-sm" data-wmp="Hanya untuk keperluan ">Hanya untuk keperluan…</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-wmp="Tidak berlaku untuk keperluan lain">Tidak berlaku untuk keperluan lain</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-wmp="SALINAN">SALINAN</button>
+          </div>
+          <label class="check"><input type="checkbox" name="date" checked><span>Add today's date (${esc(todayText())})</span></label>
+          <div class="field-grid d-wm-opts">
+            <div class="field"><span class="field-label">Layout</span>
+              <div class="segmented seg-2" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-tiled="1" aria-checked="true">All over</button><button type="button" role="radio" data-tiled="0" aria-checked="false">Once, big</button></div></div>
+            <div class="field"><span class="field-label">Size</span>
+              <div class="segmented seg-3" role="radiogroup" aria-label="Size"><button type="button" role="radio" data-size="s" aria-checked="false">S</button><button type="button" role="radio" data-size="m" aria-checked="true">M</button><button type="button" role="radio" data-size="l" aria-checked="false">L</button></div></div>
+            <div class="field"><span class="field-label">Colour</span>
+              <div class="segmented seg-3" role="radiogroup" aria-label="Colour"><button type="button" role="radio" data-color="grey" aria-checked="true">Grey</button><button type="button" role="radio" data-color="red" aria-checked="false">Red</button><button type="button" role="radio" data-color="blue" aria-checked="false">Blue</button></div></div>
+            <label class="field"><span class="field-label">Strength</span><input type="range" min="12" max="70" value="30" name="opacity" class="d-range" aria-label="Strength"></label>
+          </div>
+        </div>
+
         <div class="d-redact" data-pages></div>
-        <div class="d-go"><button class="btn btn-primary" type="button" data-save>Hide and save</button></div>
-        <p class="hint">The result is a flat picture of each page: the covered parts are gone for good, and text can't be selected any more.</p>
+        <div class="d-go"><button class="btn btn-primary" type="button" data-save>Save protected copy</button></div>
+        <p class="hint">The saved file is a flat picture of each page: covered parts are gone for good, the watermark can't be lifted off, and text can't be selected any more.</p>
       </div>
       <div data-out></div>
     </section>`;
@@ -132,8 +188,34 @@ export function renderHide(root, H) {
   const host = root.querySelector('[data-pages]');
   const out = root.querySelector('[data-out]');
   const status = root.querySelector('[data-status]');
+  const wmBox = root.querySelector('[data-wm]');
+  const wmOn = root.querySelector('[data-wm-on]');
+  const opts = { tiled: true, size: 'm', color: 'grey' };
   let file = null, pages = [], boxes = [], wordsCache = new Map();
 
+  const wm = () => {
+    if (!wmOn.checked) return null;
+    const t = root.querySelector('[name=wmtext]').value.trim() || 'SALINAN';
+    return { ...opts, opacity: Number(root.querySelector('[name=opacity]').value) / 100, text: root.querySelector('[name=date]').checked ? `${t}\n${todayText()}` : t };
+  };
+  // Page pictures shown on screen, with the watermark drawn in when it's on.
+  let pvTimer;
+  const drawPictures = () => {
+    clearTimeout(pvTimer);
+    pvTimer = setTimeout(() => {
+      const o = wm();
+      pages.forEach((pg, i) => {
+        const img = host.querySelector(`[data-page="${i}"] img`);
+        if (!img) return;
+        const k = Math.min(1, 1400 / Math.max(pg.canvas.width, pg.canvas.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(pg.canvas.width * k); c.height = Math.round(pg.canvas.height * k);
+        c.getContext('2d').drawImage(pg.canvas, 0, 0, c.width, c.height);
+        if (o) stamp(c, o);
+        img.src = c.toDataURL('image/jpeg', 0.85);
+      });
+    }, 150);
+  };
   const drawBoxes = i => {
     const layer = host.querySelector(`[data-page="${i}"] .d-boxes`);
     const pg = pages[i];
@@ -141,7 +223,7 @@ export function renderHide(root, H) {
   };
   const drawAll = () => pages.forEach((_, i) => drawBoxes(i));
 
-  H.bindPicker(root, 'hide', async files => {
+  H.bindPicker(root, 'protect', async files => {
     file = files[0];
     out.innerHTML = '';
     work.hidden = true;
@@ -151,13 +233,15 @@ export function renderHide(root, H) {
       out.innerHTML = '';
       boxes = pages.map(() => []);
       wordsCache = new Map();
+      status.textContent = '';
       host.innerHTML = pages.map((pg, i) => `
         <figure class="d-rpage" data-page="${i}">
-          <img src="${pg.canvas.toDataURL('image/jpeg', 0.85)}" alt="Page ${i + 1}" draggable="false">
+          <img alt="Page ${i + 1}" draggable="false" style="aspect-ratio:${pg.canvas.width} / ${pg.canvas.height}">
           <div class="d-boxes"></div>
           ${pages.length > 1 ? `<figcaption>Page ${i + 1}</figcaption>` : ''}
         </figure>`).join('');
       work.hidden = false;
+      drawPictures();
     } catch (err) { H.fail(out, err); }
   });
 
@@ -227,145 +311,42 @@ export function renderHide(root, H) {
     const words = q.split(/\s+/).map(w => w.replace(/[^\p{L}\p{N}]/gu, '')).filter(Boolean);
     cover(t => { const n = t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); return n.length > 1 && words.some(w => n.includes(w) || (w.includes(n) && n.length >= 3)); }, `"${e.target.q.value.trim()}"`);
   });
+
   root.addEventListener('click', e => {
     const p = e.target.closest('[data-preset]');
     if (p) cover(PRESETS[p.dataset.preset].test, 'every ' + PRESETS[p.dataset.preset].label);
     if (e.target.closest('[data-clear]')) { boxes = pages.map(() => []); drawAll(); status.textContent = 'All boxes removed.'; }
+    const o = e.target.closest('[data-tiled], [data-size], [data-color]');
+    if (o) {
+      const key = 'tiled' in o.dataset ? 'tiled' : 'size' in o.dataset ? 'size' : 'color';
+      opts[key] = key === 'tiled' ? o.dataset.tiled === '1' : o.dataset[key];
+      o.parentElement.querySelectorAll('[role=radio]').forEach(x => x.setAttribute('aria-checked', String(x === o)));
+      drawPictures();
+    }
+    const wp = e.target.closest('[data-wmp]');
+    if (wp) { const ta = root.querySelector('[name=wmtext]'); ta.value = wp.dataset.wmp; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); drawPictures(); }
   });
+  wmOn.addEventListener('change', () => { wmBox.hidden = !wmOn.checked; drawPictures(); });
+  wmBox.addEventListener('input', drawPictures);
+  wmBox.addEventListener('change', drawPictures);
 
   root.querySelector('[data-save]').addEventListener('click', async () => {
     const total = boxes.reduce((n, b) => n + b.length, 0);
-    if (!total && !confirm('Nothing is covered yet. Save anyway?')) return;
+    const o = wm();
+    if (!total && !o) { status.textContent = 'Cover something or turn on the watermark first.'; status.scrollIntoView({ block: 'center' }); return; }
     try {
+      H.progress(out, 'Saving…', null);
       const flat = pages.map((pg, i) => {
         const c = copyCanvas(pg.canvas);
         const g = c.getContext('2d');
         g.fillStyle = '#000';
         for (const b of boxes[i]) g.fillRect(Math.floor(b.x), Math.floor(b.y), Math.ceil(b.w) + 1, Math.ceil(b.h) + 1);
+        if (o) stamp(c, o);
         return { canvas: c, w: pg.w, h: pg.h };
       });
-      H.progress(out, 'Saving…', null);
-      const res = await savePages(file, flat, 'hidden');
+      const res = await savePages(file, flat, 'protected');
       out.innerHTML = '';
-      out.appendChild(L.resultCard(res.blob, res.name, `${total} ${total === 1 ? 'area' : 'areas'} covered`));
-    } catch (err) { H.fail(out, err); }
-  });
-}
-
-/* ==========================================================
-   Watermark
-   ========================================================== */
-
-const COLORS = { grey: [90, 90, 90], red: [190, 40, 40], blue: [40, 70, 170] };
-
-function stamp(canvas, { text, opacity, size, color, tiled }) {
-  const g = canvas.getContext('2d');
-  const W = canvas.width, Hh = canvas.height;
-  const base = Math.min(W, Hh);
-  const px = Math.round(base * { s: 0.035, m: 0.05, l: 0.075 }[size]);
-  g.save();
-  g.font = `700 ${px}px "Nunito Sans", system-ui, sans-serif`;
-  g.fillStyle = `rgba(${COLORS[color].join(',')},${opacity})`;
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.translate(W / 2, Hh / 2);
-  g.rotate(-Math.atan2(Hh, W) * 0.9);
-  const lines = text.split('\n');
-  if (tiled) {
-    const tw = Math.max(...lines.map(l => g.measureText(l).width)) + px * 3;
-    const th = px * (lines.length + 2.2);
-    const reach = Math.hypot(W, Hh);
-    let row = 0;
-    for (let y = -reach; y < reach; y += th, row++) {
-      for (let x = -reach + (row % 2 ? tw / 2 : 0); x < reach; x += tw) {
-        lines.forEach((l, i) => g.fillText(l, x, y + (i - (lines.length - 1) / 2) * px * 1.15));
-      }
-    }
-  } else {
-    const big = Math.min(px * 2.2, (Math.hypot(W, Hh) * 0.8) / Math.max(...lines.map(l => (g.measureText(l).width / px) || 1)));
-    g.font = `800 ${big}px "Nunito Sans", system-ui, sans-serif`;
-    lines.forEach((l, i) => g.fillText(l, 0, (i - (lines.length - 1) / 2) * big * 1.15));
-  }
-  g.restore();
-}
-
-export function renderWatermark(root, H) {
-  root.innerHTML = `
-    <section class="panel">
-      <div class="panel-head"><h2>Watermark</h2></div>
-      <p class="d-intro">Stamp text across a copy, like your KTP before you send it, so it can only be used for what you gave it for.</p>
-      ${H.picker('wm', { multiple: false, label: 'Choose a PDF or photo' })}
-      <div class="d-wm-form">
-        <label class="field"><span class="field-label">Text</span>
-          <textarea class="input" name="wmtext" rows="2" placeholder="e.g. Hanya untuk keperluan pendaftaran BPJS">Hanya untuk keperluan </textarea></label>
-        <div class="d-presets">
-          <button type="button" class="btn btn-ghost btn-sm" data-wmp="Hanya untuk keperluan ">Hanya untuk keperluan…</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-wmp="Tidak berlaku untuk keperluan lain">Tidak berlaku untuk keperluan lain</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-wmp="SALINAN">SALINAN</button>
-        </div>
-        <label class="check"><input type="checkbox" name="date" checked><span>Add today's date (${esc(todayText())})</span></label>
-        <div class="field-grid d-wm-opts">
-          <div class="field"><span class="field-label">Layout</span>
-            <div class="segmented seg-2" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-tiled="1" aria-checked="true">All over</button><button type="button" role="radio" data-tiled="0" aria-checked="false">Once, big</button></div></div>
-          <div class="field"><span class="field-label">Size</span>
-            <div class="segmented seg-3" role="radiogroup" aria-label="Size"><button type="button" role="radio" data-size="s" aria-checked="false">S</button><button type="button" role="radio" data-size="m" aria-checked="true">M</button><button type="button" role="radio" data-size="l" aria-checked="false">L</button></div></div>
-          <div class="field"><span class="field-label">Colour</span>
-            <div class="segmented seg-3" role="radiogroup" aria-label="Colour"><button type="button" role="radio" data-color="grey" aria-checked="true">Grey</button><button type="button" role="radio" data-color="red" aria-checked="false">Red</button><button type="button" role="radio" data-color="blue" aria-checked="false">Blue</button></div></div>
-          <label class="field"><span class="field-label">Strength</span><input type="range" min="12" max="70" value="30" name="opacity" class="d-range" aria-label="Strength"></label>
-        </div>
-      </div>
-      <div class="d-wm-preview" data-preview hidden><canvas></canvas></div>
-      <div class="d-go" data-go hidden><button class="btn btn-primary" type="button" data-save>Save with watermark</button></div>
-      <div data-out></div>
-    </section>`;
-  const out = root.querySelector('[data-out]');
-  const pv = root.querySelector('[data-preview]');
-  const opts = { tiled: true, size: 'm', color: 'grey' };
-  let file = null, pages = [];
-  const read = () => {
-    const t = root.querySelector('[name=wmtext]').value.trim() || 'SALINAN';
-    return { ...opts, opacity: Number(root.querySelector('[name=opacity]').value) / 100, text: root.querySelector('[name=date]').checked ? `${t}\n${todayText()}` : t };
-  };
-  const preview = () => {
-    if (!pages.length) return;
-    const src = pages[0].canvas;
-    const c = pv.querySelector('canvas');
-    const k = Math.min(1, 900 / Math.max(src.width, src.height));
-    c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
-    const g = c.getContext('2d');
-    g.drawImage(src, 0, 0, c.width, c.height);
-    stamp(c, read());
-  };
-  H.bindPicker(root, 'wm', async files => {
-    file = files[0]; out.innerHTML = '';
-    if (pages.doc) L.closePdf(pages.doc);
-    try {
-      pages = await loadPages(file, (t, p) => H.progress(out, t, p));
-      out.innerHTML = '';
-      pv.hidden = false; root.querySelector('[data-go]').hidden = false;
-      preview();
-    } catch (err) { H.fail(out, err); }
-  });
-  root.addEventListener('input', preview);
-  root.addEventListener('click', e => {
-    const b = e.target.closest('[data-tiled], [data-size], [data-color]');
-    if (b) {
-      const key = 'tiled' in b.dataset ? 'tiled' : 'size' in b.dataset ? 'size' : 'color';
-      opts[key] = key === 'tiled' ? b.dataset.tiled === '1' : b.dataset[key];
-      b.parentElement.querySelectorAll('[role=radio]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
-      preview();
-    }
-    const p = e.target.closest('[data-wmp]');
-    if (p) { const ta = root.querySelector('[name=wmtext]'); ta.value = p.dataset.wmp; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); preview(); }
-  });
-  root.addEventListener('change', e => { if (e.target.name === 'date') preview(); });
-  root.querySelector('[data-save]').addEventListener('click', async () => {
-    try {
-      H.progress(out, 'Saving…', null);
-      const o = read();
-      const flat = pages.map(pg => { const c = copyCanvas(pg.canvas); stamp(c, o); return { canvas: c, w: pg.w, h: pg.h }; });
-      const res = await savePages(file, flat, 'watermarked');
-      out.innerHTML = '';
-      out.appendChild(L.resultCard(res.blob, res.name));
+      out.appendChild(L.resultCard(res.blob, res.name, [total ? `${total} ${total === 1 ? 'area' : 'areas'} covered` : '', o ? 'watermarked' : ''].filter(Boolean).join(' · ')));
     } catch (err) { H.fail(out, err); }
   });
 }
@@ -418,63 +399,28 @@ async function pdfUnder(file, limit, onProgress) {
   } finally { L.closePdf(doc); }
 }
 
-export function renderFit(root, H) {
-  root.innerHTML = `
-    <section class="panel">
-      <div class="panel-head"><h2>Fit size</h2></div>
-      <div class="segmented seg-2 d-fit-mode" role="radiogroup" aria-label="What to do">
-        <button type="button" role="radio" data-fit="limit" aria-checked="true">Under a size limit</button>
-        <button type="button" role="radio" data-fit="photo" aria-checked="false">ID photo</button>
-      </div>
-
-      <div data-mode="limit">
-        <p class="d-intro">For upload forms that say "max 500 KB". Photos get smaller in quality first, then in size; PDFs become images, as sharp as the limit allows.</p>
-        <div class="field"><span class="field-label">Limit</span>
-          <div class="choice-chips d-limits" role="radiogroup" aria-label="Size limit">
-            ${LIMITS.map(n => `<button type="button" role="radio" data-limit="${n}" aria-checked="${n === 500}">${kb(n)}</button>`).join('')}
-            <label class="d-custom">Other <input class="input" type="number" min="20" inputmode="numeric" placeholder="KB" data-custom aria-label="Other limit in KB"> KB</label>
-          </div></div>
-        ${H.picker('fit', { label: 'Choose photos or a PDF' })}
-      </div>
-
-      <div data-mode="photo" hidden>
-        <p class="d-intro">Crop a photo to pas foto size, ready to upload or print. Drag to move it; use the slider to zoom.</p>
-        <div class="field"><span class="field-label">Size</span>
-          <div class="segmented seg-3" role="radiogroup" aria-label="Photo size">
-            ${Object.keys(ID).map(k => `<button type="button" role="radio" data-id="${k}" aria-checked="${k === '3x4'}">${k.replace('x', ' × ')} cm</button>`).join('')}
-          </div></div>
-        ${H.picker('idp', { multiple: false, accept: 'image/*,.heic,.heif', label: 'Choose a photo' })}
-        <div class="d-crop" data-crop hidden>
-          <div class="d-crop-frame" data-frame><canvas></canvas></div>
-          <label class="d-zoom"><span>Zoom</span><input type="range" min="100" max="400" value="100" data-zoom class="d-range" aria-label="Zoom"></label>
-          <label class="check"><input type="checkbox" data-idlimit><span>Also keep it under 200 KB</span></label>
-          <div class="d-go"><button class="btn btn-primary" type="button" data-idsave>Save photo</button></div>
-        </div>
-      </div>
-      <div data-out></div>
-    </section>`;
-  const out = root.querySelector('[data-out]');
-  let limitKb = 500, idSize = '3x4';
-
-  root.addEventListener('click', e => {
-    const m = e.target.closest('[data-fit]');
-    if (m) {
-      root.querySelectorAll('[data-fit]').forEach(x => x.setAttribute('aria-checked', String(x === m)));
-      root.querySelectorAll('[data-mode]').forEach(x => { x.hidden = x.dataset.mode !== m.dataset.fit; });
-      out.innerHTML = '';
-    }
+/** Compress → "Under a size limit". Mounts into `box`. */
+export function renderLimit(box, H) {
+  box.innerHTML = `
+    <p class="d-intro">For upload forms that say "max 500 KB". Photos lose quality first, then size; PDFs become pictures, as sharp as the limit allows. Files already under the limit are left as they are.</p>
+    <div class="field"><span class="field-label">Limit</span>
+      <div class="choice-chips d-limits" role="radiogroup" aria-label="Size limit">
+        ${LIMITS.map(n => `<button type="button" role="radio" data-limit="${n}" aria-checked="${n === 500}">${kb(n)}</button>`).join('')}
+        <label class="d-custom">Other <input class="input" type="number" min="20" inputmode="numeric" placeholder="KB" data-custom aria-label="Other limit in KB"> KB</label>
+      </div></div>
+    ${H.picker('fit', { label: 'Choose photos or a PDF' })}
+    <div data-out></div>`;
+  const out = box.querySelector('[data-out]');
+  let limitKb = 500;
+  box.addEventListener('click', e => {
     const l = e.target.closest('[data-limit]');
-    if (l) { limitKb = Number(l.dataset.limit); root.querySelector('[data-custom]').value = ''; root.querySelectorAll('[data-limit]').forEach(x => x.setAttribute('aria-checked', String(x === l))); }
-    const s = e.target.closest('[data-id]');
-    if (s) { idSize = s.dataset.id; root.querySelectorAll('[data-id]').forEach(x => x.setAttribute('aria-checked', String(x === s))); crop.reset(); }
+    if (l) { limitKb = Number(l.dataset.limit); box.querySelector('[data-custom]').value = ''; box.querySelectorAll('[data-limit]').forEach(x => x.setAttribute('aria-checked', String(x === l))); }
   });
-  root.querySelector('[data-custom]').addEventListener('input', e => {
+  box.querySelector('[data-custom]').addEventListener('input', e => {
     const v = Number(e.target.value);
-    if (v >= 20) { limitKb = v; root.querySelectorAll('[data-limit]').forEach(x => x.setAttribute('aria-checked', 'false')); }
+    if (v >= 20) { limitKb = v; box.querySelectorAll('[data-limit]').forEach(x => x.setAttribute('aria-checked', 'false')); }
   });
-
-  /* ----- under a limit ----- */
-  H.bindPicker(root, 'fit', async files => {
+  H.bindPicker(box, 'fit', async files => {
     const limit = limitKb * 1024;
     out.innerHTML = '';
     const results = [], notes = [];
@@ -499,8 +445,29 @@ export function renderFit(root, H) {
       else if (results.length) out.appendChild(L.resultCard(await L.zipBlobs(results), `under-${limitKb}kb.zip`, `${results.length} files`));
     } catch (err) { H.fail(out, err); }
   });
+}
 
-  /* ----- ID photo ----- */
+/** Convert → "ID photo" panel. */
+export function renderIdPhoto(root, H) {
+  root.innerHTML = `
+    <section class="panel">
+      <div class="panel-head"><h2>ID photo</h2></div>
+      <p class="d-intro">Crop a photo to pas foto size, ready to upload or print. Drag to move it; use the slider to zoom.</p>
+      <div class="field"><span class="field-label">Size</span>
+        <div class="segmented seg-3" role="radiogroup" aria-label="Photo size">
+          ${Object.keys(ID).map(k => `<button type="button" role="radio" data-id="${k}" aria-checked="${k === '3x4'}">${k.replace('x', ' × ')} cm</button>`).join('')}
+        </div></div>
+      ${H.picker('idp', { multiple: false, accept: 'image/*,.heic,.heif', label: 'Choose a photo' })}
+      <div class="d-crop" data-crop hidden>
+        <div class="d-crop-frame" data-frame><canvas></canvas></div>
+        <label class="d-zoom"><span>Zoom</span><input type="range" min="100" max="400" value="100" data-zoom class="d-range" aria-label="Zoom"></label>
+        <label class="check"><input type="checkbox" data-idlimit><span>Also keep it under 200 KB</span></label>
+        <div class="d-go"><button class="btn btn-primary" type="button" data-idsave>Save photo</button></div>
+      </div>
+      <div data-out></div>
+    </section>`;
+  const out = root.querySelector('[data-out]');
+  let idSize = '3x4';
   const frame = root.querySelector('[data-frame]');
   const cv = frame.querySelector('canvas');
   const zoomEl = root.querySelector('[data-zoom]');
@@ -524,6 +491,13 @@ export function renderFit(root, H) {
       g.drawImage(this.img, this.x, this.y, v.w, v.h, 0, 0, cv.width, cv.height);
     },
   };
+  root.addEventListener('click', e => {
+    const b = e.target.closest('[data-id]');
+    if (!b) return;
+    idSize = b.dataset.id;
+    root.querySelectorAll('[data-id]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+    crop.reset();
+  });
   H.bindPicker(root, 'idp', async files => {
     out.innerHTML = '';
     try {

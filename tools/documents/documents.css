@@ -66,10 +66,13 @@
 .d-limits { --cc: var(--flower); --cc-deep: var(--flower-deep); align-items: center; }
 .d-custom { display: inline-flex; align-items: center; gap: 6px; font-size: .86rem; font-weight: 700; }
 .d-custom .input { width: 84px; min-height: 34px; padding: 4px 8px; }
-[data-mode] .dropzone { margin-top: 12px; }
+.d-fit-mode + * .dropzone, .panel > div > .dropzone { margin-top: 12px; }
 .d-notes { margin: 14px 0 0; padding-left: 1.2em; font-size: .9rem; color: var(--text-muted); }
 .d-crop { display: grid; justify-items: center; gap: 12px; margin-top: 14px; }
 .d-crop-frame { padding: 10px; border-radius: var(--radius-sm); background: var(--bg); }
 .d-crop-frame canvas { display: block; touch-action: none; cursor: grab; box-shadow: 0 1px 6px rgb(0 0 0 / .2); }
 .d-zoom { display: flex; align-items: center; gap: 10px; width: min(320px, 100%); font-weight: 700; font-size: .9rem; }
 .d-crop .d-go { justify-self: stretch; }
+.d-step { margin: 20px 0 8px; font-size: .8rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); }
+[data-work] .d-wm-form { margin-top: 8px; }
+[data-work] .d-redact { margin-top: 18px; }
