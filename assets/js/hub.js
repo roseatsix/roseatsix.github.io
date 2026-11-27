@@ -19,6 +19,8 @@ const TOOLS = [
     href: 'tools/journal/', icon: 'journal', status: 'ready' },
   { group: 'everyday', name: 'Home inventory', desc: 'What you own, where it lives.',
     href: 'tools/inventory/', icon: 'home', status: 'ready' },
+  { group: 'everyday', name: 'Learn to code', desc: 'How this site works, explained simply, with things to try.',
+    href: 'tools/learn/', icon: 'learn', status: 'ready' },
 
   { group: 'money', name: 'Bill splitter', desc: 'Split many receipts with friends, then settle up once.',
     href: 'tools/split/', icon: 'receipt', status: 'ready' },
@@ -43,6 +45,7 @@ const ICONS = {
   merge:    '<rect x="3.5" y="4" width="7" height="9" rx="1.5"/><rect x="13.5" y="4" width="7" height="9" rx="1.5"/><path d="M7 13v2.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V13"/><path d="M12 17.5V21"/>',
   extract:  '<path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5z"/><path d="M14 3.5v5h5"/><path d="M12 11v6"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/>',
   scan:     '<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8 9h8M8 12h8M8 15h5"/>',
+  learn:    '<path d="M8.5 8 4 12l4.5 4"/><path d="m15.5 8 4.5 4-4.5 4"/><path d="M13.5 5.5 10.5 18.5"/>',
   sparkdoc: '<path d="M13 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9.5"/><path d="M8.5 13h6M8.5 16.5h4"/><path d="M18 2.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>',
 };
 
@@ -147,7 +150,7 @@ async function showInventoryBadge() {
 function renderQuickTools() {
   const nav = document.getElementById('quick-tools');
   if (!nav) return;
-  const SHORT = { 'Home inventory': 'Home', 'Bill splitter': 'Split', 'Subscriptions': 'Subs', 'Document toolkit': 'Docs', 'Generate from DOCX': 'DOCX' };
+  const SHORT = { 'Home inventory': 'Home', 'Bill splitter': 'Split', 'Subscriptions': 'Subs', 'Document toolkit': 'Docs', 'Generate from DOCX': 'DOCX', 'Learn to code': 'Learn' };
   nav.innerHTML = TOOLS.filter(t => t.status === 'ready').map(t => {
     const tone = (GROUPS.find(g => g.id === t.group) || {}).tone || 'flower';
     return `<a class="quick-tool tone-${tone}" href="${t.href}" aria-label="${t.name}" title="${t.name}">${svgIcon(t.icon)}<span>${SHORT[t.name] || t.name}</span></a>`;
