@@ -87,7 +87,15 @@ product codes and a "1,00 PCS x 15.000,00" line), service %, tax %, discount
 (including "(2.200)"), rounding (pembulatan) and total (an unlabelled amount
 equal to the items, e.g. IDR116,000, counts as the subtotal, and unlabelled
 amounts after it are read as tax and total). Prices printed above their names,
-or whose names were lost ("x1 Rp 24.000"), are kept. Tax and savings printed after the
+or whose names were lost ("x1 Rp 24.000"), are kept. Discounts printed under an
+item ("Disc. -300", "MAILER … -16.500") come off that item, so splits stay fair;
+option rows with a price ("2 LEVEL 2  910") are added to their item; "@" misread
+as 8/6/¢, "162. 500" gaps, postcodes and years on receipts that write prices
+with dots, receipt/order numbers and times are handled. Of several total lines,
+the grand total (or "Total belanja", "…termasuk pajak") or else the last one
+counts; "Total item", "Total disc.", "Total saving" are summaries. When the
+reading doesn't add up, the review warns that the photo was hard to read.
+Photos added to the Inbox are scanned from the full-size original during that visit. Tax and savings printed after the
 total (minimarket "PPN included", "Anda hemat") are ignored. When no total is
 printed, the review leaves it blank to fill in. `review.js` is the dialog for checking and
 correcting it, then sending it to a bill split or journal spending.

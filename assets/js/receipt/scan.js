@@ -175,7 +175,7 @@ function badness(text) {
   return off * 1e6 - good + 2 * (r.items.length - good);
 }
 
-/** Reads the text on a receipt. onProgress(text, fraction | null). */
+/** Reads the text on a receipt → { text, unclear }. onProgress(text, fraction | null). */
 export async function readReceipt(src, onProgress = () => {}) {
   onProgress('Getting the photo ready…', null);
   const sizes = {};
@@ -196,11 +196,14 @@ export async function readReceipt(src, onProgress = () => {}) {
     await w.setParameters({ tessedit_pageseg_mode: psm, preserve_interword_spaces: '1' });
     const { data } = await w.recognize(await canvasAt(width), { rotateAuto }, { text: true, blocks: true });
     const words = wordsOf(data);
-    for (const text of [data.text || '', words.length ? rebuildLines(words, slopeOf(data)) : ''].filter(Boolean)) {
+    // (in mode 11 the plain text is one word per line: only the rebuilt lines make sense)
+    for (const text of [psm === '11' ? '' : data.text || '', words.length ? rebuildLines(words, slopeOf(data)) : ''].filter(Boolean)) {
       const score = badness(text);
-      if (!best || score < best.score) best = { text, score };
+      if (!best || score < best.score) best = { text, score, confidence: data.confidence ?? 100 };
     }
     if (best && best.score < 300) break;         // adds up (within 0.03%, a little rounding): done
   }
-  return best ? best.text : '';
+  // unclear: the reader wasn't sure of much of it, or nothing it read adds up to a printed total
+  // (a reading that adds up to the printed total is trusted, even if the reader was unsure of some words)
+  return best ? { text: best.text, unclear: best.score > 5e4 || (best.confidence < 60 && best.score > 300) } : { text: '', unclear: true };
 }

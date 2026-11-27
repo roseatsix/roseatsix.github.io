@@ -89,8 +89,14 @@ async function shrinkPhoto(file) {
   throw new Error('That photo is too large to keep.');
 }
 
+// Full-size photos added during this visit, for scanning: the kept copy is shrunk to sync,
+// and receipt text reads better from the original.
+const originals = new Map();
+
 async function addItem(item, source) {
-  await save('in:' + newId(), { ...item, source, createdAt: Date.now(), sorted: null, movedTo: null });
+  const id = newId();
+  await save('in:' + id, { ...item, source, createdAt: Date.now(), sorted: null, movedTo: null });
+  return id;
 }
 
 async function addPhotos(files, caption = '', source = 'photo') {
@@ -99,7 +105,7 @@ async function addPhotos(files, caption = '', source = 'photo') {
     if (!f || !/^image\//.test(f.type || 'image/')) continue;
     try {
       const p = await shrinkPhoto(f);
-      await addItem({ kind: 'photo', text: n === 0 ? caption : '', ...p }, source);
+      originals.set(await addItem({ kind: 'photo', text: n === 0 ? caption : '', ...p }, source), f);
       n++;
     } catch (e) { toast(e.message || "Couldn't add that photo."); }
   }
@@ -371,7 +377,7 @@ main.addEventListener('click', async e => {
     if (act === 'more') return openMore(it);
     if (act === 'receipt') {
       const { openReceiptScan } = await import('../../assets/js/receipt/review.js');
-      const res = await openReceiptScan(it.photo);
+      const res = await openReceiptScan(originals.get(it.id) || it.photo);
       if (res) await save('in:' + it.id, { ...ui.items.get('in:' + it.id), sorted: Date.now(), movedTo: { label: res.label, href: res.href } });
       return;
     }
