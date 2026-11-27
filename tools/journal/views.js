@@ -526,7 +526,8 @@ export function renderBudget(month) {
       ${headNav({
         prev: '#/budget/' + M.addMonths(month, -1), next: '#/budget/' + M.addMonths(month, 1),
         eyebrow: 'Budget', title: esc(M.fmt.month(month)),
-        extra: `<a class="btn btn-primary btn-sm" href="#/day/${M.today()}" data-act="log-spending">${ICONS.plus}Log spending</a>`,
+        extra: `<a class="btn btn-primary btn-sm" href="#/day/${M.today()}" data-act="log-spending">${ICONS.plus}Log spending</a>
+          <label class="btn btn-ghost btn-sm">Scan receipt<input type="file" accept="image/*" data-scan-receipt hidden></label>`,
       })}
 
       <section class="panel j-bsum${left != null && left < 0 ? ' is-over' : ''}">

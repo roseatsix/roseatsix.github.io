@@ -71,3 +71,14 @@ appears in the Share menu: `share_target` in `assets/manifest.webmanifest`
 posts to `/tools/inbox/share`, which `sw.js` catches and parks in the
 `ras-share` cache; the inbox page encrypts and saves it, then clears it.
 iPhone web apps can't be share targets, so there it's Paste and Photo.
+
+## Receipt scanning
+
+`assets/js/receipt/`: `scan.js` cleans up the photo (size, grey, contrast)
+and reads it with the vendored Tesseract (Indonesian + English), on the
+device. `parse.js` turns the text into shop, date, items (qty × price),
+service %, tax %, discount and total; tax printed after the total (minimarket
+"PPN included" lines) is ignored. `review.js` is the dialog for checking and
+correcting it, then sending it to a bill split or journal spending.
+Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),
+Journal → Budget (Scan receipt).

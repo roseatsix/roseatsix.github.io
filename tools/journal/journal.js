@@ -274,6 +274,16 @@ main.addEventListener('keydown', e => {
   if (el.matches('.j-money-input') && e.key === 'Enter') el.blur();
 });
 
+// Budget → Scan receipt: read a receipt photo and log it as spending.
+main.addEventListener('change', async e => {
+  const input = e.target.closest('[data-scan-receipt]');
+  if (!input || !input.files.length) return;
+  const file = input.files[0];
+  input.value = '';
+  const { openReceiptScan } = await import('../../assets/js/receipt/review.js');
+  openReceiptScan(file, { to: 'spend' });
+});
+
 main.addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;

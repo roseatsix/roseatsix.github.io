@@ -31,6 +31,7 @@ const ui = { loaded: false, items: new Map(), view: 'open' };
 const ICON = {
   paste: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4.5" width="12" height="16" rx="2.5"/><path d="M9.5 4.5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5"/><path d="M9 10h6M9 13.5h6M9 17h3.5"/></svg>',
   photo: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10.5" r="1.8"/><path d="m20.5 16-5-5-8 8.5"/></svg>',
+  receipt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-2.4-1.6-2.4 1.6-2.4-1.6-2.4 1.6L6 20.5z"/><path d="M9 8h6M9 11.5h6M9 15h3"/></svg>',
   task: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="4.5" width="15" height="15" rx="3.5"/><path d="m8.5 12.2 2.5 2.5 4.5-5"/></svg>',
   log: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h11a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H6z"/><path d="M6 3.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2"/><path d="M9.5 8h6M9.5 11.5h6M9.5 15h3.5"/></svg>',
   wish: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
@@ -182,8 +183,9 @@ function card(it) {
       </div>
       <div class="ib-actions">
         ${it.sorted ? '' : `
+          ${it.kind === 'photo' ? `<button type="button" class="ib-chip" data-act="receipt">${ICON.receipt}Receipt</button>` : ''}
           <button type="button" class="ib-chip" data-act="task">${ICON.task}Task</button>
-          <button type="button" class="ib-chip" data-act="log">${ICON.log}Log</button>
+          ${it.kind === 'photo' ? '' : `<button type="button" class="ib-chip" data-act="log">${ICON.log}Log</button>`}
           <button type="button" class="ib-chip" data-act="wish">${ICON.wish}Wishlist</button>`}
         <span class="spacer"></span>
         <button type="button" class="icon-btn" data-act="${it.sorted ? 'unsort' : 'sort'}" aria-label="${it.sorted ? 'Back to the inbox' : 'Done'}" title="${it.sorted ? 'Back to the inbox' : 'Done'}">${it.sorted ? ICON.undo : ICON.done}</button>
@@ -367,6 +369,12 @@ main.addEventListener('click', async e => {
   try {
     if (act === 'view') return openPhoto(it);
     if (act === 'more') return openMore(it);
+    if (act === 'receipt') {
+      const { openReceiptScan } = await import('../../assets/js/receipt/review.js');
+      const res = await openReceiptScan(it.photo);
+      if (res) await save('in:' + it.id, { ...ui.items.get('in:' + it.id), sorted: Date.now(), movedTo: { label: res.label, href: res.href } });
+      return;
+    }
     if (act === 'task' || act === 'log' || act === 'wish') return busy(b, '…', () => moveOut(it, act));
     if (act === 'sort') return save('in:' + it.id, { ...ui.items.get('in:' + it.id), sorted: Date.now() });
     if (act === 'unsort') return save('in:' + it.id, { ...ui.items.get('in:' + it.id), sorted: null, movedTo: null });
