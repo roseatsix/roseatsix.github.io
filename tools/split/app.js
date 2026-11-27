@@ -16,6 +16,7 @@ journal.subscribe(list => J.setItems(list));
 const ui = { loaded: false, trip: null };
 
 const ICON = {
+  camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.3"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>',
   x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>',
@@ -229,12 +230,12 @@ function openPersonDialog(tid, pid) {
   });
 }
 
-function openReceiptDialog(tid, rid) {
+function openReceiptDialog(tid, rid, prefill = null) {
   const t = getTrip(tid);
   const people = M.peopleOf(t);
   const existing = rid ? t.receipts[rid] : null;
   const me = M.meOf(t);
-  const r = M.clone(existing) || { shop: '', date: M.today(), paidBy: (me || people[0]).id, mode: 'even', total: null, sharedBy: [], items: {}, service: 0, tax: 0, discount: 0, order: Date.now() };
+  const r = prefill || M.clone(existing) || { shop: '', date: M.today(), paidBy: (me || people[0]).id, mode: 'even', total: null, sharedBy: [], items: {}, service: 0, tax: 0, discount: 0, order: Date.now() };
   r.items = r.items || {};
   const id = rid || M.newId();
 
@@ -259,6 +260,7 @@ function openReceiptDialog(tid, rid) {
 
       el.innerHTML = `
         <h2>${existing ? 'Edit receipt' : 'Add receipt'}</h2>
+        ${existing ? '' : `<label class="sp-scan">${ICON.camera}<span><strong>${prefill ? 'Scan another receipt' : 'Scan a receipt'}</strong><small>${prefill ? 'Filled in from your photo. Check it, then choose who had what.' : 'Take or pick a photo, and the items are filled in for you.'}</small></span><input type="file" accept="image/*" data-scan hidden></label>`}
         <form novalidate class="entry-form">
           <div class="field-grid">
             <label class="field"><span class="field-label">Where</span><input class="input" name="shop" value="${esc(r.shop || '')}" placeholder="e.g. Warung Babi Guling" maxlength="60" ${existing ? '' : 'autofocus'}></label>
@@ -374,6 +376,22 @@ function openReceiptDialog(tid, rid) {
       });
       el.addEventListener('input', preview);
       el.addEventListener('change', preview);
+      el.querySelector('[data-scan]')?.addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        readForm();
+        const paidBy = r.paidBy;
+        close();
+        const { openReceiptScan } = await import('../../assets/js/receipt/review.js');
+        const res = await openReceiptScan(file, { fill: true });
+        if (!res) return openReceiptDialog(tid, null);
+        const items = {};
+        res.items.forEach((it, i) => { if (it.price > 0) items[M.newId()] = { name: it.name || 'Item', price: it.price, qty: it.qty || 1, sharedBy: [], order: i + 1 }; });
+        const filled = Object.keys(items).length
+          ? { shop: res.shop, date: res.date || M.today(), paidBy, mode: 'items', items, total: null, sharedBy: [], service: res.servicePct || 0, tax: res.taxPct || 0, discount: res.discount || 0, delivery: 0, order: Date.now() }
+          : { shop: res.shop, date: res.date || M.today(), paidBy, mode: 'even', total: res.total, sharedBy: [], items: {}, service: 0, tax: 0, discount: 0, order: Date.now() };
+        openReceiptDialog(tid, null, filled);
+      });
       el.querySelector('[data-cancel]').addEventListener('click', () => close());
       const del = el.querySelector('[data-delete]');
       if (del) del.addEventListener('click', async () => {

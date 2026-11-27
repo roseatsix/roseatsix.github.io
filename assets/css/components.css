@@ -257,3 +257,36 @@ a.stat.is-link:hover { background: var(--surface-hover); }
 .result-info strong { overflow-wrap: anywhere; }
 .result-info span { font-size: .84rem; color: var(--text-muted); }
 .result-actions { display: flex; gap: 8px; }
+
+/* ---------- Scan a receipt (assets/js/receipt/review.js) ---------- */
+.rc-reading { display: flex; gap: 14px; align-items: flex-start; }
+.rc-thumb { flex: none; width: 72px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.rc-reading > div { flex: 1; min-width: 0; }
+.rc-status { margin: 4px 0 8px !important; color: var(--text) !important; font-weight: 700; }
+.rc-bar { height: 8px; border-radius: 999px; background: color-mix(in oklab, var(--flower) 14%, var(--bg)); overflow: hidden; }
+.rc-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--flower); transition: width .3s; }
+.rc-bar i.is-busy { animation: rc-busy 1.2s ease-in-out infinite alternate; }
+@keyframes rc-busy { from { transform: translateX(-60%); } to { transform: translateX(260%); } }
+.rc-photo summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; font-size: .9rem; font-weight: 700; color: var(--text-muted); }
+.rc-photo summary::-webkit-details-marker { display: none; }
+.rc-photo summary img { width: 40px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+.rc-photo[open] summary img { display: none; }
+.rc-full { display: block; width: 100%; max-height: 60vh; object-fit: contain; margin-top: 8px; border-radius: var(--radius-sm); background: var(--bg); }
+.rc-head, .rc-item { display: grid; grid-template-columns: minmax(0, 1fr) 56px 104px 34px; gap: 6px; align-items: center; }
+.rc-head { margin-bottom: 4px; font-size: .74rem; font-weight: 700; color: var(--text-muted); }
+.rc-items { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.rc-item .input { min-height: 38px; padding: 6px 9px; font-size: .92rem; }
+.rc-item .icon-btn { width: 34px; height: 34px; }
+.rc-item .icon-btn svg, .rc-form .btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (max-width: 420px) { .rc-head, .rc-item { grid-template-columns: minmax(0, 1fr) 44px 88px 32px; gap: 4px; } }
+.rc-extras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .rc-extras { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rc-sum { display: grid; gap: 4px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); font-size: .92rem; }
+.rc-sum.is-ok { border-color: color-mix(in oklab, var(--leaf) 45%, var(--border)); }
+.rc-sum.is-off { border-color: color-mix(in oklab, var(--sun) 60%, var(--border)); background: color-mix(in oklab, var(--sun) 8%, var(--bg)); }
+.rc-verdict { display: flex; align-items: flex-start; gap: 6px; font-weight: 700; font-size: .86rem; }
+.rc-sum.is-ok .rc-verdict { color: var(--leaf-deep); }
+.rc-sum.is-off .rc-verdict { color: var(--sun-deep); }
+.rc-verdict svg { flex: none; width: 16px; height: 16px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.rc-raw summary { cursor: pointer; font-size: .86rem; font-weight: 700; color: var(--text-muted); }
+.rc-raw pre { margin: 8px 0 0; padding: 10px 12px; max-height: 220px; overflow: auto; border-radius: var(--radius-sm); background: var(--bg); font: .78rem/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }

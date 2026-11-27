@@ -70,3 +70,10 @@
 .sp-delivery .segmented { margin-top: 0; }
 @media (max-width: 420px) { .sp-delivery { grid-template-columns: minmax(0, 1fr); } }
 .sp-usesaved { display: block; margin-top: 6px; font-size: .86rem; overflow-wrap: anywhere; text-align: left; }
+
+/* scan a receipt (top of the receipt dialog) */
+.sp-scan { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 14px; border-radius: var(--radius); border: 1px dashed color-mix(in oklab, var(--flower) 45%, var(--border)); background: color-mix(in oklab, var(--flower) 6%, var(--surface)); cursor: pointer; }
+.sp-scan:hover { background: color-mix(in oklab, var(--flower) 11%, var(--surface)); }
+.sp-scan svg { flex: none; width: 34px; height: 34px; padding: 7px; border-radius: 10px; background: var(--flower-soft); color: var(--flower-deep); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sp-scan span { display: grid; }
+.sp-scan small { font-size: .84rem; color: var(--text-muted); }

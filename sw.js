@@ -9,7 +9,7 @@
    encrypted offline cache.
    ========================================================== */
 
-const VERSION = 'ras-2026-11-27h';
+const VERSION = 'ras-2026-11-27i';
 const NETWORK_TIMEOUT = 4000;
 
 const SHELL = [
@@ -20,7 +20,7 @@ const SHELL = [
   '/assets/js/core/backup.js', '/assets/js/core/crypto.js', '/assets/js/core/firebase.js', '/assets/js/core/idb.js',
   '/assets/js/core/merge.js', '/assets/js/core/session.js', '/assets/js/core/store.js',
   '/assets/js/ui/appearance.js', '/assets/js/ui/backup.js', '/assets/js/ui/dom.js', '/assets/js/ui/header.js', '/assets/js/ui/name-list.js',
-  '/assets/js/ui/theme-controls.js', '/assets/js/ui/vault-dialogs.js',
+  '/assets/js/ui/theme-controls.js', '/assets/js/receipt/parse.js', '/assets/js/receipt/scan.js', '/assets/js/receipt/review.js', '/assets/js/ui/vault-dialogs.js',
   '/tools/inbox/', '/tools/inbox/index.html', '/tools/inbox/inbox.css', '/tools/inbox/app.js',
   '/tools/learn/', '/tools/learn/index.html', '/tools/learn/learn.css', '/tools/learn/app.js', '/tools/learn/cases.js',
   '/tools/learn/demos.js', '/tools/learn/code.js', '/tools/learn/runner.js',
