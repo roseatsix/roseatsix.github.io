@@ -288,5 +288,7 @@ a.stat.is-link:hover { background: var(--surface-hover); }
 .rc-sum.is-ok .rc-verdict { color: var(--leaf-deep); }
 .rc-sum.is-off .rc-verdict { color: var(--sun-deep); }
 .rc-verdict svg { flex: none; width: 16px; height: 16px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.rc-unclear { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid color-mix(in oklab, var(--sun) 60%, var(--border)); background: color-mix(in oklab, var(--sun) 8%, var(--bg)); color: var(--sun-deep); font-size: .86rem; font-weight: 600; }
+.rc-unclear svg { flex: none; width: 16px; height: 16px; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .rc-raw summary { cursor: pointer; font-size: .86rem; font-weight: 700; color: var(--text-muted); }
 .rc-raw pre { margin: 8px 0 0; padding: 10px 12px; max-height: 220px; overflow: auto; border-radius: var(--radius-sm); background: var(--bg); font: .78rem/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }

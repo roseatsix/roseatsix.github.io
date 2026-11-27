@@ -12,14 +12,18 @@ const MONTHS = { jan: 1, feb: 2, peb: 2, mar: 3, apr: 4, mei: 5, may: 5, jun: 6,
 const RE = {
   // money: 25.000 · 25,000 · 125.000,00 · Rp25.000 · 25000 · 1.250.000
   money: /(?<![a-z\d.,])(?:(?:rp\.?|idr)\s*)?(-?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|-?\d{3,7}(?:[.,]\d{1,2})?)(?![\d.,]*[a-z\d])/gi,
-  total: /\b(grand\s*total|total\s*(bayar|belanja|tagihan|harga|pembayaran)?|jumlah(\s*bayar)?|amount\s*due|tagihan)\b/i,
+  total: /\b(grand\s*total|total\s*(bayar|belanja|tagihan|harga|pembayaran)?|tot|jumlah(\s*bayar)?|amount\s*due|tagihan)\b/i,
+  // "Total item 6  44.000", "Total disc. 11.200", "Total saving": summaries, not what was paid
+  summary: /\btotal\s*(item|qty|disc|diskon|saving|hemat|potongan|promo)/i,
+  // "Take-out tot (termasuk pajak)", "Price inclusive of PB1": the tax is already in the prices
+  included: /\b(t[e]?rmasuk|incl\.?|includ\w*|inclusive|sudah\s*termasuk)\b/i,
   subtotal: /\bs[uv][bnoa]?\s*[-.]?\s*t[o0]?ta[l1i]\b/i,          // subtotal, sub-total, and misreads like "Suotal"
   tax: /\b(ppn|pb\s*1|pbi|pajak|tax|vat)\b/i,
   service: /\b(service|serv\.?|svc|s\.?c\.?|layanan|serv\s*charge)\b/i,
   discount: /\b(disc(ount)?|diskon|potongan|promo|v[o0][uj][co0]h?er|hemat|member\s*disc)\b/i,
   rounding: /\b(pembulatan|rounding)\b/i,
-  skip: /\b(tunai|cash|kembali(an)?|change|kartu|card|debit|kredit|credit|qris|ovo|gopay|go-pay|dana|shopee\s*pay|linkaja|edc|bayar|payment|paid|npwp|telp|tlp|tel|phone|hp|wa|kasir|cashier|struk|nota|trx|no\.?\s*(trans|bon|meja|order)|terima\s*kasih|thank|www|\.com|instagram|ig\b|jl\.?|jalan|meja|table|order\s*no|pax|tamu|guest|item\(s\)|\d+\s*items?\b|qty\s*total|total\s*item|total\s*qty|qty\s*[=:]?\s*\d|br[so0]\s*[=:]?\s*\d|chk|check\s*(no|#)|\S+\/\S+\/\S+|(?:0|\+62)8\d{2}[\s-]?\d{3,4}|dpp|harga\s*jual|order|antrian|queue|ref\b)\b/i,
-  qtyAt: /(\d{1,3})(?:[.,]0{1,2})?\s*(?:[a-z]{2,5}\.?\s+)?[x×@]{1,2}\s*((?:rp\.?\s*)?\d[\d.,]*)/i,   // 2 x 12.500 · 2,00 PCS x 12.500,00
+  skip: /\b(tunai|cash|kembali(an)?|change|kartu|card|debit|kredit|credit|qris|ovo|gopay|go-pay|dana|shopee\s*pay|linkaja|edc|bayar|payment|paid|npwp|telp|tlp|tel|phone|hp|wa|kasir|cashier|struk|nota|trx|no\.?\s*(trans|bon|meja|order)|terima\s*kasih|thank|www|\.com|instagram|ig\b|jl\.?|jalan|meja|table|order\s*no|pax|tamu|guest|item\(s\)|\d+\s*items?\b|qty\s*total|total\s*item|total\s*qty|qty\s*[=:]?\s*\d|br[so0]\s*[=:]?\s*\d|chk|check\s*(no|#)|\S+\/\S+\/\S+|(?:0|\+62)8\d{2}[\s-]?\d{3,4}|dpp|harga\s*jual|order|antrian|queue|ref\b|bon|receipt|sales\s*no|approval|merch\s*id|term\s*id|trans\s*id|net\s*sales|purchase|youtap|member)\b/i,
+  qtyAt: /(\d{1,3})(?:[.,]0{1,2})?\s*(?:[a-z]{2,5}\.?\s+)?(?:[x×]\s*@?|@)\s*((?:rp\.?\s*)?\d[\d.,]*)/i,   // 2 x 12.500 · 2,00 PCS x 12.500,00
   qtyLead: /^(\d{1,2})\s*[x×]?\s+(?=[a-z])/i,
   percent: /(\d{1,2}(?:[.,]\d{1,2})?)\s*%/,
 };
@@ -36,11 +40,13 @@ export function parseMoney(str) {
   return isFinite(n) ? (neg ? -n : n) : null;
 }
 
-function moneyIn(line) {
+function moneyIn(line, strict = false) {
   const out = [];
   for (const m of line.matchAll(RE.money)) {
     const v = parseMoney(m[1]);
     if (/^-?0\d/.test(m[1])) continue;            // "002500", "092 000": codes, not prices
+    if (strict && /^(19|20)\d\d$/.test(m[1])) continue;                               // "MAILER OKTOBER 2025": a year
+    if (strict && /^-?\d{5,}$/.test(m[1]) && !/^(rp|idr)/i.test(m[0])) continue;   // "Gorontalo 96134": a postcode where prices have dots
     if (v != null) out.push({ v, at: m.index, end: m.index + m[0].length, raw: m[0] });
   }
   return out;
@@ -79,12 +85,25 @@ const titleCase = s => s.toLowerCase().replace(/(^|[\s(/-])([a-z])/g, (m, a, b) 
 export function parseReceipt(text) {
   // receipts with ",00" cents: "15.000,00=" is often read as "15.000,007" or "15.000,00x"
   const cents = (String(text || '').match(/\d[.,]\d{3}[.,]\s?\d{2}/g) || []).length >= 3;
-  const lines = String(text || '').replace(/\b(rp|idr)\.?[ \t]*\n[ \t]*(?=\d)/gi, '$1 ')   // "Jus sirsak x1 Rp" + "24.000" on the next line
+  const raw = String(text || '');
+  // Prices written 1.000 / 1,000: then a bare "96134" is a postcode or a code, not a price
+  const sep = (raw.match(/(?<![\d.,])\d{1,3}[.,]\s?\d{3}(?![\d])/g) || []).length;
+  const bare = (raw.match(/(?<![\d.,])(?!(?:19|20)\d\d(?!\d))\d{4,5}(?![\d.,])/g) || []).length;   // (not years or long codes)
+  const strict = sep >= 3 && sep >= bare * 2;
+  const money = l => moneyIn(l, strict);
+  const lines = raw.replace(/\b(rp|idr)\.?[ \t]*\n[ \t]*(?=\d)/gi, '$1 ')   // "Jus sirsak x1 Rp" + "24.000" on the next line
     .split(/\r?\n/)
+    .map(l => l.replace(/^(\s*)[lIi|!]\s?[xX×](?=\s)/, '$11x'))        // "ix", "Ix", "lx": "1x" misread
+    .map(l => l.replace(/[¢©]\s?(?=\d)/g, '@'))                         // "@" misread as ¢
+    .map(l => l.replace(/([x×]\s+)0(?=\d[.,]\d{3}\b)/i, '$1@'))       // "1x 07.273": the @ read as 0
+    .map(l => l.replace(/~\s?(?=\d)/g, '-'))                            // "~16.500": a minus
+    .map(l => l.replace(/(\d)([.,]) (\d{3})(?!\d)/g, '$1$2$3'))         // "162. 500": a gap after the dot
+    .map(l => l.replace(/^\s*[@86]?(\d{1,3}[.,]\d{3})\s+\1\s*$/, '1x @$1 $1'))   // "819.000  19.000": "1x @19.000  19.000" with the 1x lost
     .map(l => l.replace(/([x×])\s*[|lI!](?=\s|$)/g, '$1 1'))      // "x |" is "x 1" misread
     .map(l => l.replace(/(^|\s)[1lI][0OD]R\s?(?=\d)/g, '$1IDR '))     // "10R116,000" is "IDR116,000"
     .map(l => cents ? l.replace(/(\d[.,]\d{3})[.,]\s?(\d{2})[7x%z]?(?!\d)/gi, '$1,$2') : l)   // "14.000, 007" is "14.000,00="
     .map(l => l.replace(/^\s*\d{1,2}\s*[.,)]\s*(?=\S*\d)\S+\s+[-~–—]\s+(?=\p{L})/u, '§ '))   // "1. SGM5083 - Kong Kee…": number and product code (§ marks a new item)
+    .map(l => l.replace(/^\s*\d{6,8}\s+(?=\p{L})/u, '§ '))                                   // "3098531 KNDL H&M NT": a product code
     .map(l => l.replace(/(^|[\s:])(\d{1,3}) (\d{3})\s*$/, '$1$2$3'))   // "25 100" at the end: thousands split by a gap
     .map(clean).filter(Boolean);
 
@@ -97,7 +116,7 @@ export function parseReceipt(text) {
     return real >= 1 && real / t.length >= 0.6 && letters(l) >= 4;
   };
   for (const l of lines.slice(0, 12)) {
-    if (moneyIn(l).length || /^§ /.test(l)) break;        // the items have started
+    if (money(l).length || /^§ /.test(l)) break;        // the items have started
     if (parseDate(l) || RE.skip.test(l) || !wordy(l)) continue;
     let shop = l.replace(/[^\p{L}\p{N}&'.\s-]/gu, '').trim().replace(/^(\S\s+)+(?=\S{3,})/, '');
     // "Er OMA COFFEE": a short word in different case before an all-caps name is a speck
@@ -111,12 +130,29 @@ export function parseReceipt(text) {
   let afterTotal = false;      // tax lines after the total are "included" info (minimarkets)
   let prevItem = false;        // the line above was an item (its name may go on below)
   let tail = null;             // after an unlabelled subtotal: { base, extras } until a line adds up to the total
+  let grand = false;           // a "grand total" was seen: later plain totals don't replace it
+  let itemDisc = false;        // discounts were taken off their items (so "Total disc." isn't counted again)
+  let seenSep = false;         // a price written with a separator has been seen
+  let pendingCode = false;     // the pending name came from a product-code line; its next line finishes the name
   for (let i = 0; i < lines.length; i++) {
     const fresh = lines[i].startsWith('§ ');       // starts a numbered item: never the rest of the one above
     const l = fresh ? lines[i].slice(2) : lines[i];
-    const nums = moneyIn(l);
+    if (!seenSep && money(l).some(n => /[.,]/.test(n.raw))) seenSep = true;
+    const nums = money(l).filter(n => seenSep || !strict || /[.,]/.test(n.raw) || Math.abs(n.v) < 1000);   // "Kebun 1047": an address, before any price
     const last = nums[nums.length - 1];
     const label = last ? l.slice(0, nums[0].at).trim() : l;
+
+    // Summaries ("Total item 6 44.000", "Total disc. 11.200") and tax-included notes
+    if (RE.summary.test(label)) {
+      const soFar = out.items.reduce((n, it) => n + it.price * it.qty, 0);
+      if (last && /disc|diskon|potongan|promo/i.test(label) && !itemDisc && !out.discount && Math.abs(last.v) < soFar) out.discount = Math.abs(last.v);
+      inItems = false; continue;
+    }
+    if (RE.included.test(label) && !RE.total.test(label.replace(RE.included, ''))) { inItems = false; continue; }   // "Price inclusive of PB1: 11.818"
+    if (RE.included.test(label) && last) {                                            // "Take-out tot (termasuk pajak) 219.501"
+      out.total = Math.abs(last.v); out.totalPrinted = true; grand = true;
+      inItems = false; afterTotal = true; continue;
+    }
 
     // Totals and extras (and stop collecting items once they start)
     if (RE.subtotal.test(l) && last) { out.subtotal = Math.abs(last.v); inItems = false; continue; }
@@ -125,12 +161,24 @@ export function parseReceipt(text) {
     if (RE.tax.test(label) && last) { out.tax += Math.abs(last.v); const p = l.match(RE.percent); if (p) out.taxPct = Number(p[1].replace(',', '.')); inItems = false; continue; }
     if (afterTotal && RE.discount.test(label)) continue;
     const addOn = /^[^\p{L}\p{N}]{0,3}(\S{1,2}\s+)?\+\s/u.test(l);     // "+ Less sugar", "+ Harga (20.000)"
+    // "Disc. -300", "MAILER OKTOBER 2025  -16.500" right under an item: taken off that item
+    // (so whoever had it gets the discount in a split)
+    const prevIt = out.items[out.items.length - 1];
+    if (inItems && prevItem && prevIt && last && (last.v < 0 || /^(disc|diskon|potongan|promo|mailer|hemat)/i.test(label))) {
+      const line = Math.max(0, prevIt.price * prevIt.qty - Math.abs(last.v));
+      if (line % prevIt.qty) { prevIt.name = `${prevIt.qty}× ${prevIt.name}`; prevIt.qty = 1; }
+      prevIt.price = line / prevIt.qty;
+      itemDisc = true; continue;
+    }
     if (inItems && !addOn && /\(\s*\d[\d.,]*\s*\)\s*$/.test(l) && last && letters(label) >= 3) { out.discount += Math.abs(last.v); continue; }   // "(2.200)": taken off                       // "Anda hemat": savings already counted
     if (RE.discount.test(label) && last) { out.discount += Math.abs(last.v); continue; }
     if (RE.rounding.test(l)) { const m = l.match(/(-?\s?\d[\d.,]*)\s*$/); if (m) out.rounding += parseMoney(m[1].replace(/\s/g, '')) || 0; continue; }
     if (RE.total.test(label) && last && !RE.skip.test(label.replace(RE.total, ''))) {
-      // the biggest "total" line wins (grand total after tax)
-      if (out.total == null || Math.abs(last.v) >= out.total) out.total = Math.abs(last.v);
+      // the grand total wins; otherwise the last total line ("Total 192.512 … Grand total 192.500",
+      // "Total item 44.000 … Total belanja 32.800")
+      const isGrand = /grand|bayar|belanja|tagihan|pembayaran|amount\s*due/i.test(label);
+      if (isGrand || !grand) out.total = Math.abs(last.v);
+      if (isGrand) grand = true;
       out.totalPrinted = true;
       inItems = false; afterTotal = true; continue;
     }
@@ -148,17 +196,30 @@ export function parseReceipt(text) {
     }
     // "+ Less sugar", "+ Harga (20.000)": add-ons to the line above, not items
     if (addOn) continue;
-    if (RE.skip.test(l) || (l.match(/\//g) || []).length >= 3 || (parseDate(l) && letters(l.replace(/[a-z]{3,9}/i, '')) < 3)) { pending = null; continue; }
+    if (RE.skip.test(l) || /\b\d{1,2}:\d{2}\b/.test(l) || /\w+-\d{2,}-\d{3,}/.test(l) || (l.match(/\//g) || []).length >= 3 || (parseDate(l) && letters(l.replace(/[a-z]{3,9}/i, '')) < 3)) { pending = null; prevItem = false; continue; }
+
+    // "2  LEVEL 2   1.820" under "4 MIE GACOAN  41.820": an option with its own price, part of the item above
+    if (prevItem && prevIt && last && /^(\d{1,3}\s+)?(level|lvl|lv|extra|topping|add[\s-]?on)\b/i.test(label)) {
+      const line = prevIt.price * prevIt.qty + Math.max(0, last.v);
+      if (line % prevIt.qty) { prevIt.name = `${prevIt.qty}× ${prevIt.name}`; prevIt.qty = 1; }
+      prevIt.price = line / prevIt.qty; continue;
+    }
 
     // "2 x 12.500   25.000" on its own line: belongs to the name above
     const at = l.match(RE.qtyAt);
     if (at && letters(l.slice(0, at.index)) < 2 && pending) {
       const qty = Number(at[1]);
-      const unit = parseMoney(at[2]);
+      let unit = parseMoney(at[2]);
+      // "1x 862.000  62.000": the @ read as an 8 (or 6)
+      const lone = at[2].replace(/^(rp\.?\s*)/i, '');
+      if (/^[86]\d/.test(lone) && last && unit * qty !== last.v) { const u2 = parseMoney(lone.slice(1)); if (u2 && (u2 * qty === last.v || u2 < unit / 5)) unit = u2; }
       // the line's amount, unless it disagrees with qty × unit price (then one was misread; the unit price is likelier right)
-      const amount = last && last.at > at.index + at[0].length - 1 && (!unit || last.v === unit * qty) ? last.v : unit * qty;
-      if (qty > 0 && amount > 0) out.items.push({ name: pending, qty, price: Math.round(amount / qty) });
-      pending = null; prevItem = true;
+      const amount = unit < 100 ? 0                                                  // "1x @0  0" ("@0" read as "80"): free
+        : last && last.at > at.index + at[0].length - 1 && (!unit || last.v === unit * qty) ? last.v : unit * qty;
+      const nm = pending.replace(/^\d\s+(?=\p{L})/u, '');                       // "5 Ocha App": a speck read as a digit
+      if (qty > 0 && amount > 0) out.items.push({ name: nm, qty, price: Math.round(amount / qty) });
+      else if (qty > 0 && pending) out.items.push({ name: nm, qty, price: 0 });   // free ("Ocha app 1x @0  0")
+      pending = null; prevItem = amount > 0 || prevItem; pendingCode = false;
       continue;
     }
 
@@ -174,7 +235,9 @@ export function parseReceipt(text) {
         prev.name = (prev.name.replace(/\s*-$/, '') + ' ' + titleCase(l)).trim(); prevItem = false; pending = null; continue;
       }
       // a name without a price; the next line may carry it
-      if (letters(l) >= 2 && !parseDate(l)) pending = titleCase(l);
+      if (RE.total.test(l) || RE.subtotal.test(l) || RE.tax.test(l) || RE.service.test(l)) { prevItem = false; continue; }
+      if (pending && /^[(\[]/.test(l)) pending += ' ' + titleCase(l);          // "UMA TORI MISO UDON" + "(SPICY)"
+      else if (letters(l) >= 2 && !parseDate(l)) { pending = titleCase(l); pendingCode = fresh; }
       prevItem = false;
       continue;
     }
@@ -182,8 +245,10 @@ export function parseReceipt(text) {
     // a line that's just the sum of everything above is an unlabelled total
     const soFar = out.items.reduce((n, it) => n + it.price * it.qty, 0);
     // (or a big unlabelled amount, printed again further down, at least as much as everything above: a misread total)
-    const again = () => lines.slice(i + 1).some(x => moneyIn(x).some(n => n.v === last.v));
-    if (out.items.length >= 2 && last.v === soFar) {
+    // (printed again further down on a line that isn't an item: "**44  IDR116,000", "Subtotal 116.000")
+    const again = () => lines.slice(i + 1).some(x => { const n = money(x); return n.some(v => v.v === last.v) && (!/\p{L}{4,}/u.test(x.slice(0, n[0].at)) || RE.total.test(x) || RE.subtotal.test(x)); });
+    const wordy = /\p{L}{4,}/u.test(label) && !RE.total.test(label);
+    if (out.items.length >= 2 && last.v === soFar && (!wordy || again())) {
       // the items' sum: a subtotal; tax and the total may follow, labelled or not
       if (out.subtotal == null) out.subtotal = last.v;
       tail = { base: last.v, extras: [] };
@@ -194,8 +259,16 @@ export function parseReceipt(text) {
       inItems = false; afterTotal = true; continue;
     }
 
+    // a price alone on the line under a name ("3 PANGSIT GORENG" / "31.365"): the line's amount
+    if (pending && nums.length === 1 && !label && l.trim() === nums[0].raw.trim()) {
+      const q = pending.match(/^(\d{1,2})\s+(?=\p{L})/u);
+      const qty = q ? Number(q[1]) : 1;
+      out.items.push({ name: q ? pending.slice(q[0].length) : pending, qty, price: Math.round(last.v / qty) });
+      pending = null; prevItem = true; pendingCode = false; continue;
+    }
+
     // "1,00 PCS x 30.000,00 30.000,00" under a name, too garbled for the pattern above
-    const lead = l.match(/^(\d{1,3})(?:[.,]\d{1,2})?\b/);
+    const lead = l.match(/^(\d{1,3})(?:[.,]\d{1,2})?\s+\S/);
     if (pending && lead && letters(label) <= 5 && !/\p{L}{4,}/u.test(label)) {
       const qty = Number(lead[1]) || 1;
       out.items.push({ name: pending, qty, price: Math.round(last.v / qty) });
@@ -206,7 +279,11 @@ export function parseReceipt(text) {
     let name = label, qty = 1, amount = last.v;
     const post = name.match(/\s[x×]\s*(\d{1,3})?\s*$/i);       // "Capcay cah x 1   25.000"
     const unitRow = nums.length >= 2 ? l.match(/\s(\d{1,2})\s+(\d{3,7})\s+\S+\s*$/) : null;
-    if (at && letters(l.slice(0, at.index)) >= 2) {
+    // "SOSRO TB LS 250   2   3,800   7,600": name, qty, unit price, amount that agree
+    const qua = nums.length >= 2 ? l.match(/\s(\d{1,3})\s+((?:rp\.?\s*)?\d[\d.,]*)\s+((?:rp\.?\s*)?\d[\d.,]*)\s*$/i) : null;
+    if (qua && Number(qua[1]) * parseMoney(qua[2]) === parseMoney(qua[3]) && letters(l.slice(0, qua.index)) >= 2) {
+      name = l.slice(0, qua.index); qty = Number(qua[1]); amount = parseMoney(qua[3]);
+    } else if (at && letters(l.slice(0, at.index)) >= 2) {
       name = l.slice(0, at.index).trim();
       qty = Number(at[1]);
       if (nums.length < 2) amount = parseMoney(at[2]) * qty;
@@ -232,15 +309,16 @@ export function parseReceipt(text) {
     if (bare && amount >= 100) {
       qty = Number(bare[1] || bare[2]) || 1;
       const next = lines[i + 1] || '';
-      if (!moneyIn(next).length && letters(next) >= 3 && !next.startsWith('§ ') && !RE.skip.test(next) && !RE.total.test(next) && !RE.subtotal.test(next) && !RE.tax.test(next)) { name = next; i++; }
+      if (!money(next).length && letters(next) >= 3 && !next.startsWith('§ ') && !RE.skip.test(next) && !RE.total.test(next) && !RE.subtotal.test(next) && !RE.tax.test(next)) { name = next; i++; }
       else name = pending || '';
       out.items.push({ name: titleCase(name), qty, price: Math.round(amount / qty) });
       pending = null; prevItem = true; continue;
     }
     if (letters(name) < 2 || amount < 100 || amount <= 0) { pending = null; prevItem = false; continue; }
     if (!name && pending) name = pending;
+    else if (pending && pendingCode) name = pending + ' ' + name;                  // "3098531 KNDL H&M NT" / "HT WM500  1  162.500"
     out.items.push({ name: titleCase(name), qty: qty || 1, price: Math.round(amount / (qty || 1)) });
-    pending = null; prevItem = true;
+    pending = null; prevItem = true; pendingCode = false;
   }
 
   // No total after an unlabelled subtotal (misread or cut off): an amount that's a usual
@@ -255,8 +333,9 @@ export function parseReceipt(text) {
   const base = out.subtotal || sum;
   if (out.service && out.servicePct == null && base) out.servicePct = round1(out.service / base * 100);
   if (out.tax && out.taxPct == null && base) out.taxPct = round1(out.tax / (base + out.service) * 100);
+  if (out.discount >= sum && sum) out.discount = 0;                              // a misread: more off than everything costs
   const chain = base + out.service + out.tax - out.discount + out.rounding;
-  if (out.total == null && sum) out.total = chain;
+  if (out.total == null && sum && chain > 0) out.total = chain;
   // the subtotal matches the items and service and tax are printed, but the grand total
   // doesn't add up: the total was misread (one number) more likely than all the others
   else if (out.total != null && out.subtotal === sum && sum && (out.service || out.tax) && out.total !== chain) out.total = chain;

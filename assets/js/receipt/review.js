@@ -50,13 +50,13 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
           <p class="hint">Everything is read on this device; the photo isn't uploaded anywhere.</p></div>
         </div>`;
 
-      let r = null, raw = '';
+      let r = null, raw = '', unclear = false;
       readReceipt(image, (text, f) => {
         const s = el.querySelector('[data-status]'), b = el.querySelector('[data-bar]');
         if (s) s.textContent = text + (f != null ? ` ${Math.round(f * 100)}%` : '');
         if (b) { b.style.width = f != null ? Math.round(f * 100) + '%' : '30%'; b.classList.toggle('is-busy', f == null); }
-      }).then(text => {
-        raw = text;
+      }).then(res => {
+        const text = res.text; raw = text; unclear = res.unclear;
         const p = parseReceipt(text);
         r = { shop: p.shop, date: p.date || J.today(), items: p.items.length ? p.items : [{ name: '', qty: 1, price: null }],
           servicePct: p.servicePct || 0, taxPct: p.taxPct || 0, discount: p.discount || 0, rounding: p.rounding || 0, total: p.totalPrinted || p.subtotal != null ? p.total : null };   // a total worked out from the items would always "match"
@@ -75,6 +75,7 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
         el.innerHTML = `
           <h2>Check the receipt</h2>
           <p class="hint" style="margin-top:-4px">Fix anything the reader got wrong. Tap the photo to compare.</p>
+          ${unclear ? `<p class="rc-unclear">${ICON.warn}<span>This photo was hard to read, so check each item against the receipt. A retake helps: lay the receipt flat in good light and fill the frame with it.</span></p>` : ''}
           <form novalidate class="entry-form rc-form">
             <details class="rc-photo"><summary><img src="${imgUrl}" alt="Receipt photo"><span>Show the photo</span></summary><img class="rc-full" src="${imgUrl}" alt="Receipt photo, large"></details>
             <div class="field-grid">
