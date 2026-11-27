@@ -3,7 +3,7 @@
 import { mountHeader } from '../../assets/js/ui/header.js';
 import * as S from '../../assets/js/core/session.js';
 import { openStore } from '../../assets/js/core/store.js';
-import { toast } from '../../assets/js/ui/dom.js';
+import { toast, reveal } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import * as V from './views.js';
 import * as D from './dialogs.js';
@@ -21,7 +21,7 @@ function onRoute() {
   if (kind === 'item' && M.get('item:' + id)) {
     const st = M.get('item:' + id).status;
     history.replaceState(null, '', st === 'wish' ? '#/wishlist' : st === 'gone' ? '#/declutter' : '#/items');
-    setTimeout(() => D.openItemDialog(id), 0);
+    ui.reveal = `[data-id="${id}"]`;
   }
   let v = (location.hash || '').split('/')[1];
   if (v === 'replace') v = 'due';   // old links
@@ -29,6 +29,7 @@ function onRoute() {
   tabs.querySelectorAll('[data-tab]').forEach(a => a.setAttribute('aria-current', a.dataset.tab === ui.view ? 'page' : 'false'));
   render();
   window.scrollTo({ top: 0 });
+  if (ui.reveal) { const sel = ui.reveal; ui.reveal = null; setTimeout(() => reveal(sel, main), 60); }
 }
 
 function render() {

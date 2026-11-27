@@ -413,7 +413,7 @@ function monthEventList(month) {
   const days = M.daysInMonth(month);
   for (let d = 1; d <= days; d++) {
     const date = `${month}-${M.pad(d)}`;
-    for (const h of holidaysOn(date)) rows.push(`<li style="${colorVar('holiday')}"><span class="j-ev-date">${esc(M.fmt.short(date))}</span><span class="j-ev-dot"></span><span>${esc(h.name)}</span><span class="j-ev-cat">Public holiday</span></li>`);
+    for (const h of holidaysOn(date)) rows.push(`<li style="${colorVar('holiday')}"><span class="j-ev-date">${esc(M.fmt.short(date))}</span><span class="j-ev-dot"></span><span>${esc(h.name)}${h.tentative ? ' <small>(not final yet)</small>' : ''}</span><span class="j-ev-cat">${h.kind === 'cuti' ? 'Cuti bersama' : 'Public holiday'}</span></li>`);
     for (const e of M.eventsOn(date)) {
       if (e.date !== date && !(e.yearly && e.date.slice(5) === date.slice(5)) && d !== 1) continue;  // list ranges once
       const c = M.eventCat(e.cat);
@@ -663,19 +663,19 @@ export function renderSearch(query) {
     for (const [date, list] of M.idx().logsByDate) {
       for (const e of list) {
         const h = snippet(e.text, q) || snippet(fieldsText(M.logCat(e.cat), e.fields), q);
-        if (h) results.push({ sort: date + (e.time || ''), html: `<button type="button" class="panel j-result" data-act="edit-log" data-id="${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
-          <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.logCat(e.cat).name)} · ${esc(M.fmt.long(date))} ${esc(e.time || '')}</span><span class="j-result-hit">${h}</span></button>` });
+        if (h) results.push({ sort: date + (e.time || ''), html: `<a class="panel j-result" href="#/log/${e.id}" style="${colorVar(M.logCat(e.cat).color)}">
+          <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.logCat(e.cat).name)} · ${esc(M.fmt.long(date))} ${esc(e.time || '')}</span><span class="j-result-hit">${h}</span></a>` });
       }
     }
     for (const t of M.idx().tasks) {
       const h = snippet(t.title, q) || snippet(t.notes, q) || Object.values(t.subtasks || {}).map(s => snippet(s.text, q)).find(Boolean);
-      if (h) results.push({ sort: t.due || '0000', html: `<button type="button" class="panel j-result" data-act="open-task" data-id="${t.id}">
-        <span class="j-result-top">Task${t.due ? ' · due ' + esc(M.fmt.long(t.due)) : ''}${t.done ? ' · done' : ''}</span><span class="j-result-hit">${h}</span></button>` });
+      if (h) results.push({ sort: t.due || '0000', html: `<a class="panel j-result" href="#/task/${t.id}">
+        <span class="j-result-top">Task${t.due ? ' · due ' + esc(M.fmt.long(t.due)) : ''}${t.done ? ' · done' : ''}</span><span class="j-result-hit">${h}</span></a>` });
     }
     for (const e of M.idx().events) {
       const h = snippet(e.title, q) || snippet(e.note, q);
-      if (h) results.push({ sort: e.date, html: `<button type="button" class="panel j-result" data-act="edit-event" data-id="${e.id}" style="${colorVar(M.eventCat(e.cat).color)}">
-        <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.eventCat(e.cat).name)} · ${esc(M.fmt.long(e.date))}</span><span class="j-result-hit">${h}</span></button>` });
+      if (h) results.push({ sort: e.date, html: `<a class="panel j-result" href="#/event/${e.id}" style="${colorVar(M.eventCat(e.cat).color)}">
+        <span class="j-result-top"><span class="j-ev-dot"></span>${esc(M.eventCat(e.cat).name)} · ${esc(M.fmt.long(e.date))}</span><span class="j-result-hit">${h}</span></a>` });
     }
   }
   results.sort((a, b) => b.sort.localeCompare(a.sort));

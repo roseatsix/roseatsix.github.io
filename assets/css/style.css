@@ -934,7 +934,7 @@ body.has-highlights .hero .lede { display: none; }
 }
 .hl-task { --hc: var(--flower); }
 .hl-event { --hc: var(--leaf); }
-.hl-holiday { --hc: color-mix(in oklab, var(--leaf) 50%, #3E8E95); }
+.hl-holiday, .hl-cuti { --hc: color-mix(in oklab, var(--leaf) 50%, #3E8E95); }
 .hl-home { --hc: var(--sun); }
 .hl-renew { --hc: color-mix(in oklab, var(--flower) 35%, #7A6BA8); }
 .hl-budget { --hc: var(--danger); }
@@ -1094,3 +1094,11 @@ body.has-highlights .hero .lede { display: none; }
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
 }
+
+/* An entry you jumped to from search or the hub glows for a moment */
+.is-found { animation: ras-found 2.6s ease-out; border-radius: var(--radius-sm); }
+@keyframes ras-found {
+  0%, 35% { background-color: color-mix(in oklab, var(--flower) 14%, transparent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--flower) 55%, transparent); }
+  100% { background-color: transparent; box-shadow: 0 0 0 2px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .is-found { animation-duration: 3.2s; } }

@@ -7,7 +7,7 @@
 import { mountHeader } from '../../assets/js/ui/header.js';
 import * as S from '../../assets/js/core/session.js';
 import { openStore } from '../../assets/js/core/store.js';
-import { toast } from '../../assets/js/ui/dom.js';
+import { toast, reveal } from '../../assets/js/ui/dom.js';
 import * as M from './model.js';
 import * as V from './views.js';
 import * as D from './dialogs.js';
@@ -51,19 +51,21 @@ function parseHash() {
   }
 }
 
-/** Links like #/task/<id> or #/event/<id> (from the hub's search) open that item. */
+/** Links like #/task/<id>, #/event/<id> or #/log/<id> (from the hub's search
+    and highlights) go to where that entry lives and point it out. */
 function openLinked() {
   const [, kind, id] = (location.hash || '').split('/');
   if (kind === 'task' && M.get('task:' + id)) {
     const t = M.get('task:' + id);
-    history.replaceState(null, '', '#/day/' + (M.isDate(t.due) ? t.due : M.today()));
-    setTimeout(() => D.openTaskDialog(id), 0);
+    // undated tasks live in the week view's Someday
+    history.replaceState(null, '', M.isDate(t.due) ? '#/day/' + t.due : '#/week/' + M.today());
+    ui.reveal = `[data-act="open-task"][data-id="${id}"]`;
   } else if (kind === 'event' && M.get('event:' + id)) {
     history.replaceState(null, '', '#/month/' + M.get('event:' + id).date.slice(0, 7));
-    setTimeout(() => D.openEventDialog(id), 0);
+    ui.reveal = `.j-ev-title[data-id="${id}"]`;
   } else if (kind === 'log' && M.get('log:' + id)) {
     history.replaceState(null, '', '#/day/' + M.get('log:' + id).date);
-    setTimeout(() => D.openLogDialog(id), 0);
+    ui.reveal = `.j-entry-btn[data-id="${id}"]`;
   }
 }
 
@@ -77,6 +79,11 @@ function onRoute() {
   updateTabs();
   render();
   window.scrollTo({ top: 0 });
+  if (ui.reveal) {
+    const sel = ui.reveal;
+    ui.reveal = null;
+    setTimeout(() => reveal(sel, main), 60);
+  }
 }
 
 function updateTabs() {

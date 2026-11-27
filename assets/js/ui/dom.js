@@ -108,3 +108,19 @@ export async function busy(button, label, fn) {
     button.innerHTML = old;
   }
 }
+
+/** Scroll to something on the page and highlight it briefly
+    (used when a search result or hub link points at an entry). */
+export function reveal(selector, root = document) {
+  const el = root.querySelector(selector);
+  if (!el) return false;
+  const closed = el.closest('details:not([open])');
+  if (closed) closed.open = true;
+  const smooth = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  el.scrollIntoView({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+  el.classList.remove('is-found');
+  void el.offsetWidth;            // restart the animation
+  el.classList.add('is-found');
+  setTimeout(() => el.classList.remove('is-found'), 2800);
+  return true;
+}

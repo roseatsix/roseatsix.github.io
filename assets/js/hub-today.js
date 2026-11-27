@@ -27,6 +27,7 @@ const TYPES = {
   task: 'Task',
   event: 'Event',
   holiday: 'Holiday',
+  cuti: 'Cuti bersama',
   home: 'Home',
   renew: 'Renewal',
   budget: 'Budget',
@@ -111,7 +112,7 @@ function collect() {
   /* holidays and events in the next 7 days */
   for (let i = 0; i <= 7; i++) {
     const d = J.addDays(t, i);
-    for (const h of holidaysOn(d)) rows.push({ type: 'holiday', rank: 4, date: d, title: h.name, meta: when(d), href: `tools/journal/#/month/${d.slice(0, 7)}` });
+    for (const h of holidaysOn(d)) rows.push({ type: h.kind === 'cuti' ? 'cuti' : 'holiday', rank: 4, date: d, title: h.kind === 'cuti' ? h.name.replace(/^cuti bersama\s*/i, '') || h.name : h.name, meta: when(d), href: `tools/journal/#/month/${d.slice(0, 7)}` });
     for (const e of J.eventsOn(d)) {
       if (i > 0 && e.date !== d && !(e.yearly && e.date.slice(5) === d.slice(5))) continue;   // multi-day: list once
       const c = J.eventCat(e.cat);
@@ -128,7 +129,7 @@ function rowHtml(r) {
     : '';
   return `
     <li class="hl hl-${r.type}${r.late ? ' is-overdue' : ''}">
-      <span class="hl-icon">${ICON[r.type]}</span>
+      <span class="hl-icon">${ICON[r.type] || ICON.holiday}</span>
       <a class="hl-main" href="${r.href}">
         <span class="hl-type">${TYPES[r.type]}</span>
         <span class="hl-title">${esc(r.title)}</span>
