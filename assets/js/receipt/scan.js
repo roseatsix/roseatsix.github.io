@@ -69,11 +69,11 @@ export function findPaper(im) {
 }
 
 /** Crop to the paper, scale to ~1600px wide, greyscale, and stretch the contrast. */
-export async function prepare(src) {
+export async function prepare(src, width = 1600) {
   const im = await loadImage(src);
   const box = findPaper(im) || { x: 0, y: 0, w: im.naturalWidth, h: im.naturalHeight };
-  // receipts are tall and narrow: aim for ~1600px across, at most 5000px long
-  const s = Math.min(3, Math.max(0.4, 1600 / box.w), 5000 / Math.max(box.w, box.h));
+  // receipts are tall and narrow: aim for `width` across (1600 by default), at most 3.2× that long
+  const s = Math.min(3, Math.max(0.4, width / box.w), (width * 3.2) / Math.max(box.w, box.h));
   const w = Math.round(box.w * s), h = Math.round(box.h * s);
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -150,14 +150,22 @@ function badness(text) {
   const r = parseReceipt(text);
   const c = check({ ...r });
   if (!r.items.length) return 1e12;
-  const diff = c.diff == null ? r.total == null ? 5e5 : 1e6 : Math.abs(c.diff);
-  return diff * 10 - r.items.length;          // matching the total matters most; then more items
+  // How far the items are from a total printed on the receipt (one worked out from the items
+  // always "matches"), as a share of it, so a big receipt nearly right beats a small misreading.
+  // A printed subtotal that matches is nearly as good: the grand total itself may be misread.
+  const off = Math.min(r.totalPrinted ? Math.abs(c.diff) / Math.max(1, r.total) : 1,
+    r.subtotal != null ? Math.abs(r.subtotal - c.sum) / Math.max(1, r.subtotal) + 0.0001 : 1);
+  // then more items, but only believable ones: Rupiah prices are whole hundreds, names have words
+  const fine = it => (it.price * it.qty) % 100 === 0 && /\p{L}{3,}/u.test(it.name) && !/\d{4,}/.test(it.name);
+  const good = r.items.filter(fine).length;
+  return off * 1e6 - good + 2 * (r.items.length - good);
 }
 
 /** Reads the text on a receipt. onProgress(text, fraction | null). */
 export async function readReceipt(src, onProgress = () => {}) {
   onProgress('Getting the photo ready…', null);
-  const canvas = await prepare(src);
+  const sizes = {};
+  const canvasAt = async width => sizes[width] || (sizes[width] = await prepare(src, width));
   let ready = false, pass = 0;
   const w = await ocrWorker('ind+eng', m => {
     if (m.status === 'recognizing text') { ready = true; onProgress(pass > 1 ? 'Reading it again another way…' : 'Reading the receipt…', m.progress); }
@@ -166,16 +174,19 @@ export async function readReceipt(src, onProgress = () => {}) {
   // Try the usual layout reading first; if the items don't add up to the
   // printed total, try other ways of finding the text and keep the best.
   let best = null;
-  for (const psm of ['4', '3', '11']) {
+  // 4: columns of text · 6: one block (tight or tilted receipts) · straightened · smaller
+  // (condensed print reads better) · 11: every word wherever it is
+  const ways = [['4', false, 1600], ['6', false, 1600], ['6', true, 1600], ['4', false, 1200], ['6', true, 1200], ['11', false, 1600]];
+  for (const [psm, rotateAuto, width] of ways) {
     pass++;
     await w.setParameters({ tessedit_pageseg_mode: psm, preserve_interword_spaces: '1' });
-    const { data } = await w.recognize(canvas, {}, { text: true, blocks: true });
+    const { data } = await w.recognize(await canvasAt(width), { rotateAuto }, { text: true, blocks: true });
     const words = wordsOf(data);
-    for (const text of [words.length ? rebuildLines(words) : '', data.text || ''].filter(Boolean)) {
+    for (const text of [data.text || '', words.length ? rebuildLines(words) : ''].filter(Boolean)) {
       const score = badness(text);
       if (!best || score < best.score) best = { text, score };
     }
-    if (best && best.score < 10 * 3) break;      // adds up (within a few rupiah): done
+    if (best && best.score < 300) break;         // adds up (within 0.03%, a little rounding): done
   }
   return best ? best.text : '';
 }

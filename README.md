@@ -78,10 +78,16 @@ iPhone web apps can't be share targets, so there it's Paste and Photo.
 colourless area), cleans it up (size, grey, contrast) and reads it with the
 vendored Tesseract (Indonesian + English), on the device. Lines are rebuilt
 from word positions (so far-right prices join their items); if the result
-doesn't add up to the printed total it re-reads in other layout modes and
-keeps the best. `parse.js` turns the text into shop, date, items (qty × price),
-service %, tax %, discount, rounding (pembulatan) and total; tax printed after the total (minimarket
-"PPN included" lines) is ignored. `review.js` is the dialog for checking and
+doesn't add up to a printed total (or subtotal) it re-reads in other ways
+(column layout, one block, straightened, smaller for condensed print, every
+word) and keeps the reading that adds up best, preferring believable items
+(whole-hundred prices, real words). `parse.js` turns the text into shop, date,
+items (qty × price, names that run onto a second line, numbered items with
+product codes and a "1,00 PCS x 15.000,00" line), service %, tax %, discount
+(including "(2.200)"), rounding (pembulatan) and total (an unlabelled amount
+equal to the items, e.g. IDR116,000, counts). Tax and savings printed after the
+total (minimarket "PPN included", "Anda hemat") are ignored. When no total is
+printed, the review leaves it blank to fill in. `review.js` is the dialog for checking and
 correcting it, then sending it to a bill split or journal spending.
 Used from: Inbox (photo → Receipt), Bill splitter (Add receipt → Scan),
 Journal → Budget (Scan receipt).

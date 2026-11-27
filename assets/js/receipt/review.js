@@ -59,7 +59,7 @@ export function openReceiptScan(image, { fill = false, to: startTo = 'split' } =
         raw = text;
         const p = parseReceipt(text);
         r = { shop: p.shop, date: p.date || J.today(), items: p.items.length ? p.items : [{ name: '', qty: 1, price: null }],
-          servicePct: p.servicePct || 0, taxPct: p.taxPct || 0, discount: p.discount || 0, rounding: p.rounding || 0, total: p.total };
+          servicePct: p.servicePct || 0, taxPct: p.taxPct || 0, discount: p.discount || 0, rounding: p.rounding || 0, total: p.totalPrinted || p.subtotal != null ? p.total : null };   // a total worked out from the items would always "match"
         review();
       }).catch(err => {
         console.error(err);
